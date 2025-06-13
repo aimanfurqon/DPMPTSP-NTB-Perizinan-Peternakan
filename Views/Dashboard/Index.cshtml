@@ -1,5 +1,7 @@
-﻿@{
+﻿@model PerizinanPeternakan.ViewModels.DashboardStatsViewModel
+@{
     ViewData["Title"] = "Dashboard";
+    var userRole = Context.Session.GetString("Role");
 }
 
 <div class="dashboard-container">
@@ -8,37 +10,71 @@
             <i class="fas fa-home"></i>
             Selamat Datang, @ViewBag.UserName!
         </h1>
-        <p class="welcome-subtitle">Sistem Perizinan Peternakan - DPMPTSP NTB</p>
+        <p class="welcome-subtitle">
+            Sistem Perizinan Peternakan - DPMPTSP NTB
+            <span class="user-badge">@userRole</span>
+        </p>
     </div>
 
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-icon">
-                <i class="fas fa-users"></i>
+                <i class="fas fa-file-alt"></i>
             </div>
             <div class="stat-content">
-                <h3>@ViewBag.TotalUsers</h3>
-                <p>Total Pengguna</p>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-icon active">
-                <i class="fas fa-user-check"></i>
-            </div>
-            <div class="stat-content">
-                <h3>@ViewBag.ActiveUsers</h3>
-                <p>Pengguna Aktif</p>
+                <h3>@Model.TotalApplications</h3>
+                <p>
+                    @if (userRole == "User")
+                    {
+                        <text>Total Permohonan Saya</text>
+                    }
+                    else
+                    {
+                        <text>Total Permohonan</text>
+                    }
+                </p>
             </div>
         </div>
 
         <div class="stat-card">
             <div class="stat-icon pending">
-                <i class="fas fa-file-alt"></i>
+                <i class="fas fa-clock"></i>
             </div>
             <div class="stat-content">
-                <h3>0</h3>
-                <p>Permohonan Pending</p>
+                <h3>@Model.PendingVerification</h3>
+                <p>
+                    @if (userRole == "User")
+                    {
+                        <text>Menunggu Verifikasi</text>
+                    }
+                    else if (userRole == "Verifikator")
+                    {
+                        <text>Perlu Verifikasi</text>
+                    }
+                    else
+                    {
+                        <text>Sedang Diverifikasi</text>
+                    }
+                </p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon warning">
+                <i class="fas fa-user-tie"></i>
+            </div>
+            <div class="stat-content">
+                <h3>@Model.PendingKepalaDinas</h3>
+                <p>
+                    @if (userRole == "KepalaDinas")
+                    {
+                        <text>Perlu Persetujuan</text>
+                    }
+                    else
+                    {
+                        <text>Menunggu Kepala Dinas</text>
+                    }
+                </p>
             </div>
         </div>
 
@@ -47,8 +83,8 @@
                 <i class="fas fa-check-circle"></i>
             </div>
             <div class="stat-content">
-                <h3>0</h3>
-                <p>Permohonan Disetujui</p>
+                <h3>@Model.ApprovedThisMonth</h3>
+                <p>Disetujui Bulan Ini</p>
             </div>
         </div>
     </div>
@@ -57,56 +93,169 @@
         <div class="content-card">
             <div class="card-header">
                 <h3>
-                    <i class="fas fa-clipboard-list"></i>
-                    Menu Utama
+                    <i class="fas fa-list"></i>
+                    @if (userRole == "User")
+                    {
+                        <text>Permohonan Terbaru</text>
+                    }
+                    else
+                    {
+                        <text>Aktivitas Terbaru</text>
+                    }
                 </h3>
+                <a href="@Url.Action("Index", "Permit")" class="view-all-link">
+                    Lihat Semua <i class="fas fa-arrow-right"></i>
+                </a>
             </div>
             <div class="card-body">
-                <div class="menu-grid">
-                    <a href="#" class="menu-item">
-                        <i class="fas fa-plus-circle"></i>
-                        <span>Permohonan Baru</span>
-                    </a>
-                    <a href="#" class="menu-item">
-                        <i class="fas fa-list"></i>
-                        <span>Daftar Permohonan</span>
-                    </a>
-                    <a href="#" class="menu-item">
-                        <i class="fas fa-search"></i>
-                        <span>Cek Status</span>
-                    </a>
-                    @if (ViewBag.UserRole == "Admin")
-                    {
-                        <a href="#" class="menu-item">
-                            <i class="fas fa-users-cog"></i>
-                            <span>Kelola Pengguna</span>
-                        </a>
-                    }
-                </div>
+                @if (Model.RecentApplications.Any())
+                {
+                    <div class="application-list">
+                        @foreach (var app in Model.RecentApplications)
+                        {
+                            <div class="application-item">
+                                <div class="app-info">
+                                    <div class="app-header">
+                                        <span class="app-number">@app.ApplicationNumber</span>
+                                        <span class="status-badge badge-@PermitStatusHelper.GetStatusClass(app.Status)">
+                                            @PermitStatusHelper.GetStatusText(app.Status)
+                                        </span>
+                                    </div>
+                                    <h4 class="app-company">@app.CompanyName</h4>
+                                    <div class="app-details">
+                                        <span class="app-route">
+                                            <i class="fas fa-route"></i>
+                                            @app.OriginLocation → @app.DestinationLocation
+                                        </span>
+                                        <span class="app-date">
+                                            <i class="fas fa-calendar"></i>
+                                            @app.SubmissionDate.ToString("dd/MM/yyyy")
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="app-actions">
+                                    <a href="@Url.Action("Detail", "Permit", new { id = app.Id })" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    @if (app.CanApprove)
+                                    {
+                                        <a href="@Url.Action("Approve", "Permit", new { id = app.Id })" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state-small">
+                        <i class="fas fa-inbox"></i>
+                        <p>Tidak ada data untuk ditampilkan</p>
+                    </div>
+                }
             </div>
         </div>
 
-        <div class="content-card">
-            <div class="card-header">
-                <h3>
-                    <i class="fas fa-bell"></i>
-                    Notifikasi Terbaru
-                </h3>
-            </div>
-            <div class="card-body">
-                <div class="notification-list">
-                    <div class="notification-item">
-                        <div class="notification-icon">
-                            <i class="fas fa-info-circle"></i>
-                        </div>
-                        <div class="notification-content">
-                            <p>Selamat datang di Sistem Perizinan Peternakan!</p>
-                            <small>@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</small>
-                        </div>
+        @if (userRole != "User" && Model.MyPendingApprovals.Any())
+        {
+            <div class="content-card">
+                <div class="card-header">
+                    <h3>
+                        <i class="fas fa-tasks"></i>
+                        @if (userRole == "Verifikator")
+                        {
+                            <text>Perlu Verifikasi</text>
+                        }
+                        else
+                        {
+                            <text>Perlu Persetujuan</text>
+                        }
+                    </h3>
+                    <span class="pending-count">@Model.MyPendingApprovals.Count</span>
+                </div>
+                <div class="card-body">
+                    <div class="application-list">
+                        @foreach (var app in Model.MyPendingApprovals)
+                        {
+                            <div class="application-item urgent">
+                                <div class="app-info">
+                                    <div class="app-header">
+                                        <span class="app-number">@app.ApplicationNumber</span>
+                                        <span class="urgency-indicator">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                        </span>
+                                    </div>
+                                    <h4 class="app-company">@app.CompanyName</h4>
+                                    <div class="app-details">
+                                        <span class="app-route">
+                                            <i class="fas fa-route"></i>
+                                            @app.OriginLocation → @app.DestinationLocation
+                                        </span>
+                                        <span class="app-date">
+                                            <i class="fas fa-clock"></i>
+                                            @((DateTime.Now - app.SubmissionDate).Days) hari yang lalu
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="app-actions">
+                                    <a href="@Url.Action("Approve", "Permit", new { id = app.Id })" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-gavel"></i>
+                                        Proses
+                                    </a>
+                                </div>
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
-        </div>
+        }
+
+        @if (userRole == "User")
+        {
+            <div class="content-card">
+                <div class="card-header">
+                    <h3>
+                        <i class="fas fa-plus-circle"></i>
+                        Aksi Cepat
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="quick-actions">
+                        <a href="@Url.Action("Create", "Permit")" class="quick-action-item">
+                            <div class="action-icon">
+                                <i class="fas fa-file-plus"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Permohonan Baru</h4>
+                                <p>Buat permohonan izin pengeluaran ternak</p>
+                            </div>
+                        </a>
+
+                        <a href="@Url.Action("Index", "Permit")" class="quick-action-item">
+                            <div class="action-icon">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Cek Status</h4>
+                                <p>Lihat status permohonan Anda</p>
+                            </div>
+                        </a>
+
+                        <a href="@Url.Action("Profile", "Auth")" class="quick-action-item">
+                            <div class="action-icon">
+                                <i class="fas fa-user-edit"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Update Profile</h4>
+                                <p>Perbarui informasi akun Anda</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
     </div>
 </div>
 
@@ -122,22 +271,50 @@
         border-radius: 15px;
         margin-bottom: 30px;
         text-align: center;
+        position: relative;
+        overflow: hidden;
     }
 
-    .welcome-title {
-        font-size: 28px;
-        font-weight: 600;
-        margin-bottom: 10px;
-    }
-
-        .welcome-title i {
-            margin-right: 10px;
+        .welcome-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 100%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: rotate(15deg);
         }
+
+        .welcome-section .welcome-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 2;
+        }
+
+    .welcome-title i {
+        margin-right: 10px;
+    }
 
     .welcome-subtitle {
         font-size: 16px;
         opacity: 0.9;
         margin: 0;
+        position: relative;
+        z-index: 2;
+    }
+
+    .user-badge {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-left: 10px;
+        text-transform: uppercase;
     }
 
     .stats-grid {
@@ -175,16 +352,16 @@
         font-size: 24px;
     }
 
-        .stat-icon.active {
-            background: #28a745;
-        }
-
         .stat-icon.pending {
             background: #ffc107;
         }
 
+        .stat-icon.warning {
+            background: #fd7e14;
+        }
+
         .stat-icon.approved {
-            background: #17a2b8;
+            background: #28a745;
         }
 
     .stat-content h3 {
@@ -217,6 +394,9 @@
         background: #f8f9fa;
         padding: 20px;
         border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
         .card-header h3 {
@@ -231,83 +411,172 @@
             color: #667eea;
         }
 
-    .card-body {
-        padding: 25px;
-    }
-
-    .menu-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 15px;
-    }
-
-    .menu-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 20px;
-        background: #f8f9fa;
-        border-radius: 10px;
+    .view-all-link {
+        color: #667eea;
         text-decoration: none;
-        color: #333;
-        transition: all 0.3s;
-        text-align: center;
+        font-size: 14px;
+        font-weight: 500;
     }
 
-        .menu-item:hover {
-            background: #667eea;
-            color: white;
-            transform: translateY(-3px);
-            text-decoration: none;
+        .view-all-link:hover {
+            text-decoration: underline;
         }
 
-        .menu-item i {
+    .pending-count {
+        background: #dc3545;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .application-list {
+        space-y: 15px;
+    }
+
+    .application-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+    }
+
+        .application-item:hover {
+            background: #e9ecef;
+        }
+
+        .application-item.urgent {
+            border-left: 4px solid #dc3545;
+            background: #fff5f5;
+        }
+
+            .application-item.urgent:hover {
+                background: #ffe6e6;
+            }
+
+    .app-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .app-number {
+        font-size: 12px;
+        color: #666;
+        font-weight: 600;
+    }
+
+    .status-badge {
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .urgency-indicator {
+        color: #dc3545;
+        font-size: 14px;
+    }
+
+    .app-company {
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+    }
+
+    .app-details {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .app-route, .app-date {
+        font-size: 12px;
+        color: #666;
+    }
+
+        .app-route i, .app-date i {
+            margin-right: 6px;
+            width: 12px;
+        }
+
+    .app-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .empty-state-small {
+        text-align: center;
+        padding: 30px;
+        color: #666;
+    }
+
+        .empty-state-small i {
             font-size: 32px;
+            color: #e9ecef;
             margin-bottom: 10px;
         }
 
-        .menu-item span {
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-    .notification-list {
-        max-height: 300px;
-        overflow-y: auto;
-    }
-
-    .notification-item {
+    .quick-actions {
         display: flex;
-        padding: 15px 0;
-        border-bottom: 1px solid #e9ecef;
+        flex-direction: column;
+        gap: 15px;
     }
 
-        .notification-item:last-child {
-            border-bottom: none;
+    .quick-action-item {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s;
+    }
+
+        .quick-action-item:hover {
+            background: #e9ecef;
+            color: inherit;
+            text-decoration: none;
+            transform: translateX(5px);
         }
 
-    .notification-icon {
+    .action-icon {
         width: 40px;
         height: 40px;
         border-radius: 8px;
-        background: #e3f2fd;
-        color: #1976d2;
+        background: #667eea;
+        color: white;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-right: 15px;
-        flex-shrink: 0;
+        font-size: 18px;
     }
 
-    .notification-content p {
-        margin: 0 0 5px 0;
-        color: #333;
+    .action-content h4 {
+        margin: 0 0 4px 0;
         font-size: 14px;
+        font-weight: 600;
+        color: #333;
     }
 
-    .notification-content small {
-        color: #666;
+    .action-content p {
+        margin: 0;
         font-size: 12px;
+        color: #666;
     }
 
     @@media (max-width: 768px) {
@@ -321,16 +590,23 @@
         grid-template-columns: 1fr;
     }
 
-    .menu-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
     .welcome-title {
         font-size: 24px;
     }
 
     .dashboard-container {
         padding: 15px;
+    }
+
+    .application-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .app-actions {
+        width: 100%;
+        justify-content: flex-end;
     }
 
     }

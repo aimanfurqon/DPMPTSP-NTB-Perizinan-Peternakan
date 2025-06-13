@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PerizinanPeternakan.Data;
+using PerizinanPeternakan.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,15 @@ builder.Services.AddSession(options =>
     options.Cookie.Name = "PerizinanPeternakan.Session";
 });
 
+// Register services
+builder.Services.AddScoped<IPdfGeneratorService, PdfGeneratorService>();
+
+// Add file upload services
+builder.Services.Configure<IISServerOptions>(options =>
+{
+    options.MaxRequestBodySize = 52428800; // 50MB
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -31,12 +41,10 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
 
 // Enable session before authorization
 app.UseSession();
-
 app.UseAuthorization();
 
 // Default route
@@ -44,19 +52,30 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Auth}/{action=Login}/{id?}");
 
-// Ensure database is created
+// Simple database creation (no auto seeding)
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
     try
     {
+        // Hanya buat database dan tabel, tidak seed data
         context.Database.EnsureCreated();
-        // Atau gunakan context.Database.Migrate() jika menggunakan migrations
+        logger.LogInformation("Database ensured created successfully");
+
+        // Cek apakah ada data users
+        var userCount = context.Users.Count();
+        logger.LogInformation($"Current users in database: {userCount}");
+
+        if (userCount == 0)
+        {
+            logger.LogWarning("No users found in database. Please run the SQL insert script manually.");
+        }
     }
     catch (Exception ex)
     {
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred creating the DB.");
+        logger.LogError(ex, "An error occurred while ensuring database creation");
     }
 }
 

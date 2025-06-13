@@ -32,7 +32,7 @@ namespace PerizinanPeternakan.Models
 
         public bool IsActive { get; set; } = true;
 
-        // Role: "Admin", "User", "Operator"
+        // Role: "User", "Verifikator", "KepalaDinas"
         public string Role { get; set; } = "User";
     }
 }

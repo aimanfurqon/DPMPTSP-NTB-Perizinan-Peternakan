@@ -28,7 +28,79 @@ namespace PerizinanPeternakan.Controllers
             return View();
         }
 
-        // POST: Login
+        // GET: Register
+        [HttpGet]
+        public IActionResult Register()
+        {
+            // Jika sudah login, redirect ke dashboard
+            if (HttpContext.Session.GetString("UserId") != null)
+            {
+                return RedirectToAction("Index", "Dashboard");
+            }
+
+            return View();
+        }
+
+        //// POST: Login
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> Login(LoginViewModel model)
+        //{
+        //    if (!ModelState.IsValid)
+        //    {
+        //        return View(model);
+        //    }
+
+        //    try
+        //    {
+        //        // Cari user berdasarkan username atau email
+        //        var user = await _context.Users
+        //            .FirstOrDefaultAsync(u => (u.Username == model.Username || u.Email == model.Username)
+        //                                   && u.IsActive);
+
+        //        if (user == null)
+        //        {
+        //            ModelState.AddModelError("", "Username/Email atau password salah");
+        //            return View(model);
+        //        }
+
+        //        // Verifikasi password
+        //        if (!BCrypt.Net.BCrypt.Verify(model.Password, user.Password))
+        //        {
+        //            ModelState.AddModelError("", "Username/Email atau password salah");
+        //            return View(model);
+        //        }
+
+        //        // Set session
+        //        HttpContext.Session.SetString("UserId", user.Id.ToString());
+        //        HttpContext.Session.SetString("Username", user.Username);
+        //        HttpContext.Session.SetString("NamaLengkap", user.NamaLengkap);
+        //        HttpContext.Session.SetString("Role", user.Role);
+
+        //        TempData["SuccessMessage"] = $"Selamat datang, {user.NamaLengkap}!";
+        //        return RedirectToAction("Index", "Dashboard");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        ModelState.AddModelError("", "Terjadi kesalahan sistem. Silakan coba lagi.");
+        //        return View(model);
+        //    }
+        //}
+
+        //// GET: Register
+        //[HttpGet]
+        //public IActionResult Register()
+        //{
+        //    // Jika sudah login, redirect ke dashboard
+        //    if (HttpContext.Session.GetString("UserId") != null)
+        //    {
+        //        return RedirectToAction("Index", "Dashboard");
+        //    }
+
+        //    return View();
+        //}
+
+        // POST: Login - Modified untuk bypass password
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
@@ -43,20 +115,23 @@ namespace PerizinanPeternakan.Controllers
                 // Cari user berdasarkan username atau email
                 var user = await _context.Users
                     .FirstOrDefaultAsync(u => (u.Username == model.Username || u.Email == model.Username)
-                                           && u.IsActive);
+                                       && u.IsActive);
 
                 if (user == null)
                 {
-                    ModelState.AddModelError("", "Username/Email atau password salah");
+                    ModelState.AddModelError("", "Username/Email tidak ditemukan");
                     return View(model);
                 }
 
-                // Verifikasi password
+                // BYPASS PASSWORD VERIFICATION UNTUK DEVELOPMENT
+                // Uncomment baris di bawah untuk enable password verification lagi
+                /*
                 if (!BCrypt.Net.BCrypt.Verify(model.Password, user.Password))
                 {
                     ModelState.AddModelError("", "Username/Email atau password salah");
                     return View(model);
                 }
+                */
 
                 // Set session
                 HttpContext.Session.SetString("UserId", user.Id.ToString());
@@ -64,7 +139,7 @@ namespace PerizinanPeternakan.Controllers
                 HttpContext.Session.SetString("NamaLengkap", user.NamaLengkap);
                 HttpContext.Session.SetString("Role", user.Role);
 
-                TempData["SuccessMessage"] = $"Selamat datang, {user.NamaLengkap}!";
+                TempData["SuccessMessage"] = $"Selamat datang, {user.NamaLengkap}! (Development Mode - No Password Check)";
                 return RedirectToAction("Index", "Dashboard");
             }
             catch (Exception ex)
@@ -72,19 +147,6 @@ namespace PerizinanPeternakan.Controllers
                 ModelState.AddModelError("", "Terjadi kesalahan sistem. Silakan coba lagi.");
                 return View(model);
             }
-        }
-
-        // GET: Register
-        [HttpGet]
-        public IActionResult Register()
-        {
-            // Jika sudah login, redirect ke dashboard
-            if (HttpContext.Session.GetString("UserId") != null)
-            {
-                return RedirectToAction("Index", "Dashboard");
-            }
-
-            return View();
         }
 
         // POST: Register
