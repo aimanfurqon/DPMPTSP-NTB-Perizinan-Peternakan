@@ -1,0 +1,337 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="dashboard-container">
+    <div class="welcome-section">
+        <h1 class="welcome-title">
+            <i class="fas fa-home"></i>
+            Selamat Datang, @ViewBag.UserName!
+        </h1>
+        <p class="welcome-subtitle">Sistem Perizinan Peternakan - DPMPTSP NTB</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <h3>@ViewBag.TotalUsers</h3>
+                <p>Total Pengguna</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon active">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <div class="stat-content">
+                <h3>@ViewBag.ActiveUsers</h3>
+                <p>Pengguna Aktif</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon pending">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="stat-content">
+                <h3>0</h3>
+                <p>Permohonan Pending</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon approved">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-content">
+                <h3>0</h3>
+                <p>Permohonan Disetujui</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-grid">
+        <div class="content-card">
+            <div class="card-header">
+                <h3>
+                    <i class="fas fa-clipboard-list"></i>
+                    Menu Utama
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="menu-grid">
+                    <a href="#" class="menu-item">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Permohonan Baru</span>
+                    </a>
+                    <a href="#" class="menu-item">
+                        <i class="fas fa-list"></i>
+                        <span>Daftar Permohonan</span>
+                    </a>
+                    <a href="#" class="menu-item">
+                        <i class="fas fa-search"></i>
+                        <span>Cek Status</span>
+                    </a>
+                    @if (ViewBag.UserRole == "Admin")
+                    {
+                        <a href="#" class="menu-item">
+                            <i class="fas fa-users-cog"></i>
+                            <span>Kelola Pengguna</span>
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="content-card">
+            <div class="card-header">
+                <h3>
+                    <i class="fas fa-bell"></i>
+                    Notifikasi Terbaru
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="notification-list">
+                    <div class="notification-item">
+                        <div class="notification-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div class="notification-content">
+                            <p>Selamat datang di Sistem Perizinan Peternakan!</p>
+                            <small>@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .dashboard-container {
+        padding: 20px;
+    }
+
+    .welcome-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .welcome-title {
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+        .welcome-title i {
+            margin-right: 10px;
+        }
+
+    .welcome-subtitle {
+        font-size: 16px;
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        transition: transform 0.3s;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 20px;
+        background: #667eea;
+        color: white;
+        font-size: 24px;
+    }
+
+        .stat-icon.active {
+            background: #28a745;
+        }
+
+        .stat-icon.pending {
+            background: #ffc107;
+        }
+
+        .stat-icon.approved {
+            background: #17a2b8;
+        }
+
+    .stat-content h3 {
+        font-size: 32px;
+        font-weight: 700;
+        margin: 0 0 5px 0;
+        color: #333;
+    }
+
+    .stat-content p {
+        margin: 0;
+        color: #666;
+        font-size: 14px;
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+
+    .content-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: #f8f9fa;
+        padding: 20px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+        .card-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .card-header i {
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+    .card-body {
+        padding: 25px;
+    }
+
+    .menu-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 15px;
+    }
+
+    .menu-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        text-decoration: none;
+        color: #333;
+        transition: all 0.3s;
+        text-align: center;
+    }
+
+        .menu-item:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-3px);
+            text-decoration: none;
+        }
+
+        .menu-item i {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .menu-item span {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+    .notification-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .notification-item {
+        display: flex;
+        padding: 15px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+
+    .notification-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: #e3f2fd;
+        color: #1976d2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+
+    .notification-content p {
+        margin: 0 0 5px 0;
+        color: #333;
+        font-size: 14px;
+    }
+
+    .notification-content small {
+        color: #666;
+        font-size: 12px;
+    }
+
+    @@media (max-width: 768px) {
+        .content-grid
+
+    {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .menu-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .welcome-title {
+        font-size: 24px;
+    }
+
+    .dashboard-container {
+        padding: 15px;
+    }
+
+    }
+</style>
