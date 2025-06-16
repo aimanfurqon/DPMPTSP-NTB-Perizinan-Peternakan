@@ -1,0 +1,703 @@
+﻿@model PerizinanPeternakan.ViewModels.PermitApplicationViewModel
+@{
+    ViewData["Title"] = "Permohonan Baru";
+}
+
+<div class="create-container">
+    <div class="page-header">
+        <div class="header-content">
+            <h1 class="page-title">
+                <i class="fas fa-plus-circle"></i>
+                Permohonan Izin Baru
+            </h1>
+            <p class="page-subtitle">Buat permohonan izin pengeluaran ternak potong</p>
+        </div>
+
+        <div class="header-actions">
+            <a href="@Url.Action("Index", "Permit")" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Kembali
+            </a>
+        </div>
+    </div>
+
+    <form asp-action="Create" method="post" class="permit-form" id="permitForm">
+        <div class="form-sections">
+            <!-- Informasi Perusahaan -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3>
+                        <i class="fas fa-building"></i>
+                        Informasi Perusahaan
+                    </h3>
+                    <span class="section-number">1</span>
+                </div>
+
+                <div class="section-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label asp-for="CompanyName" class="form-label required">
+                                <i class="fas fa-building"></i>
+                                Nama Perusahaan
+                            </label>
+                            <input asp-for="CompanyName" class="form-control"
+                                   placeholder="Contoh: CV. DENA BERSAUDARA" />
+                            <span asp-validation-for="CompanyName" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label asp-for="CompanyAddress" class="form-label required">
+                                <i class="fas fa-map-marker-alt"></i>
+                                Alamat Perusahaan
+                            </label>
+                            <textarea asp-for="CompanyAddress" class="form-control" rows="3"
+                                      placeholder="Masukkan alamat lengkap perusahaan"></textarea>
+                            <span asp-validation-for="CompanyAddress" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail Pengiriman -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3>
+                        <i class="fas fa-shipping-fast"></i>
+                        Detail Pengiriman
+                    </h3>
+                    <span class="section-number">2</span>
+                </div>
+
+                <div class="section-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label asp-for="OriginLocation" class="form-label required">
+                                <i class="fas fa-map-marker-alt text-success"></i>
+                                Asal Ternak
+                            </label>
+                            <input asp-for="OriginLocation" class="form-control"
+                                   placeholder="Contoh: Kab. Bima" />
+                            <span asp-validation-for="OriginLocation" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="DestinationLocation" class="form-label required">
+                                <i class="fas fa-map-marker-alt text-danger"></i>
+                                Tujuan Pengiriman
+                            </label>
+                            <input asp-for="DestinationLocation" class="form-control"
+                                   placeholder="Contoh: Kab. Jeneponto, Sulawesi Selatan" />
+                            <span asp-validation-for="DestinationLocation" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="DeparturePort" class="form-label required">
+                                <i class="fas fa-anchor"></i>
+                                Pelabuhan Asal
+                            </label>
+                            <input asp-for="DeparturePort" class="form-control"
+                                   placeholder="Contoh: Pelabuhan Sape, Kab. Bima" />
+                            <span asp-validation-for="DeparturePort" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="ArrivalPort" class="form-label required">
+                                <i class="fas fa-anchor"></i>
+                                Pelabuhan Bongkar
+                            </label>
+                            <input asp-for="ArrivalPort" class="form-control"
+                                   placeholder="Contoh: Pelabuhan Bungeng, Kab. Jeneponto" />
+                            <span asp-validation-for="ArrivalPort" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail Ternak -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3>
+                        <i class="fas fa-paw"></i>
+                        Detail Ternak
+                    </h3>
+                    <span class="section-number">3</span>
+                </div>
+
+                <div class="section-body">
+                    <div class="livestock-container" id="livestockContainer">
+                        @for (int i = 0; i < Math.Max(Model.LivestockDetails?.Count ?? 0, 1); i++)
+                        {
+                            <div class="livestock-item" data-index="@i">
+                                <div class="livestock-header">
+                                    <h4>Ternak #<span class="livestock-number">@(i + 1)</span></h4>
+                                    @if (i > 0)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-livestock">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    }
+                                </div>
+
+                                <div class="livestock-form">
+                                    <div class="form-group">
+                                        <label class="form-label required">
+                                            <i class="fas fa-paw"></i>
+                                            Jenis Ternak
+                                        </label>
+                                        <select name="LivestockDetails[@i].LivestockType" class="form-control livestock-type" required>
+                                            <option value="">Pilih Jenis Ternak</option>
+                                            <option value="Sapi Potong">Sapi Potong</option>
+                                            <option value="Kerbau Potong">Kerbau Potong</option>
+                                            <option value="Kuda Pedaging">Kuda Pedaging</option>
+                                            <option value="Kambing">Kambing</option>
+                                            <option value="Domba">Domba</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label required">
+                                            <i class="fas fa-calculator"></i>
+                                            Jumlah (ekor)
+                                        </label>
+                                        <input type="number" name="LivestockDetails[@i].Quantity"
+                                               class="form-control livestock-quantity" min="1" max="10000"
+                                               placeholder="Masukkan jumlah ternak" required />
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            <i class="fas fa-comment"></i>
+                                            Keterangan
+                                        </label>
+                                        <textarea name="LivestockDetails[@i].Description"
+                                              class="form-control" rows="2"
+                                              placeholder="Keterangan tambahan (opsional)"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="livestock-actions">
+                        <button type="button" class="btn btn-outline-primary" id="addLivestock">
+                            <i class="fas fa-plus"></i>
+                            Tambah Jenis Ternak
+                        </button>
+
+                        <div class="livestock-summary">
+                            <div class="summary-item">
+                                <span class="label">Total Jenis:</span>
+                                <span class="value" id="totalTypes">1</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Total Ekor:</span>
+                                <span class="value" id="totalQuantity">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <div class="action-buttons">
+                <button type="button" class="btn btn-outline-secondary btn-lg" onclick="window.location.href='@Url.Action("Index", "Permit")'">
+                    <i class="fas fa-times"></i>
+                    Batal
+                </button>
+
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                    <i class="fas fa-paper-plane"></i>
+                    Ajukan Permohonan
+                </button>
+            </div>
+
+            <div class="form-info">
+                <div class="info-item">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Pastikan semua data yang diisi sudah benar sebelum mengajukan permohonan</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-clock"></i>
+                    <span>Proses verifikasi akan dilakukan dalam 1-3 hari kerja</span>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        let livestockIndex = @(Math.Max(Model.LivestockDetails?.Count ?? 0, 1));
+
+        $(document).ready(function() {
+            updateSummary();
+            updateLivestockNumbers();
+
+            // Add livestock item
+            $('#addLivestock').click(function() {
+                addLivestockItem();
+            });
+
+            // Remove livestock item
+            $(document).on('click', '.remove-livestock', function() {
+                $(this).closest('.livestock-item').remove();
+                updateLivestockNumbers();
+                updateSummary();
+            });
+
+            // Update summary when quantity changes
+            $(document).on('input', '.livestock-quantity', function() {
+                updateSummary();
+            });
+
+            // Form submission
+            $('#permitForm').on('submit', function(e) {
+                if (!validateForm()) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                $('#submitBtn').html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...');
+                $('#submitBtn').prop('disabled', true);
+            });
+        });
+
+        function addLivestockItem() {
+            const template = `
+                <div class="livestock-item" data-index="${livestockIndex}">
+                    <div class="livestock-header">
+                        <h4>Ternak #<span class="livestock-number">${livestockIndex + 1}</span></h4>
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-livestock">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="livestock-form">
+                        <div class="form-group">
+                            <label class="form-label required">
+                                <i class="fas fa-paw"></i>
+                                Jenis Ternak
+                            </label>
+                            <select name="LivestockDetails[${livestockIndex}].LivestockType" class="form-control livestock-type" required>
+                                <option value="">Pilih Jenis Ternak</option>
+                                <option value="Sapi Potong">Sapi Potong</option>
+                                <option value="Kerbau Potong">Kerbau Potong</option>
+                                <option value="Kuda Pedaging">Kuda Pedaging</option>
+                                <option value="Kambing">Kambing</option>
+                                <option value="Domba">Domba</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required">
+                                <i class="fas fa-calculator"></i>
+                                Jumlah (ekor)
+                            </label>
+                            <input type="number" name="LivestockDetails[${livestockIndex}].Quantity"
+                                   class="form-control livestock-quantity" min="1" max="10000"
+                                   placeholder="Masukkan jumlah ternak" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-comment"></i>
+                                Keterangan
+                            </label>
+                            <textarea name="LivestockDetails[${livestockIndex}].Description"
+                                      class="form-control" rows="2"
+                                      placeholder="Keterangan tambahan (opsional)"></textarea>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $('#livestockContainer').append(template);
+            livestockIndex++;
+            updateLivestockNumbers();
+            updateSummary();
+        }
+
+        function updateLivestockNumbers() {
+            $('.livestock-item').each(function(index) {
+                $(this).find('.livestock-number').text(index + 1);
+            });
+        }
+
+        function updateSummary() {
+            const totalTypes = $('.livestock-item').length;
+            let totalQuantity = 0;
+
+            $('.livestock-quantity').each(function() {
+                const qty = parseInt($(this).val()) || 0;
+                totalQuantity += qty;
+            });
+
+            $('#totalTypes').text(totalTypes);
+            $('#totalQuantity').text(totalQuantity);
+        }
+
+        function validateForm() {
+            let isValid = true;
+            const errors = [];
+
+            // Check if at least one livestock item has valid data
+            let hasValidLivestock = false;
+            $('.livestock-item').each(function() {
+                const type = $(this).find('.livestock-type').val();
+                const quantity = parseInt($(this).find('.livestock-quantity').val()) || 0;
+
+                if (type && quantity > 0) {
+                    hasValidLivestock = true;
+                }
+            });
+
+            if (!hasValidLivestock) {
+                errors.push('Minimal harus ada satu jenis ternak dengan jumlah yang valid');
+                isValid = false;
+            }
+
+            if (errors.length > 0) {
+                alert('Error:\n' + errors.join('\n'));
+            }
+
+            return isValid;
+        }
+    </script>
+}
+
+<style>
+    .create-container {
+        padding: 20px;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .header-content {
+        flex: 1;
+    }
+
+    .page-title {
+        color: #333;
+        margin-bottom: 8px;
+        font-size: 28px;
+        font-weight: 600;
+    }
+
+        .page-title i {
+            margin-right: 12px;
+            color: #667eea;
+        }
+
+    .page-subtitle {
+        color: #666;
+        margin: 0;
+        font-size: 16px;
+    }
+
+    .header-actions {
+        margin-left: 20px;
+    }
+
+    .permit-form {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .form-sections {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    .form-section {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .section-header {
+        background: #f8f9fa;
+        padding: 20px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        .section-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .section-header i {
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+    .section-number {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #667eea;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .section-body {
+        padding: 25px;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        color: #333;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+        .form-label.required::after {
+            content: '*';
+            color: #dc3545;
+            margin-left: 4px;
+        }
+
+        .form-label i {
+            margin-right: 8px;
+            color: #667eea;
+            width: 16px;
+        }
+
+    .form-control {
+        padding: 12px 15px;
+        border: 2px solid #e1e5e9;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: all 0.3s;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+    .livestock-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .livestock-item {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s;
+    }
+
+        .livestock-item:hover {
+            border-color: #667eea;
+        }
+
+    .livestock-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+        .livestock-header h4 {
+            margin: 0;
+            color: #333;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+    .livestock-form {
+        display: grid;
+        grid-template-columns: 1fr 120px 1fr;
+        gap: 15px;
+        align-items: start;
+    }
+
+    .livestock-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .livestock-summary {
+        display: flex;
+        gap: 20px;
+    }
+
+    .summary-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 10px 15px;
+        background: #667eea;
+        color: white;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+
+        .summary-item .label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .summary-item .value {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+    .form-actions {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        padding: 25px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+        .action-buttons .btn {
+            flex: 1;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+            .action-buttons .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            }
+
+    .form-info {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 10px;
+        font-size: 14px;
+        color: #666;
+    }
+
+        .info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-item i {
+            margin-right: 10px;
+            margin-top: 2px;
+            color: #667eea;
+            flex-shrink: 0;
+        }
+
+    .text-danger {
+        color: #dc3545;
+        font-size: 12px;
+        margin-top: 5px;
+        display: block;
+    }
+
+    @@media (max-width: 768px) {
+        .create-container
+
+    {
+        padding: 15px;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .header-actions {
+        margin-left: 0;
+        width: 100%;
+    }
+
+        .header-actions .btn {
+            width: 100%;
+        }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .livestock-form {
+        grid-template-columns: 1fr;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+        .action-buttons .btn {
+            flex: none;
+            width: 100%;
+        }
+
+    .page-title {
+        font-size: 24px;
+    }
+
+    .livestock-summary {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    }
+</style>
