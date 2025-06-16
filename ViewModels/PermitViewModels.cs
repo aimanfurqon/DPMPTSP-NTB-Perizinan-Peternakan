@@ -100,11 +100,24 @@ namespace PerizinanPeternakan.ViewModels
         public string ApplicantName { get; set; } = string.Empty;
         public PermitStatus Status { get; set; }
         public DateTime SubmissionDate { get; set; }
+
+        // Added properties for new approval flow
+        public DateTime? AdminApprovalDate { get; set; }
+        public DateTime? VerificationDate { get; set; }
+        public DateTime? FinalApprovalDate { get; set; }
+
         public string OriginLocation { get; set; } = string.Empty;
         public string DestinationLocation { get; set; } = string.Empty;
         public bool CanDownload { get; set; }
         public bool CanView { get; set; }
         public bool CanApprove { get; set; }
+
+        // Additional properties for better display
+        public string? GeneratedDocumentPath { get; set; }
+        public int CurrentApprovalLevel { get; set; }
+        public string? AdminName { get; set; }
+        public string? VerifikatorName { get; set; }
+        public string? KepalaDinasName { get; set; }
     }
 
     public class PermitDetailViewModel
@@ -118,6 +131,12 @@ namespace PerizinanPeternakan.ViewModels
         public string ApplicantPhone { get; set; } = string.Empty;
         public PermitStatus Status { get; set; }
         public DateTime SubmissionDate { get; set; }
+
+        // Added approval dates for new flow
+        public DateTime? AdminApprovalDate { get; set; }
+        public DateTime? VerificationDate { get; set; }
+        public DateTime? FinalApprovalDate { get; set; }
+
         public string OriginLocation { get; set; } = string.Empty;
         public string DestinationLocation { get; set; } = string.Empty;
         public string DeparturePort { get; set; } = string.Empty;
@@ -130,6 +149,12 @@ namespace PerizinanPeternakan.ViewModels
         public bool CanDownload { get; set; }
         public bool CanApprove { get; set; }
         public string? GeneratedDocumentPath { get; set; }
+
+        // Added approver information
+        public string? AdminName { get; set; }
+        public string? VerifikatorName { get; set; }
+        public string? KepalaDinasName { get; set; }
+        public int CurrentApprovalLevel { get; set; }
     }
 
     public class ApprovalHistoryViewModel
@@ -150,6 +175,13 @@ namespace PerizinanPeternakan.ViewModels
         public int PendingKepalaDinas { get; set; }
         public int ApprovedThisMonth { get; set; }
         public int RejectedThisMonth { get; set; }
+
+        // Additional stats for new flow
+        public int PendingAdminReview { get; set; }
+        public int PendingVerifikatorReview { get; set; }
+        public int AdminApprovedThisMonth { get; set; }
+        public int VerifikatorApprovedThisMonth { get; set; }
+
         public List<PermitListViewModel> RecentApplications { get; set; } = new List<PermitListViewModel>();
         public List<PermitListViewModel> MyPendingApprovals { get; set; } = new List<PermitListViewModel>();
     }

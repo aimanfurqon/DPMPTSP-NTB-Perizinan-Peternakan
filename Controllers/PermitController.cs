@@ -18,7 +18,7 @@ namespace PerizinanPeternakan.Controllers
             _pdfGenerator = pdfGenerator;
         }
 
-        // GET: Permit/Index - Daftar permohonan untuk user yang login
+        // GET: Permit/Index - Daftar permohonan berdasarkan role
         public async Task<IActionResult> Index()
         {
             var userId = GetCurrentUserId();
@@ -40,20 +40,25 @@ namespace PerizinanPeternakan.Controllers
                         ApplicantName = p.User.NamaLengkap,
                         Status = p.Status,
                         SubmissionDate = p.SubmissionDate,
+                        AdminApprovalDate = p.AdminApprovalDate,
+                        VerificationDate = p.VerificationDate,
+                        FinalApprovalDate = p.FinalApprovalDate,
                         OriginLocation = p.OriginLocation,
                         DestinationLocation = p.DestinationLocation,
                         CanDownload = p.Status == PermitStatus.FinalApproved && !string.IsNullOrEmpty(p.GeneratedDocumentPath),
                         CanView = true,
-                        CanApprove = false
+                        CanApprove = false,
+                        GeneratedDocumentPath = p.GeneratedDocumentPath,
+                        CurrentApprovalLevel = p.CurrentApprovalLevel
                     })
                     .OrderByDescending(p => p.SubmissionDate)
                     .ToListAsync();
             }
-            else if (userRole == "Verifikator")
+            else if (userRole == "Admin")
             {
-                // Verifikator melihat permohonan yang perlu diverifikasi
+                // Admin melihat permohonan yang perlu review data (level 1)
                 permits = await _context.PermitApplications
-                    .Where(p => p.Status == PermitStatus.Submitted || p.Status == PermitStatus.UnderReview)
+                    .Where(p => p.Status == PermitStatus.Submitted || p.Status == PermitStatus.UnderAdminReview)
                     .Select(p => new PermitListViewModel
                     {
                         Id = p.Id,
@@ -66,14 +71,40 @@ namespace PerizinanPeternakan.Controllers
                         DestinationLocation = p.DestinationLocation,
                         CanDownload = false,
                         CanView = true,
-                        CanApprove = true
+                        CanApprove = true,
+                        CurrentApprovalLevel = p.CurrentApprovalLevel
                     })
                     .OrderByDescending(p => p.SubmissionDate)
                     .ToListAsync();
             }
+            else if (userRole == "Verifikator")
+            {
+                // Verifikator melihat dokumen PDF yang sudah digenerate oleh admin (level 2)
+                permits = await _context.PermitApplications
+                    .Where(p => p.Status == PermitStatus.AdminApproved || p.Status == PermitStatus.UnderVerifikatorReview)
+                    .Select(p => new PermitListViewModel
+                    {
+                        Id = p.Id,
+                        ApplicationNumber = p.ApplicationNumber,
+                        CompanyName = p.CompanyName,
+                        ApplicantName = p.User.NamaLengkap,
+                        Status = p.Status,
+                        SubmissionDate = p.SubmissionDate,
+                        AdminApprovalDate = p.AdminApprovalDate,
+                        OriginLocation = p.OriginLocation,
+                        DestinationLocation = p.DestinationLocation,
+                        CanDownload = !string.IsNullOrEmpty(p.GeneratedDocumentPath), // Bisa download untuk verifikasi
+                        CanView = true,
+                        CanApprove = true,
+                        GeneratedDocumentPath = p.GeneratedDocumentPath,
+                        CurrentApprovalLevel = p.CurrentApprovalLevel
+                    })
+                    .OrderByDescending(p => p.AdminApprovalDate ?? p.SubmissionDate)
+                    .ToListAsync();
+            }
             else if (userRole == "KepalaDinas")
             {
-                // Kepala Dinas melihat permohonan yang sudah disetujui verifikator
+                // Kepala Dinas melihat dokumen yang sudah diverifikasi (level 3)
                 permits = await _context.PermitApplications
                     .Where(p => p.Status == PermitStatus.VerifikatorApproved || p.Status == PermitStatus.PendingKepalaDinas)
                     .Select(p => new PermitListViewModel
@@ -84,13 +115,17 @@ namespace PerizinanPeternakan.Controllers
                         ApplicantName = p.User.NamaLengkap,
                         Status = p.Status,
                         SubmissionDate = p.SubmissionDate,
+                        AdminApprovalDate = p.AdminApprovalDate,
+                        VerificationDate = p.VerificationDate,
                         OriginLocation = p.OriginLocation,
                         DestinationLocation = p.DestinationLocation,
-                        CanDownload = false,
+                        CanDownload = !string.IsNullOrEmpty(p.GeneratedDocumentPath),
                         CanView = true,
-                        CanApprove = true
+                        CanApprove = true,
+                        GeneratedDocumentPath = p.GeneratedDocumentPath,
+                        CurrentApprovalLevel = p.CurrentApprovalLevel
                     })
-                    .OrderByDescending(p => p.SubmissionDate)
+                    .OrderByDescending(p => p.VerificationDate ?? p.AdminApprovalDate ?? p.SubmissionDate)
                     .ToListAsync();
             }
 
@@ -204,6 +239,7 @@ namespace PerizinanPeternakan.Controllers
                 .Include(p => p.LivestockDetails)
                 .Include(p => p.ApprovalHistory)
                     .ThenInclude(h => h.User)
+                .Include(p => p.Admin)
                 .Include(p => p.Verifikator)
                 .Include(p => p.KepalaDinas)
                 .FirstOrDefaultAsync(p => p.Id == id);
@@ -361,13 +397,24 @@ namespace PerizinanPeternakan.Controllers
 
                 if (model.Action == "Approve")
                 {
-                    if (userRole == "Verifikator")
+                    if (userRole == "Admin")
+                    {
+                        toStatus = PermitStatus.AdminApproved;
+                        actionText = "Disetujui Admin";
+                        permit.AdminId = userId.Value;
+                        permit.AdminApprovalDate = DateTime.Now;
+                        permit.CurrentApprovalLevel = 2;
+
+                        // Generate PDF document setelah admin approve
+                        await GeneratePermitDocument(permit);
+                    }
+                    else if (userRole == "Verifikator")
                     {
                         toStatus = PermitStatus.VerifikatorApproved;
                         actionText = "Disetujui Verifikator";
                         permit.VerifikatorId = userId.Value;
                         permit.VerificationDate = DateTime.Now;
-                        permit.CurrentApprovalLevel = 2;
+                        permit.CurrentApprovalLevel = 3;
                     }
                     else // KepalaDinas
                     {
@@ -377,15 +424,17 @@ namespace PerizinanPeternakan.Controllers
                         permit.FinalApprovalDate = DateTime.Now;
                         permit.ValidFrom = DateTime.Now;
                         permit.ValidUntil = DateTime.Now.AddMonths(6); // Valid 6 bulan
-                        permit.CurrentApprovalLevel = 3;
-
-                        // Generate PDF document
-                        await GeneratePermitDocument(permit);
+                        permit.CurrentApprovalLevel = 4;
                     }
                 }
                 else // Reject
                 {
-                    if (userRole == "Verifikator")
+                    if (userRole == "Admin")
+                    {
+                        toStatus = PermitStatus.AdminRejected;
+                        actionText = "Ditolak Admin";
+                    }
+                    else if (userRole == "Verifikator")
                     {
                         toStatus = PermitStatus.VerifikatorRejected;
                         actionText = "Ditolak Verifikator";
@@ -427,6 +476,7 @@ namespace PerizinanPeternakan.Controllers
         }
 
         // GET: Permit/Download/5 - Download PDF
+        // GET: Permit/Download/5 - Download PDF
         public async Task<IActionResult> Download(int id)
         {
             var userId = GetCurrentUserId();
@@ -437,6 +487,9 @@ namespace PerizinanPeternakan.Controllers
             var permit = await _context.PermitApplications
                 .Include(p => p.User)
                 .Include(p => p.LivestockDetails)
+                .Include(p => p.Admin)
+                .Include(p => p.Verifikator)
+                .Include(p => p.KepalaDinas)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (permit == null)
@@ -452,24 +505,63 @@ namespace PerizinanPeternakan.Controllers
                 return RedirectToAction("Index");
             }
 
-            if (permit.Status != PermitStatus.FinalApproved || string.IsNullOrEmpty(permit.GeneratedDocumentPath))
+            // User hanya bisa download jika sudah final approved
+            // Admin/Verifikator/KepalaDinas bisa download setelah PDF generated
+            bool canDownload = false;
+            if (userRole == "User")
+            {
+                canDownload = permit.Status == PermitStatus.FinalApproved && !string.IsNullOrEmpty(permit.GeneratedDocumentPath);
+            }
+            else
+            {
+                canDownload = !string.IsNullOrEmpty(permit.GeneratedDocumentPath);
+            }
+
+            if (!canDownload)
             {
                 TempData["ErrorMessage"] = "Dokumen belum tersedia untuk didownload";
                 return RedirectToAction("Detail", new { id });
             }
 
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", permit.GeneratedDocumentPath.TrimStart('/'));
-
-            if (!System.IO.File.Exists(filePath))
+            try
             {
-                TempData["ErrorMessage"] = "File dokumen tidak ditemukan";
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", permit.GeneratedDocumentPath.TrimStart('/'));
+
+                if (!System.IO.File.Exists(filePath))
+                {
+                    // File tidak ada, regenerate
+                    TempData["ErrorMessage"] = "File dokumen tidak ditemukan. Regenerating...";
+                    await RegeneratePermitDocument(permit);
+                    return RedirectToAction("Detail", new { id });
+                }
+
+                var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+                var fileName = $"Izin_Pengeluaran_Ternak_{permit.ApplicationNumber.Replace("/", "_")}.html";
+
+                // Return as HTML file that can be opened in browser and printed as PDF
+                return File(fileBytes, "text/html", fileName);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Terjadi kesalahan saat mengunduh dokumen";
                 return RedirectToAction("Detail", new { id });
             }
+        }
 
-            var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
-            var fileName = $"Izin_Pengeluaran_Ternak_{permit.ApplicationNumber}.pdf";
-
-            return File(fileBytes, "application/pdf", fileName);
+        // Method to regenerate document if missing
+        // Method to regenerate document if missing
+        private async Task RegeneratePermitDocument(LivestockPermitApplication permit)
+        {
+            try
+            {
+                await GeneratePermitDocument(permit);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                // Log error
+                Console.WriteLine($"Error regenerating document: {ex.Message}");
+            }
         }
 
         #region Private Methods
@@ -496,7 +588,8 @@ namespace PerizinanPeternakan.Controllers
         {
             return userRole switch
             {
-                "Verifikator" => status == PermitStatus.Submitted || status == PermitStatus.UnderReview,
+                "Admin" => status == PermitStatus.Submitted || status == PermitStatus.UnderAdminReview,
+                "Verifikator" => status == PermitStatus.AdminApproved || status == PermitStatus.UnderVerifikatorReview,
                 "KepalaDinas" => status == PermitStatus.VerifikatorApproved || status == PermitStatus.PendingKepalaDinas,
                 _ => false
             };
@@ -525,7 +618,6 @@ namespace PerizinanPeternakan.Controllers
             catch (Exception ex)
             {
                 // Log error but don't fail the approval process
-                // Consider logging to a proper logging system
                 Console.WriteLine($"Error generating PDF: {ex.Message}");
             }
         }

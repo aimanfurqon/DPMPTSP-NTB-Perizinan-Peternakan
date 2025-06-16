@@ -31,7 +31,6 @@ namespace PerizinanPeternakan.Data
                 entity.Property(e => e.Alamat).HasMaxLength(500);
                 entity.Property(e => e.Role).HasMaxLength(20);
 
-                // Index untuk username dan email (harus unik)
                 entity.HasIndex(e => e.Username).IsUnique();
                 entity.HasIndex(e => e.Email).IsUnique();
             });
@@ -50,23 +49,30 @@ namespace PerizinanPeternakan.Data
                 entity.Property(e => e.RejectionReason).HasMaxLength(1000);
                 entity.Property(e => e.GeneratedDocumentPath).HasMaxLength(500);
 
-                // Relationships
+                // Relationships - SEMUA MENGGUNAKAN NoAction untuk menghindari cascade conflicts
                 entity.HasOne(d => d.User)
                       .WithMany()
                       .HasForeignKey(d => d.UserId)
-                      .OnDelete(DeleteBehavior.Restrict);
+                      .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasOne(d => d.Admin)
+                      .WithMany()
+                      .HasForeignKey(d => d.AdminId)
+                      .IsRequired(false)
+                      .OnDelete(DeleteBehavior.NoAction);
 
                 entity.HasOne(d => d.Verifikator)
                       .WithMany()
                       .HasForeignKey(d => d.VerifikatorId)
-                      .OnDelete(DeleteBehavior.SetNull);
+                      .IsRequired(false)
+                      .OnDelete(DeleteBehavior.NoAction);
 
                 entity.HasOne(d => d.KepalaDinas)
                       .WithMany()
                       .HasForeignKey(d => d.KepalaDinasId)
-                      .OnDelete(DeleteBehavior.SetNull);
+                      .IsRequired(false)
+                      .OnDelete(DeleteBehavior.NoAction);
 
-                // Index
                 entity.HasIndex(e => e.ApplicationNumber).IsUnique();
                 entity.HasIndex(e => e.Status);
                 entity.HasIndex(e => e.SubmissionDate);
@@ -100,7 +106,7 @@ namespace PerizinanPeternakan.Data
                 entity.HasOne(d => d.User)
                       .WithMany()
                       .HasForeignKey(d => d.UserId)
-                      .OnDelete(DeleteBehavior.Cascade);
+                      .OnDelete(DeleteBehavior.NoAction);
 
                 entity.HasIndex(e => e.ActionDate);
             });
@@ -122,18 +128,18 @@ namespace PerizinanPeternakan.Data
                 entity.HasOne(d => d.UploadedByUser)
                       .WithMany()
                       .HasForeignKey(d => d.UploadedByUserId)
-                      .OnDelete(DeleteBehavior.Restrict);
+                      .OnDelete(DeleteBehavior.NoAction);
             });
 
-            // Seed data default users
+            // Seed data with Admin role
             modelBuilder.Entity<User>().HasData(
-                // Kepala Dinas (Admin)
+                // Kepala Dinas
                 new User
                 {
                     Id = 1,
-                    Username = "admin",
-                    Email = "admin@dpmptsp-ntb.go.id",
-                    Password = BCrypt.Net.BCrypt.HashPassword("admin123"),
+                    Username = "kepaladinas",
+                    Email = "kepaladinas@dpmptsp-ntb.go.id",
+                    Password = BCrypt.Net.BCrypt.HashPassword("kepala123"),
                     NamaLengkap = "Hj. Eva Dewiyani, SP",
                     NoTelepon = "081234567890",
                     Alamat = "Kantor DPMPTSP NTB, Jl. Udayana No. 4 Mataram",
@@ -142,45 +148,75 @@ namespace PerizinanPeternakan.Data
                     IsActive = true
                 },
 
-                // Verifikator 1
+                // Admin 1 (menggantikan role verifikator lama)
                 new User
                 {
                     Id = 2,
+                    Username = "admin1",
+                    Email = "admin1@dpmptsp-ntb.go.id",
+                    Password = BCrypt.Net.BCrypt.HashPassword("admin123"),
+                    NamaLengkap = "Ahmad Admin, S.Pt",
+                    NoTelepon = "081234567891",
+                    Alamat = "Kantor DPMPTSP NTB, Jl. Udayana No. 4 Mataram",
+                    Role = "Admin",
+                    TanggalDaftar = new DateTime(2024, 1, 15),
+                    IsActive = true
+                },
+
+                // Admin 2 (backup)
+                new User
+                {
+                    Id = 3,
+                    Username = "admin2",
+                    Email = "admin2@dpmptsp-ntb.go.id",
+                    Password = BCrypt.Net.BCrypt.HashPassword("admin123"),
+                    NamaLengkap = "Siti Admin, S.Pt",
+                    NoTelepon = "081234567893",
+                    Alamat = "Kantor DPMPTSP NTB, Jl. Udayana No. 4 Mataram",
+                    Role = "Admin",
+                    TanggalDaftar = new DateTime(2024, 1, 20),
+                    IsActive = true
+                },
+
+                // Verifikator 1 (sekarang role baru)
+                new User
+                {
+                    Id = 4,
                     Username = "verifikator1",
                     Email = "verifikator1@dpmptsp-ntb.go.id",
                     Password = BCrypt.Net.BCrypt.HashPassword("verifikator123"),
-                    NamaLengkap = "Ahmad Verifikasi, S.Pt",
-                    NoTelepon = "081234567891",
+                    NamaLengkap = "Budi Verifikator, S.Pt, M.Si",
+                    NoTelepon = "081234567894",
                     Alamat = "Kantor DPMPTSP NTB, Jl. Udayana No. 4 Mataram",
                     Role = "Verifikator",
-                    TanggalDaftar = new DateTime(2024, 1, 15),
+                    TanggalDaftar = new DateTime(2024, 1, 25),
                     IsActive = true
                 },
 
                 // Verifikator 2 (backup)
                 new User
                 {
-                    Id = 3,
+                    Id = 5,
                     Username = "verifikator2",
                     Email = "verifikator2@dpmptsp-ntb.go.id",
                     Password = BCrypt.Net.BCrypt.HashPassword("verifikator123"),
-                    NamaLengkap = "Siti Verifikasi, S.Pt",
-                    NoTelepon = "081234567893",
+                    NamaLengkap = "Rina Verifikator, S.Pt",
+                    NoTelepon = "081234567895",
                     Alamat = "Kantor DPMPTSP NTB, Jl. Udayana No. 4 Mataram",
                     Role = "Verifikator",
-                    TanggalDaftar = new DateTime(2024, 1, 20),
+                    TanggalDaftar = new DateTime(2024, 1, 30),
                     IsActive = true
                 },
 
                 // User Demo 1
                 new User
                 {
-                    Id = 4,
+                    Id = 6,
                     Username = "user1",
                     Email = "user1@example.com",
                     Password = BCrypt.Net.BCrypt.HashPassword("user123"),
                     NamaLengkap = "Budi Peternak",
-                    NoTelepon = "081234567892",
+                    NoTelepon = "081234567896",
                     Alamat = "Desa Suka Maju, Kec. Praya, Lombok Tengah",
                     Role = "User",
                     TanggalDaftar = new DateTime(2024, 2, 1),
@@ -190,12 +226,12 @@ namespace PerizinanPeternakan.Data
                 // User Demo 2 (CV/Perusahaan)
                 new User
                 {
-                    Id = 5,
+                    Id = 7,
                     Username = "cvdena",
                     Email = "cvdena@example.com",
                     Password = BCrypt.Net.BCrypt.HashPassword("cvdena123"),
                     NamaLengkap = "CV. DENA BERSAUDARA",
-                    NoTelepon = "081234567894",
+                    NoTelepon = "081234567897",
                     Alamat = "Desa Dena, Kec. Madapangga, Kab. Bima",
                     Role = "User",
                     TanggalDaftar = new DateTime(2024, 3, 1),
@@ -205,12 +241,12 @@ namespace PerizinanPeternakan.Data
                 // User Demo 3
                 new User
                 {
-                    Id = 6,
+                    Id = 8,
                     Username = "sarimakmur",
                     Email = "sarimakmur@example.com",
                     Password = BCrypt.Net.BCrypt.HashPassword("sari123"),
                     NamaLengkap = "PT. Sari Makmur Ternak",
-                    NoTelepon = "081234567895",
+                    NoTelepon = "081234567898",
                     Alamat = "Jl. Peternakan No. 15, Mataram",
                     Role = "User",
                     TanggalDaftar = new DateTime(2024, 3, 15),

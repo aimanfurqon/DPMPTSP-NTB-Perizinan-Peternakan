@@ -48,14 +48,19 @@ namespace PerizinanPeternakan.Models
 
         public string? RejectionReason { get; set; }
 
+        // Admin approval (Level 1)
+        public int? AdminId { get; set; }
+        public virtual User? Admin { get; set; }
+        public DateTime? AdminApprovalDate { get; set; }
+
+        // Verifikator approval (Level 2)
         public int? VerifikatorId { get; set; }
         public virtual User? Verifikator { get; set; }
-
-        public int? KepalaDinasId { get; set; }
-        public virtual User? KepalaDinas { get; set; }
-
         public DateTime? VerificationDate { get; set; }
 
+        // Kepala Dinas approval (Level 3)
+        public int? KepalaDinasId { get; set; }
+        public virtual User? KepalaDinas { get; set; }
         public DateTime? FinalApprovalDate { get; set; }
 
         public string? GeneratedDocumentPath { get; set; }
@@ -101,7 +106,7 @@ namespace PerizinanPeternakan.Models
 
         [Required(ErrorMessage = "Aksi harus diisi")]
         [StringLength(50, ErrorMessage = "Aksi maksimal 50 karakter")]
-        public string Action { get; set; } = string.Empty; // "Submit", "Approve", "Reject", "Review"
+        public string Action { get; set; } = string.Empty;
 
         [StringLength(1000, ErrorMessage = "Komentar maksimal 1000 karakter")]
         public string? Comments { get; set; }
@@ -126,7 +131,7 @@ namespace PerizinanPeternakan.Models
 
         [Required(ErrorMessage = "Tipe dokumen harus diisi")]
         [StringLength(50, ErrorMessage = "Tipe dokumen maksimal 50 karakter")]
-        public string DocumentType { get; set; } = string.Empty; // "Application", "Supporting", "Generated"
+        public string DocumentType { get; set; } = string.Empty;
 
         public long FileSize { get; set; }
 
@@ -139,6 +144,7 @@ namespace PerizinanPeternakan.Models
         public virtual User UploadedByUser { get; set; }
     }
 
+    // Updated Status Enum with new flow
     public enum PermitStatus
     {
         [Display(Name = "Draft")]
@@ -147,29 +153,38 @@ namespace PerizinanPeternakan.Models
         [Display(Name = "Diajukan")]
         Submitted = 2,
 
+        [Display(Name = "Sedang Dicek Admin")]
+        UnderAdminReview = 3,
+
+        [Display(Name = "Disetujui Admin")]
+        AdminApproved = 4,
+
+        [Display(Name = "Ditolak Admin")]
+        AdminRejected = 5,
+
         [Display(Name = "Sedang Diverifikasi")]
-        UnderReview = 3,
+        UnderVerifikatorReview = 6,
 
         [Display(Name = "Disetujui Verifikator")]
-        VerifikatorApproved = 4,
+        VerifikatorApproved = 7,
 
         [Display(Name = "Ditolak Verifikator")]
-        VerifikatorRejected = 5,
+        VerifikatorRejected = 8,
 
         [Display(Name = "Menunggu Kepala Dinas")]
-        PendingKepalaDinas = 6,
+        PendingKepalaDinas = 9,
 
         [Display(Name = "Ditolak Kepala Dinas")]
-        KepalaDinasRejected = 7,
+        KepalaDinasRejected = 10,
 
         [Display(Name = "Disetujui")]
-        FinalApproved = 8,
+        FinalApproved = 11,
 
         [Display(Name = "Ditolak")]
-        FinalRejected = 9
+        FinalRejected = 12
     }
 
-    // Helper class untuk status display
+    // Updated Helper class
     public static class PermitStatusHelper
     {
         public static string GetStatusText(PermitStatus status)
@@ -178,7 +193,10 @@ namespace PerizinanPeternakan.Models
             {
                 PermitStatus.Draft => "Draft",
                 PermitStatus.Submitted => "Diajukan",
-                PermitStatus.UnderReview => "Sedang Diverifikasi",
+                PermitStatus.UnderAdminReview => "Sedang Dicek Admin",
+                PermitStatus.AdminApproved => "Disetujui Admin",
+                PermitStatus.AdminRejected => "Ditolak Admin",
+                PermitStatus.UnderVerifikatorReview => "Sedang Diverifikasi",
                 PermitStatus.VerifikatorApproved => "Disetujui Verifikator",
                 PermitStatus.VerifikatorRejected => "Ditolak Verifikator",
                 PermitStatus.PendingKepalaDinas => "Menunggu Kepala Dinas",
@@ -195,7 +213,10 @@ namespace PerizinanPeternakan.Models
             {
                 PermitStatus.Draft => "secondary",
                 PermitStatus.Submitted => "info",
-                PermitStatus.UnderReview => "warning",
+                PermitStatus.UnderAdminReview => "warning",
+                PermitStatus.AdminApproved => "primary",
+                PermitStatus.AdminRejected => "danger",
+                PermitStatus.UnderVerifikatorReview => "warning",
                 PermitStatus.VerifikatorApproved => "primary",
                 PermitStatus.VerifikatorRejected => "danger",
                 PermitStatus.PendingKepalaDinas => "warning",
@@ -203,6 +224,37 @@ namespace PerizinanPeternakan.Models
                 PermitStatus.FinalApproved => "success",
                 PermitStatus.FinalRejected => "danger",
                 _ => "secondary"
+            };
+        }
+
+        public static string GetNextApprovalRole(PermitStatus status)
+        {
+            return status switch
+            {
+                PermitStatus.Submitted => "Admin",
+                PermitStatus.AdminApproved => "Verifikator",
+                PermitStatus.VerifikatorApproved => "KepalaDinas",
+                _ => ""
+            };
+        }
+
+        public static int GetApprovalLevel(PermitStatus status)
+        {
+            return status switch
+            {
+                PermitStatus.Draft => 0,
+                PermitStatus.Submitted => 1,
+                PermitStatus.UnderAdminReview => 1,
+                PermitStatus.AdminApproved => 2,
+                PermitStatus.AdminRejected => 1,
+                PermitStatus.UnderVerifikatorReview => 2,
+                PermitStatus.VerifikatorApproved => 3,
+                PermitStatus.VerifikatorRejected => 2,
+                PermitStatus.PendingKepalaDinas => 3,
+                PermitStatus.KepalaDinasRejected => 3,
+                PermitStatus.FinalApproved => 4,
+                PermitStatus.FinalRejected => 4,
+                _ => 0
             };
         }
     }

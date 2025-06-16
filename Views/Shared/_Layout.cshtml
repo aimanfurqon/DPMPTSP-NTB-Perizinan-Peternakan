@@ -46,14 +46,28 @@
                             </li>
                         }
                         
+                        @if (Context.Session.GetString("Role") == "Admin")
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-clipboard-check"></i> Administrasi
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="@Url.Action("Index", "Permit")"><i class="fas fa-tasks"></i> Perlu Review Data</a></li>
+                                    <li><a class="dropdown-item" href="@Url.Action("AdminHistory", "Permit")"><i class="fas fa-history"></i> Riwayat Review</a></li>
+                                </ul>
+                            </li>
+                        }
+                        
                         @if (Context.Session.GetString("Role") == "Verifikator")
                         {
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-check-circle"></i> Verifikasi
+                                    <i class="fas fa-file-signature"></i> Verifikasi
                                 </a>
                                 <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="@Url.Action("Index", "Permit")"><i class="fas fa-clipboard-check"></i> Perlu Verifikasi</a></li>
+                                    <li><a class="dropdown-item" href="@Url.Action("Index", "Permit")"><i class="fas fa-clipboard-check"></i> Verifikasi Dokumen</a></li>
+                                    <li><a class="dropdown-item" href="@Url.Action("VerifikatorHistory", "Permit")"><i class="fas fa-history"></i> Riwayat Verifikasi</a></li>
                                 </ul>
                             </li>
                         }
@@ -66,15 +80,17 @@
                                 </a>
                                 <ul class="dropdown-menu">
                                     <li><a class="dropdown-item" href="@Url.Action("Index", "Permit")"><i class="fas fa-gavel"></i> Perlu Persetujuan</a></li>
+                                    <li><a class="dropdown-item" href="@Url.Action("KepalaDinasHistory", "Permit")"><i class="fas fa-history"></i> Riwayat Persetujuan</a></li>
                                 </ul>
                             </li>
                             
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-cogs"></i> Admin
+                                    <i class="fas fa-cogs"></i> Manajemen
                                 </a>
                                 <ul class="dropdown-menu">
                                     <li><a class="dropdown-item" href="#"><i class="fas fa-chart-bar"></i> Laporan</a></li>
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-users"></i> Kelola Pengguna</a></li>
                                     <li><a class="dropdown-item" href="#"><i class="fas fa-settings"></i> Pengaturan</a></li>
                                 </ul>
                             </li>
