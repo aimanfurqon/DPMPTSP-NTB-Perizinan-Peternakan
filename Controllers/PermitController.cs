@@ -93,7 +93,7 @@ namespace PerizinanPeternakan.Controllers
                         AdminApprovalDate = p.AdminApprovalDate,
                         OriginLocation = p.OriginLocation,
                         DestinationLocation = p.DestinationLocation,
-                        CanDownload = !string.IsNullOrEmpty(p.GeneratedDocumentPath), // Bisa download untuk verifikasi
+                        CanDownload = false, // Verifikator tidak download, tapi view
                         CanView = true,
                         CanApprove = true,
                         GeneratedDocumentPath = p.GeneratedDocumentPath,
@@ -119,7 +119,7 @@ namespace PerizinanPeternakan.Controllers
                         VerificationDate = p.VerificationDate,
                         OriginLocation = p.OriginLocation,
                         DestinationLocation = p.DestinationLocation,
-                        CanDownload = !string.IsNullOrEmpty(p.GeneratedDocumentPath),
+                        CanDownload = false, // Kepala Dinas tidak download, tapi view
                         CanView = true,
                         CanApprove = true,
                         GeneratedDocumentPath = p.GeneratedDocumentPath,
@@ -299,6 +299,180 @@ namespace PerizinanPeternakan.Controllers
             return View(model);
         }
 
+        // Tambahkan method ini ke PermitController.cs Anda (setelah method Download)
+
+        [HttpGet]
+        public async Task<IActionResult> ViewDocument(int id)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return RedirectToAction("Login", "Auth");
+
+            var userRole = HttpContext.Session.GetString("Role");
+
+            var permit = await _context.PermitApplications
+                .Include(p => p.User)
+                .Include(p => p.LivestockDetails)
+                .Include(p => p.Admin)
+                .Include(p => p.Verifikator)
+                .Include(p => p.KepalaDinas)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (permit == null)
+            {
+                return NotFound();
+            }
+
+            // Check permission to view document
+            bool canView = false;
+            switch (userRole)
+            {
+                case "Admin":
+                    canView = permit.Status >= PermitStatus.AdminApproved;
+                    break;
+                case "Verifikator":
+                    canView = permit.Status >= PermitStatus.AdminApproved;
+                    break;
+                case "KepalaDinas":
+                    canView = permit.Status >= PermitStatus.VerifikatorApproved;
+                    break;
+                case "User":
+                    canView = permit.UserId == userId.Value;
+                    break;
+            }
+
+            if (!canView)
+            {
+                return Forbid();
+            }
+
+            // Generate fresh PDF content if needed or document doesn't exist
+            if (string.IsNullOrEmpty(permit.GeneratedDocumentPath))
+            {
+                await GeneratePermitDocument(permit);
+                await _context.SaveChangesAsync();
+            }
+
+            // Create view model for document viewer
+            var viewModel = new PermitDocumentViewModel
+            {
+                PermitId = permit.Id,
+                ApplicationNumber = permit.ApplicationNumber,
+                CompanyName = permit.CompanyName,
+                Status = permit.Status,
+                DocumentContent = await GetDocumentContent(permit),
+                CanApprove = CanUserApprove(userRole, permit.Status),
+                UserRole = userRole
+            };
+
+            return View(viewModel);
+        }
+
+        // Method untuk mendapatkan konten dokumen sebagai HTML
+        private async Task<string> GetDocumentContent(LivestockPermitApplication permit)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(permit.GeneratedDocumentPath))
+                {
+                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", permit.GeneratedDocumentPath.TrimStart('/'));
+
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        var content = await System.IO.File.ReadAllTextAsync(filePath);
+                        return content;
+                    }
+                }
+
+                // Generate fresh content if file doesn't exist
+                var htmlBytes = await _pdfGenerator.GeneratePermitPdf(permit);
+                return System.Text.Encoding.UTF8.GetString(htmlBytes);
+            }
+            catch (Exception)
+            {
+                return "<div class='alert alert-danger'><i class='fas fa-exclamation-triangle'></i> Gagal memuat konten dokumen.</div>";
+            }
+        }
+
+        // Method untuk API endpoint yang mengembalikan file binary (untuk modal/iframe)
+        [HttpGet]
+        public async Task<IActionResult> GetDocumentFile(int id)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return Unauthorized();
+
+            var userRole = HttpContext.Session.GetString("Role");
+
+            var permit = await _context.PermitApplications
+                .Include(p => p.User)
+                .Include(p => p.LivestockDetails)
+                .Include(p => p.Admin)
+                .Include(p => p.Verifikator)
+                .Include(p => p.KepalaDinas)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (permit == null)
+            {
+                return NotFound();
+            }
+
+            // Check permission
+            bool canView = false;
+            switch (userRole)
+            {
+                case "Admin":
+                    canView = permit.Status >= PermitStatus.AdminApproved;
+                    break;
+                case "Verifikator":
+                    canView = permit.Status >= PermitStatus.AdminApproved;
+                    break;
+                case "KepalaDinas":
+                    canView = permit.Status >= PermitStatus.VerifikatorApproved;
+                    break;
+                case "User":
+                    canView = permit.UserId == userId.Value;
+                    break;
+            }
+
+            if (!canView)
+            {
+                return Forbid();
+            }
+
+            try
+            {
+                // Generate document if doesn't exist
+                if (string.IsNullOrEmpty(permit.GeneratedDocumentPath))
+                {
+                    await GeneratePermitDocument(permit);
+                    await _context.SaveChangesAsync();
+                }
+
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", permit.GeneratedDocumentPath.TrimStart('/'));
+
+                if (!System.IO.File.Exists(filePath))
+                {
+                    // Regenerate if missing
+                    await GeneratePermitDocument(permit);
+                    await _context.SaveChangesAsync();
+                    filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", permit.GeneratedDocumentPath.TrimStart('/'));
+                }
+
+                if (System.IO.File.Exists(filePath))
+                {
+                    var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+                    return File(fileBytes, "text/html");
+                }
+                else
+                {
+                    return NotFound();
+                }
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Error loading document");
+            }
+        }
+
         // GET: Permit/Approve/5 - Form approval
         [HttpGet]
         public async Task<IActionResult> Approve(int id)
@@ -475,8 +649,7 @@ namespace PerizinanPeternakan.Controllers
             }
         }
 
-        // GET: Permit/Download/5 - Download PDF
-        // GET: Permit/Download/5 - Download PDF
+        // GET: Permit/Download/5 - Download PDF (hanya untuk User dengan status FinalApproved)
         public async Task<IActionResult> Download(int id)
         {
             var userId = GetCurrentUserId();
@@ -498,28 +671,23 @@ namespace PerizinanPeternakan.Controllers
                 return RedirectToAction("Index");
             }
 
-            // Check access rights
-            if (userRole == "User" && permit.UserId != userId.Value)
+            // Check access rights - hanya User yang bisa download
+            if (userRole != "User")
+            {
+                TempData["ErrorMessage"] = "Download hanya tersedia untuk pemohon";
+                return RedirectToAction("Detail", new { id });
+            }
+
+            if (permit.UserId != userId.Value)
             {
                 TempData["ErrorMessage"] = "Anda tidak memiliki akses ke dokumen ini";
                 return RedirectToAction("Index");
             }
 
             // User hanya bisa download jika sudah final approved
-            // Admin/Verifikator/KepalaDinas bisa download setelah PDF generated
-            bool canDownload = false;
-            if (userRole == "User")
+            if (permit.Status != PermitStatus.FinalApproved || string.IsNullOrEmpty(permit.GeneratedDocumentPath))
             {
-                canDownload = permit.Status == PermitStatus.FinalApproved && !string.IsNullOrEmpty(permit.GeneratedDocumentPath);
-            }
-            else
-            {
-                canDownload = !string.IsNullOrEmpty(permit.GeneratedDocumentPath);
-            }
-
-            if (!canDownload)
-            {
-                TempData["ErrorMessage"] = "Dokumen belum tersedia untuk didownload";
+                TempData["ErrorMessage"] = "Dokumen belum tersedia untuk didownload. Menunggu persetujuan akhir.";
                 return RedirectToAction("Detail", new { id });
             }
 
@@ -530,7 +698,7 @@ namespace PerizinanPeternakan.Controllers
                 if (!System.IO.File.Exists(filePath))
                 {
                     // File tidak ada, regenerate
-                    TempData["ErrorMessage"] = "File dokumen tidak ditemukan. Regenerating...";
+                    TempData["ErrorMessage"] = "File dokumen tidak ditemukan. Sedang memproses ulang...";
                     await RegeneratePermitDocument(permit);
                     return RedirectToAction("Detail", new { id });
                 }
@@ -545,22 +713,6 @@ namespace PerizinanPeternakan.Controllers
             {
                 TempData["ErrorMessage"] = "Terjadi kesalahan saat mengunduh dokumen";
                 return RedirectToAction("Detail", new { id });
-            }
-        }
-
-        // Method to regenerate document if missing
-        // Method to regenerate document if missing
-        private async Task RegeneratePermitDocument(LivestockPermitApplication permit)
-        {
-            try
-            {
-                await GeneratePermitDocument(permit);
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                // Log error
-                Console.WriteLine($"Error regenerating document: {ex.Message}");
             }
         }
 
@@ -599,7 +751,7 @@ namespace PerizinanPeternakan.Controllers
         {
             try
             {
-                var pdfBytes = await _pdfGenerator.GeneratePermitPdf(permit);
+                var htmlBytes = await _pdfGenerator.GeneratePermitPdf(permit);
 
                 var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "documents", "permits");
                 if (!Directory.Exists(uploadsPath))
@@ -607,10 +759,10 @@ namespace PerizinanPeternakan.Controllers
                     Directory.CreateDirectory(uploadsPath);
                 }
 
-                var fileName = $"permit_{permit.ApplicationNumber.Replace("/", "_")}_{DateTime.Now:yyyyMMddHHmmss}.pdf";
+                var fileName = $"permit_{permit.ApplicationNumber.Replace("/", "_")}_{DateTime.Now:yyyyMMddHHmmss}.html";
                 var filePath = Path.Combine(uploadsPath, fileName);
 
-                await System.IO.File.WriteAllBytesAsync(filePath, pdfBytes);
+                await System.IO.File.WriteAllBytesAsync(filePath, htmlBytes);
 
                 // Update permit with document path
                 permit.GeneratedDocumentPath = $"/documents/permits/{fileName}";
@@ -618,7 +770,25 @@ namespace PerizinanPeternakan.Controllers
             catch (Exception ex)
             {
                 // Log error but don't fail the approval process
-                Console.WriteLine($"Error generating PDF: {ex.Message}");
+                Console.WriteLine($"Error generating document: {ex.Message}");
+
+                // Set a placeholder path to indicate document generation was attempted
+                permit.GeneratedDocumentPath = $"/documents/permits/error_{permit.Id}_{DateTime.Now:yyyyMMddHHmmss}.html";
+            }
+        }
+
+        // Method to regenerate document if missing
+        private async Task RegeneratePermitDocument(LivestockPermitApplication permit)
+        {
+            try
+            {
+                await GeneratePermitDocument(permit);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                // Log error
+                Console.WriteLine($"Error regenerating document: {ex.Message}");
             }
         }
 

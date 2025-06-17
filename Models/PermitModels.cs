@@ -227,33 +227,124 @@ namespace PerizinanPeternakan.Models
             };
         }
 
-        public static string GetNextApprovalRole(PermitStatus status)
+        public static string GetStatusIcon(PermitStatus status)
+        {
+            return status switch
+            {
+                PermitStatus.Draft => "fas fa-edit",
+                PermitStatus.Submitted => "fas fa-paper-plane",
+                PermitStatus.UnderAdminReview => "fas fa-clock",
+                PermitStatus.AdminApproved => "fas fa-check",
+                PermitStatus.AdminRejected => "fas fa-times",
+                PermitStatus.UnderVerifikatorReview => "fas fa-search",
+                PermitStatus.VerifikatorApproved => "fas fa-check-circle",
+                PermitStatus.VerifikatorRejected => "fas fa-times-circle",
+                PermitStatus.PendingKepalaDinas => "fas fa-user-tie",
+                PermitStatus.KepalaDinasRejected => "fas fa-ban",
+                PermitStatus.FinalApproved => "fas fa-stamp",
+                PermitStatus.FinalRejected => "fas fa-times-circle",
+                _ => "fas fa-question-circle"
+            };
+        }
+
+        public static string GetNextStepText(PermitStatus status)
+        {
+            return status switch
+            {
+                PermitStatus.Draft => "Siap untuk diajukan",
+                PermitStatus.Submitted => "Menunggu review dari Admin",
+                PermitStatus.UnderAdminReview => "Sedang dalam review Admin",
+                PermitStatus.AdminApproved => "Menunggu verifikasi dari Verifikator",
+                PermitStatus.AdminRejected => "Permohonan ditolak oleh Admin",
+                PermitStatus.UnderVerifikatorReview => "Sedang dalam verifikasi",
+                PermitStatus.VerifikatorApproved => "Menunggu persetujuan dari Kepala Dinas",
+                PermitStatus.VerifikatorRejected => "Permohonan ditolak oleh Verifikator",
+                PermitStatus.PendingKepalaDinas => "Menunggu keputusan Kepala Dinas",
+                PermitStatus.KepalaDinasRejected => "Permohonan ditolak oleh Kepala Dinas",
+                PermitStatus.FinalApproved => "Izin telah diterbitkan",
+                PermitStatus.FinalRejected => "Permohonan ditolak final",
+                _ => "Status tidak diketahui"
+            };
+        }
+
+        public static bool CanDownload(PermitStatus status, string userRole)
+        {
+            if (userRole == "User")
+            {
+                return status == PermitStatus.FinalApproved;
+            }
+
+            // Admin, Verifikator, KepalaDinas bisa download jika sudah ada dokumen
+            return status >= PermitStatus.AdminApproved;
+        }
+
+        public static bool CanView(PermitStatus status, string userRole)
+        {
+            return userRole switch
+            {
+                "User" => true, // User bisa lihat semua permohonannya
+                "Admin" => status >= PermitStatus.Submitted,
+                "Verifikator" => status >= PermitStatus.AdminApproved,
+                "KepalaDinas" => status >= PermitStatus.VerifikatorApproved,
+                _ => false
+            };
+        }
+
+        public static bool CanApprove(PermitStatus status, string userRole)
+        {
+            return userRole switch
+            {
+                "Admin" => status == PermitStatus.Submitted || status == PermitStatus.UnderAdminReview,
+                "Verifikator" => status == PermitStatus.AdminApproved || status == PermitStatus.UnderVerifikatorReview,
+                "KepalaDinas" => status == PermitStatus.VerifikatorApproved || status == PermitStatus.PendingKepalaDinas,
+                _ => false
+            };
+        }
+
+        public static PermitStatus GetNextApprovalStatus(PermitStatus currentStatus)
+        {
+            return currentStatus switch
+            {
+                PermitStatus.Submitted => PermitStatus.AdminApproved,
+                PermitStatus.UnderAdminReview => PermitStatus.AdminApproved,
+                PermitStatus.AdminApproved => PermitStatus.VerifikatorApproved,
+                PermitStatus.UnderVerifikatorReview => PermitStatus.VerifikatorApproved,
+                PermitStatus.VerifikatorApproved => PermitStatus.FinalApproved,
+                PermitStatus.PendingKepalaDinas => PermitStatus.FinalApproved,
+                _ => currentStatus
+            };
+        }
+
+        public static string GetApproverRoleForStatus(PermitStatus status)
         {
             return status switch
             {
                 PermitStatus.Submitted => "Admin",
+                PermitStatus.UnderAdminReview => "Admin",
                 PermitStatus.AdminApproved => "Verifikator",
+                PermitStatus.UnderVerifikatorReview => "Verifikator",
                 PermitStatus.VerifikatorApproved => "KepalaDinas",
+                PermitStatus.PendingKepalaDinas => "KepalaDinas",
                 _ => ""
             };
         }
 
-        public static int GetApprovalLevel(PermitStatus status)
+        public static int GetProgressPercentage(PermitStatus status)
         {
             return status switch
             {
                 PermitStatus.Draft => 0,
-                PermitStatus.Submitted => 1,
-                PermitStatus.UnderAdminReview => 1,
-                PermitStatus.AdminApproved => 2,
-                PermitStatus.AdminRejected => 1,
-                PermitStatus.UnderVerifikatorReview => 2,
-                PermitStatus.VerifikatorApproved => 3,
-                PermitStatus.VerifikatorRejected => 2,
-                PermitStatus.PendingKepalaDinas => 3,
-                PermitStatus.KepalaDinasRejected => 3,
-                PermitStatus.FinalApproved => 4,
-                PermitStatus.FinalRejected => 4,
+                PermitStatus.Submitted => 25,
+                PermitStatus.UnderAdminReview => 25,
+                PermitStatus.AdminApproved => 50,
+                PermitStatus.UnderVerifikatorReview => 50,
+                PermitStatus.VerifikatorApproved => 75,
+                PermitStatus.PendingKepalaDinas => 75,
+                PermitStatus.FinalApproved => 100,
+                PermitStatus.AdminRejected => 0,
+                PermitStatus.VerifikatorRejected => 0,
+                PermitStatus.KepalaDinasRejected => 0,
+                PermitStatus.FinalRejected => 0,
                 _ => 0
             };
         }

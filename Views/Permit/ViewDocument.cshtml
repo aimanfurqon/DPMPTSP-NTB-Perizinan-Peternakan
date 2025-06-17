@@ -1,0 +1,349 @@
+﻿@model PerizinanPeternakan.ViewModels.PermitDocumentViewModel
+@{
+    ViewData["Title"] = "Lihat Dokumen";
+    var userRole = Context.Session.GetString("Role");
+}
+
+<div class="document-viewer-container">
+    <div class="viewer-header">
+        <div class="header-content">
+            <h1 class="viewer-title">
+                <i class="fas fa-file-alt"></i>
+                Dokumen Permohonan
+            </h1>
+            <div class="document-info">
+                <span class="app-number">@Model.ApplicationNumber</span>
+                <span class="company-name">@Model.CompanyName</span>
+                <span class="status-badge badge-@PermitStatusHelper.GetStatusClass(Model.Status)">
+                    @PermitStatusHelper.GetStatusText(Model.Status)
+                </span>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <a href="@Url.Action("Detail", "Permit", new { id = Model.PermitId })" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Kembali ke Detail
+            </a>
+
+            @if (Model.CanApprove)
+            {
+                <a href="@Url.Action("Approve", "Permit", new { id = Model.PermitId })" class="btn btn-primary">
+                    <i class="fas fa-gavel"></i>
+                    Proses Permohonan
+                </a>
+            }
+
+            <button onclick="window.print()" class="btn btn-success">
+                <i class="fas fa-print"></i>
+                Print
+            </button>
+        </div>
+    </div>
+
+    <div class="document-content-wrapper">
+        <div class="document-frame">
+            @Html.Raw(Model.DocumentContent)
+        </div>
+    </div>
+
+    @if (Model.CanApprove)
+    {
+        <div class="quick-actions">
+            <div class="action-info">
+                <i class="fas fa-info-circle"></i>
+                <span>
+                    @if (userRole == "Verifikator")
+                    {
+                        <text>Silakan periksa dokumen di atas dan lakukan verifikasi</text>
+                    }
+                    else if (userRole == "KepalaDinas")
+                    {
+                        <text>Silakan tinjau dokumen yang telah diverifikasi untuk persetujuan akhir</text>
+                    }
+                </span>
+            </div>
+
+            <div class="action-buttons">
+                <a href="@Url.Action("Approve", "Permit", new { id = Model.PermitId })" class="btn btn-success btn-lg">
+                    <i class="fas fa-check"></i>
+                    @if (userRole == "Verifikator")
+                    {
+                        <text>Lanjut ke Verifikasi</text>
+                    }
+                    else
+                    {
+                        <text>Lanjut ke Persetujuan</text>
+                    }
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .document-viewer-container {
+        padding: 20px;
+        background: #f8f9fa;
+        min-height: 100vh;
+    }
+
+    .viewer-header {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    .header-content {
+        flex: 1;
+    }
+
+    .viewer-title {
+        color: #333;
+        margin-bottom: 15px;
+        font-size: 24px;
+        font-weight: 600;
+    }
+
+        .viewer-title i {
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+    .document-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .app-number {
+        font-weight: 600;
+        color: #667eea;
+        font-size: 16px;
+    }
+
+    .company-name {
+        color: #333;
+        font-weight: 500;
+    }
+
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .badge-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .badge-info {
+        background: #17a2b8;
+        color: white;
+    }
+
+    .badge-warning {
+        background: #ffc107;
+        color: #212529;
+    }
+
+    .badge-primary {
+        background: #007bff;
+        color: white;
+    }
+
+    .badge-danger {
+        background: #dc3545;
+        color: white;
+    }
+
+    .badge-success {
+        background: #28a745;
+        color: white;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 10px;
+        margin-left: 20px;
+        flex-wrap: wrap;
+    }
+
+        .header-actions .btn {
+            padding: 10px 20px;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+            .header-actions .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            }
+
+    .document-content-wrapper {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        margin-bottom: 25px;
+    }
+
+    .document-frame {
+        max-height: calc(100vh - 300px);
+        overflow-y: auto;
+        padding: 40px;
+        border: 1px solid #e9ecef;
+    }
+
+    .quick-actions {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .action-info {
+        display: flex;
+        align-items: center;
+        color: #666;
+        font-size: 14px;
+    }
+
+        .action-info i {
+            margin-right: 10px;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+    .action-buttons .btn {
+        padding: 12px 30px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s;
+    }
+
+        .action-buttons .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+    /* Print styles */
+    @@media print {
+        .viewer-header, .quick-actions, .header-actions
+
+    {
+        display: none !important;
+    }
+
+    .document-viewer-container {
+        padding: 0;
+        background: white;
+    }
+
+    .document-content-wrapper {
+        box-shadow: none;
+        border-radius: 0;
+    }
+
+    .document-frame {
+        max-height: none;
+        overflow: visible;
+        padding: 20px;
+    }
+
+    /* Hide any no-print elements from the PDF content */
+    .no-print {
+        display: none !important;
+    }
+
+    }
+
+    /* Responsive design */
+    @@media (max-width: 768px) {
+        .document-viewer-container
+
+    {
+        padding: 15px;
+    }
+
+    .viewer-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .header-actions {
+        margin-left: 0;
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+        .header-actions .btn {
+            flex: 1;
+            text-align: center;
+        }
+
+    .document-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .quick-actions {
+        flex-direction: column;
+        gap: 20px;
+        align-items: flex-start;
+    }
+
+    .action-buttons {
+        width: 100%;
+    }
+
+        .action-buttons .btn {
+            width: 100%;
+        }
+
+    .viewer-title {
+        font-size: 20px;
+    }
+
+    .document-frame {
+        padding: 20px;
+        max-height: calc(100vh - 400px);
+    }
+
+    }
+
+    /* Scroll styling */
+    .document-frame::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .document-frame::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    .document-frame::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+    }
+
+        .document-frame::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+</style>

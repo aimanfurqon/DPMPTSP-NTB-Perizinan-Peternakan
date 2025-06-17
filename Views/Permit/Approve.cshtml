@@ -2,7 +2,7 @@
 @{
     ViewData["Title"] = "Proses Permohonan";
     var userRole = Context.Session.GetString("Role");
-    var actionTitle = userRole == "Verifikator" ? "Verifikasi" : "Persetujuan Kepala Dinas";
+    var actionTitle = userRole == "Verifikator" ? "Verifikasi" : userRole == "Admin" ? "Review Data" : "Persetujuan Kepala Dinas";
 }
 
 <div class="approval-container">
@@ -20,6 +20,14 @@
                 <i class="fas fa-arrow-left"></i>
                 Kembali
             </a>
+
+            @if (userRole == "Verifikator" || userRole == "KepalaDinas")
+            {
+                <a href="@Url.Action("ViewDocument", "Permit", new { id = Model.Id })" class="btn btn-info">
+                    <i class="fas fa-eye"></i>
+                    Lihat Dokumen
+                </a>
+            }
         </div>
     </div>
 
@@ -155,7 +163,11 @@
                               placeholder="Berikan komentar atau catatan untuk permohonan ini..."></textarea>
                     <span asp-validation-for="Comments" class="text-danger"></span>
                     <small class="form-text text-muted">
-                        @if (userRole == "Verifikator")
+                        @if (userRole == "Admin")
+                        {
+                            <text>Berikan catatan hasil review data dan persyaratan administratif</text>
+                        }
+                        else if (userRole == "Verifikator")
                         {
                             <text>Berikan catatan hasil verifikasi dokumen dan persyaratan teknis</text>
                         }
@@ -170,7 +182,11 @@
                     <div class="button-group">
                         <button type="button" class="btn btn-success btn-lg" onclick="submitApproval('Approve')" id="approveBtn">
                             <i class="fas fa-check"></i>
-                            @if (userRole == "Verifikator")
+                            @if (userRole == "Admin")
+                            {
+                                <text>Setujui Review</text>
+                            }
+                            else if (userRole == "Verifikator")
                             {
                                 <text>Setujui Verifikasi</text>
                             }
@@ -187,7 +203,14 @@
                     </div>
 
                     <div class="action-info">
-                        @if (userRole == "Verifikator")
+                        @if (userRole == "Admin")
+                        {
+                            <div class="info-item approve-info">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Dengan menyetujui, dokumen PDF akan digenerate dan permohonan diteruskan ke Verifikator</span>
+                            </div>
+                        }
+                        else if (userRole == "Verifikator")
                         {
                             <div class="info-item approve-info">
                                 <i class="fas fa-info-circle"></i>
@@ -198,7 +221,7 @@
                         {
                             <div class="info-item approve-info">
                                 <i class="fas fa-info-circle"></i>
-                                <span>Dengan menyetujui, dokumen izin akan otomatis dibuat dan dapat diunduh oleh pemohon</span>
+                                <span>Dengan menyetujui, dokumen izin akan final dan dapat diunduh oleh pemohon</span>
                             </div>
                         }
 
@@ -367,6 +390,8 @@
 
     .header-actions {
         margin-left: 20px;
+        display: flex;
+        gap: 10px;
     }
 
     .approval-content {

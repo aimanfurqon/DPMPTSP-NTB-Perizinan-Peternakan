@@ -17,6 +17,10 @@
                 {
                     <text>Permohonan Perlu Verifikasi</text>
                 }
+                else if (userRole == "Admin")
+                {
+                    <text>Permohonan Perlu Review</text>
+                }
                 else
                 {
                     <text>Permohonan Perlu Persetujuan</text>
@@ -75,6 +79,22 @@
                                 <span class="detail-label">Diajukan:</span>
                                 <span class="detail-value">@permit.SubmissionDate.ToString("dd/MM/yyyy")</span>
                             </div>
+                            @if (permit.AdminApprovalDate.HasValue && userRole != "User")
+                            {
+                                <div class="detail-item">
+                                    <i class="fas fa-check-circle text-primary"></i>
+                                    <span class="detail-label">Admin:</span>
+                                    <span class="detail-value">@permit.AdminApprovalDate.Value.ToString("dd/MM/yyyy")</span>
+                                </div>
+                            }
+                            @if (permit.VerificationDate.HasValue && userRole == "KepalaDinas")
+                            {
+                                <div class="detail-item">
+                                    <i class="fas fa-clipboard-check text-info"></i>
+                                    <span class="detail-label">Verifikasi:</span>
+                                    <span class="detail-value">@permit.VerificationDate.Value.ToString("dd/MM/yyyy")</span>
+                                </div>
+                            }
                         </div>
                     </div>
 
@@ -93,11 +113,33 @@
                                 </a>
                             }
 
-                            @if (permit.CanDownload)
+                            @* Untuk User - hanya bisa download jika sudah approved *@
+                            @if (permit.CanDownload && userRole == "User")
                             {
                                 <a asp-action="Download" asp-route-id="@permit.Id" class="btn btn-success btn-sm">
                                     <i class="fas fa-download"></i>
                                     Download
+                                </a>
+                            }
+
+                            @* Untuk Verifikator dan KepalaDinas - lihat dokumen tanpa download *@
+                            @if (!string.IsNullOrEmpty(permit.GeneratedDocumentPath) &&
+                                                (userRole == "Verifikator" || userRole == "KepalaDinas" || userRole == "Admin"))
+                            {
+                                <button type="button" class="btn btn-info btn-sm"
+                                        onclick="viewDocumentModal('@permit.Id', '@permit.ApplicationNumber')">
+                                    <i class="fas fa-file-pdf"></i>
+                                    Lihat Dokumen
+                                </button>
+                            }
+
+                            @* Link ke halaman view document untuk semua yang berhak *@
+                            @if (!string.IsNullOrEmpty(permit.GeneratedDocumentPath) &&
+                                                (userRole == "Verifikator" || userRole == "KepalaDinas"))
+                            {
+                                <a asp-action="ViewDocument" asp-route-id="@permit.Id" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-external-link-alt"></i>
+                                    Buka Dokumen
                                 </a>
                             }
                         </div>
@@ -105,16 +147,6 @@
                 </div>
             }
         </div>
-
-        @if (Model.Count == 10)
-        {
-            <div class="text-center mt-4">
-                <button class="btn btn-outline-primary" onclick="loadMore()">
-                    <i class="fas fa-chevron-down"></i>
-                    Muat Lebih Banyak
-                </button>
-            </div>
-        }
     }
     else
     {
@@ -122,41 +154,217 @@
             <div class="empty-icon">
                 <i class="fas fa-inbox"></i>
             </div>
-            <h3>
-                @if (userRole == "User")
-                {
-                    <text>Belum Ada Permohonan</text>
-                }
-                else
-                {
-                    <text>Tidak Ada Permohonan untuk Diproses</text>
-                }
-            </h3>
-            <p>
+            <h3>Tidak Ada Permohonan</h3>
+            <p class="empty-description">
                 @if (userRole == "User")
                 {
                     <text>Anda belum memiliki permohonan izin. Buat permohonan baru untuk memulai.</text>
                 }
                 else
                 {
-                    <text>Saat ini tidak ada permohonan yang perlu diproses.</text>
+                    <text>Tidak ada permohonan yang perlu diproses saat ini.</text>
                 }
             </p>
-
             @if (userRole == "User")
             {
-                <a asp-action="Create" class="btn btn-primary mt-3">
+                <a asp-action="Create" class="btn btn-primary">
                     <i class="fas fa-plus"></i>
-                    Buat Permohonan Pertama
+                    Buat Permohonan Baru
                 </a>
             }
         </div>
     }
 </div>
 
+<!-- Modal untuk menampilkan dokumen dalam iframe -->
+<div class="modal fade" id="documentModal" tabindex="-1" aria-labelledby="documentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="documentModalLabel">
+                    <i class="fas fa-file-pdf text-danger"></i>
+                    Dokumen Permohonan
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="document-viewer">
+                    <div class="viewer-header">
+                        <div class="document-info">
+                            <h6 id="documentTitle">Memuat dokumen...</h6>
+                            <div class="viewer-controls">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="downloadFromModal()">
+                                    <i class="fas fa-download"></i>
+                                    Download
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="printFromModal()">
+                                    <i class="fas fa-print"></i>
+                                    Print
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="openInNewTab()">
+                                    <i class="fas fa-external-link-alt"></i>
+                                    Buka di Tab Baru
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="viewer-container">
+                        <div class="loading-spinner" id="documentLoader">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Memuat dokumen...</p>
+                        </div>
+                        <iframe id="documentFrame" src="" style="display: none; width: 100%; height: 600px; border: none; border-radius: 0 0 8px 8px;"></iframe>
+                        <div class="error-message" id="documentError" style="display: none;">
+                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                            <p>Gagal memuat dokumen. Silakan coba lagi atau buka di tab baru.</p>
+                            <button type="button" class="btn btn-outline-primary" onclick="retryLoadDocument()">
+                                <i class="fas fa-redo"></i>
+                                Coba Lagi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <a href="#" id="approveFromModal" class="btn btn-warning" style="display: none;">
+                    <i class="fas fa-check-circle"></i>
+                    Proses Permohonan
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentPermitId = null;
+        let currentApplicationNumber = null;
+
+        function viewDocumentModal(permitId, applicationNumber) {
+            currentPermitId = permitId;
+            currentApplicationNumber = applicationNumber;
+
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('documentModal'));
+            modal.show();
+
+            // Reset modal state
+            document.getElementById('documentTitle').innerText = `Dokumen ${applicationNumber}`;
+            document.getElementById('documentLoader').style.display = 'block';
+            document.getElementById('documentFrame').style.display = 'none';
+            document.getElementById('documentError').style.display = 'none';
+
+            // Update approve button if user can approve
+            const approveBtn = document.getElementById('approveFromModal');
+            @if (userRole == "Verifikator" || userRole == "KepalaDinas" || userRole == "Admin")
+            {
+                    <text>
+                    approveBtn.href = '@Url.Action("Approve", "Permit")/' + permitId;
+                    approveBtn.style.display = 'inline-block';
+                    </text>
+            }
+
+            // Load document
+            loadDocumentInModal(permitId);
+        }
+
+        function loadDocumentInModal(permitId) {
+            const iframe = document.getElementById('documentFrame');
+            const loader = document.getElementById('documentLoader');
+            const errorDiv = document.getElementById('documentError');
+
+            // Set iframe source
+            iframe.src = `@Url.Action("GetDocumentFile", "Permit")/${permitId}`;
+
+            // Handle iframe load
+            iframe.onload = function() {
+                try {
+                    // Check if iframe loaded successfully
+                    if (iframe.contentDocument || iframe.contentWindow.document) {
+                        loader.style.display = 'none';
+                        iframe.style.display = 'block';
+                        errorDiv.style.display = 'none';
+                    }
+                } catch (e) {
+                    // Cross-origin or other error
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                        iframe.style.display = 'block';
+                        errorDiv.style.display = 'none';
+                    }, 1000);
+                }
+            };
+
+            // Handle iframe error
+            iframe.onerror = function() {
+                loader.style.display = 'none';
+                iframe.style.display = 'none';
+                errorDiv.style.display = 'block';
+            };
+
+            // Fallback timeout
+            setTimeout(() => {
+                if (loader.style.display !== 'none') {
+                    loader.style.display = 'none';
+                    iframe.style.display = 'block';
+                }
+            }, 3000);
+        }
+
+        function downloadFromModal() {
+            if (currentPermitId) {
+                window.open(`@Url.Action("Download", "Permit")/${currentPermitId}`, '_blank');
+            }
+        }
+
+        function printFromModal() {
+            const iframe = document.getElementById('documentFrame');
+            try {
+                if (iframe.contentWindow) {
+                    iframe.contentWindow.print();
+                } else {
+                    // Fallback: open in new window and print
+                    const printWindow = window.open(`@Url.Action("GetDocumentFile", "Permit")/${currentPermitId}`, '_blank');
+                    printWindow.onload = function() {
+                        printWindow.print();
+                    };
+                }
+            } catch (e) {
+                console.log('Print error:', e);
+                alert('Tidak dapat mencetak dari modal. Silakan buka dokumen di tab baru untuk mencetak.');
+            }
+        }
+
+        function openInNewTab() {
+            if (currentPermitId) {
+                window.open(`@Url.Action("ViewDocument", "Permit")/${currentPermitId}`, '_blank');
+            }
+        }
+
+        function retryLoadDocument() {
+            if (currentPermitId) {
+                loadDocumentInModal(currentPermitId);
+            }
+        }
+
+        // Clean up when modal is closed
+        document.getElementById('documentModal').addEventListener('hidden.bs.modal', function() {
+            const iframe = document.getElementById('documentFrame');
+            iframe.src = 'about:blank';
+            currentPermitId = null;
+            currentApplicationNumber = null;
+        });
+    </script>
+}
+
 <style>
     .permits-container {
         padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
     }
 
     .page-header {
@@ -168,14 +376,18 @@
         border-bottom: 2px solid #e9ecef;
     }
 
-    .header-content h1 {
+    .header-content {
+        flex: 1;
+    }
+
+    .page-title {
         color: #333;
         margin-bottom: 8px;
         font-size: 28px;
         font-weight: 600;
     }
 
-        .header-content h1 i {
+        .page-title i {
             margin-right: 12px;
             color: #667eea;
         }
@@ -186,24 +398,22 @@
         font-size: 16px;
     }
 
-    .header-actions .btn {
-        padding: 12px 24px;
-        font-weight: 600;
-        border-radius: 8px;
+    .header-actions {
+        margin-left: 20px;
     }
 
     .permits-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-        gap: 25px;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 20px;
     }
 
     .permit-card {
         background: white;
         border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         overflow: hidden;
+        transition: all 0.3s ease;
     }
 
         .permit-card:hover {
@@ -212,31 +422,53 @@
         }
 
     .card-header {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        padding: 20px;
+        background: #f8f9fa;
+        padding: 15px 20px;
+        border-bottom: 1px solid #e9ecef;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1px solid #e9ecef;
     }
 
     .permit-number {
+        font-size: 12px;
+        color: #666;
         font-weight: 600;
-        color: #333;
-        font-size: 14px;
+        display: flex;
+        align-items: center;
     }
 
         .permit-number i {
-            margin-right: 8px;
+            margin-right: 6px;
             color: #667eea;
         }
 
     .status-badge {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 12px;
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 11px;
         font-weight: 600;
         text-transform: uppercase;
+    }
+
+    .badge-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .badge-approved {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .badge-rejected {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .badge-verification {
+        background: #cce5ff;
+        color: #004085;
     }
 
     .badge-secondary {
@@ -287,12 +519,12 @@
     }
 
         .applicant-name i {
-            margin-right: 8px;
+            margin-right: 6px;
             color: #667eea;
         }
 
     .permit-details {
-        space-y: 8px;
+        margin-bottom: 20px;
     }
 
     .detail-item {
@@ -308,13 +540,13 @@
         }
 
     .detail-label {
-        font-weight: 500;
-        margin-right: 8px;
-        color: #555;
+        font-weight: 600;
+        margin-right: 6px;
+        min-width: 60px;
     }
 
     .detail-value {
-        color: #333;
+        color: #666;
     }
 
     .card-footer {
@@ -325,25 +557,21 @@
 
     .action-buttons {
         display: flex;
-        gap: 10px;
+        gap: 8px;
         flex-wrap: wrap;
     }
 
-        .action-buttons .btn {
-            flex: 1;
-            min-width: 80px;
-            font-size: 12px;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-weight: 500;
-        }
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 12px;
+        border-radius: 6px;
+        font-weight: 600;
+    }
 
     .empty-state {
         text-align: center;
         padding: 60px 20px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        color: #666;
     }
 
     .empty-icon {
@@ -354,39 +582,127 @@
 
     .empty-state h3 {
         color: #333;
-        margin-bottom: 12px;
-        font-size: 24px;
+        margin-bottom: 10px;
     }
 
-    .empty-state p {
-        color: #666;
-        font-size: 16px;
+    .empty-description {
+        margin-bottom: 25px;
         max-width: 400px;
-        margin: 0 auto;
+        margin-left: auto;
+        margin-right: auto;
     }
+
+    /* Modal Styles */
+    .modal-xl {
+        max-width: 1200px;
+    }
+
+    .document-viewer {
+        width: 100%;
+    }
+
+    .viewer-header {
+        background: #f8f9fa;
+        padding: 15px 20px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .document-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        .document-info h6 {
+            margin: 0;
+            color: #333;
+            font-weight: 600;
+        }
+
+    .viewer-controls {
+        display: flex;
+        gap: 10px;
+    }
+
+    .viewer-container {
+        position: relative;
+        background: #f8f9fa;
+        min-height: 600px;
+    }
+
+    .loading-spinner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 400px;
+        color: #666;
+    }
+
+        .loading-spinner p {
+            margin-top: 15px;
+            margin-bottom: 0;
+        }
+
+    .error-message {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 400px;
+        color: #666;
+        text-align: center;
+    }
+
+        .error-message i {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
 
     @@media (max-width: 768px) {
-        .page-header
+        .permits-container
 
     {
+        padding: 15px;
+    }
+
+    .page-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: 20px;
+        gap: 15px;
     }
+
+    .header-actions {
+        margin-left: 0;
+        width: 100%;
+    }
+
+        .header-actions .btn {
+            width: 100%;
+        }
 
     .permits-grid {
         grid-template-columns: 1fr;
-        gap: 20px;
     }
 
-    .permit-card {
-        margin-bottom: 0;
+    .page-title {
+        font-size: 24px;
     }
 
-    .card-header {
+    .document-info {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
+    }
+
+    .viewer-controls {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .modal-xl {
+        max-width: 95%;
     }
 
     .action-buttons {
@@ -400,11 +716,3 @@
 
     }
 </style>
-
-<script>
-    function loadMore() {
-        // Implementation for loading more permits
-        // This would typically involve AJAX call to load more data
-        console.log('Load more permits');
-    }
-</script>

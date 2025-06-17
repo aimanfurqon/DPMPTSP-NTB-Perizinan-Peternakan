@@ -1,95 +1,60 @@
-﻿using PerizinanPeternakan.Models;
-using System.Text;
-using System.Globalization;
 
-namespace PerizinanPeternakan.Services
-{
-    public interface IPdfGeneratorService
-    {
-        Task<byte[]> GeneratePermitPdf(LivestockPermitApplication permit);
-    }
-
-    public class PdfGeneratorService : IPdfGeneratorService
-    {
-        public async Task<byte[]> GeneratePermitPdf(LivestockPermitApplication permit)
-        {
-            // Generate HTML content
-            var html = GeneratePermitHtml(permit);
-
-            try
-            {
-                // Create enhanced PDF content with viewer controls
-                var pdfContent = GeneratePdfContent(html);
-                return Encoding.UTF8.GetBytes(pdfContent);
-            }
-            catch (Exception ex)
-            {
-                // Fallback: Create a simple text-based PDF content
-                var fallbackContent = GenerateFallbackPdf(permit);
-                return Encoding.UTF8.GetBytes(fallbackContent);
-            }
-        }
-
-        private string GeneratePdfContent(string html)
-        {
-            // Create a complete HTML document that browsers can display properly
-            return $@"
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset='utf-8'>
     <title>Surat Izin Pengeluaran Ternak Potong</title>
     <style>
-        @media print {{
-            body {{ margin: 0; padding: 20px; }}
-            .no-print {{ display: none !important; }}
-            .viewer-controls {{ display: none !important; }}
-        }}
-        body {{ 
+        @media print {
+            body { margin: 0; padding: 20px; }
+            .no-print { display: none !important; }
+            .viewer-controls { display: none !important; }
+        }
+        body { 
             font-family: 'Times New Roman', serif; 
             font-size: 12pt; 
             line-height: 1.4; 
             margin: 20px;
             color: #000;
             background: white;
-        }}
-        .header {{ 
+        }
+        .header { 
             text-align: center; 
             margin-bottom: 30px; 
             border-bottom: 3px solid #000;
             padding-bottom: 15px;
-        }}
-        .title {{ 
+        }
+        .title { 
             text-align: center; 
             font-weight: bold; 
             margin: 25px 0; 
             line-height: 1.3;
-        }}
-        .content {{ 
+        }
+        .content { 
             text-align: justify; 
             line-height: 1.5;
-        }}
-        table {{ 
+        }
+        table { 
             width: 100%; 
             border-collapse: collapse; 
             margin: 15px 0;
-        }}
-        th, td {{ 
+        }
+        th, td { 
             border: 1px solid #000; 
             padding: 8px; 
             text-align: left;
-        }}
-        th {{ 
+        }
+        th { 
             background-color: #f0f0f0; 
             font-weight: bold; 
             text-align: center;
-        }}
-        .signature {{ 
+        }
+        .signature { 
             margin-top: 40px; 
             text-align: right;
             page-break-inside: avoid;
-        }}
-        .viewer-controls {{
+        }
+        .viewer-controls {
             position: sticky;
             top: 0;
             background: #f8f9fa;
@@ -100,36 +65,36 @@ namespace PerizinanPeternakan.Services
             display: flex;
             justify-content: space-between;
             align-items: center;
-        }}
-        .control-group {{
+        }
+        .control-group {
             display: flex;
             gap: 10px;
             align-items: center;
-        }}
-        .zoom-control {{
+        }
+        .zoom-control {
             display: flex;
             align-items: center;
             gap: 5px;
-        }}
-        .zoom-btn {{
+        }
+        .zoom-btn {
             padding: 5px 10px;
             border: 1px solid #ccc;
             background: white;
             cursor: pointer;
             border-radius: 4px;
-        }}
-        .zoom-btn:hover {{
+        }
+        .zoom-btn:hover {
             background: #e9ecef;
-        }}
-        .zoom-level {{
+        }
+        .zoom-level {
             font-weight: bold;
             min-width: 50px;
             text-align: center;
-        }}
-        .document-wrapper {{
+        }
+        .document-wrapper {
             transform-origin: top left;
             transition: transform 0.3s ease;
-        }}
+        }
     </style>
 </head>
 <body>
@@ -147,75 +112,7 @@ namespace PerizinanPeternakan.Services
         </div>
     </div>
     <div class='document-wrapper' id='documentWrapper'>
-        {html}
-    </div>
-    <script>
-        let currentZoom = 1;
         
-        function zoomIn() {{
-            currentZoom = Math.min(currentZoom + 0.1, 2);
-            updateZoom();
-        }}
-        
-        function zoomOut() {{
-            currentZoom = Math.max(currentZoom - 0.1, 0.5);
-            updateZoom();
-        }}
-        
-        function updateZoom() {{
-            document.getElementById('documentWrapper').style.transform = `scale(${{currentZoom}})`;
-            document.getElementById('zoomLevel').textContent = Math.round(currentZoom * 100) + '%';
-        }}
-        
-        // Auto-print when opened for final approved documents (optional)
-        // window.onload = function() {{ window.print(); }}
-    </script>
-</body>
-</html>";
-        }
-
-        private string GenerateFallbackPdf(LivestockPermitApplication permit)
-        {
-            var culture = new CultureInfo("id-ID");
-
-            return $@"
-SURAT IZIN PENGELUARAN TERNAK POTONG
-UNTUK KEPERLUAN PERDAGANGAN ANTAR PULAU/ANTAR PROVINSI
-
-PEMERINTAH PROVINSI NUSA TENGGARA BARAT
-DINAS PENANAMAN MODAL DAN PELAYANAN TERPADU SATU PINTU
-Jalan Udayana No. 4 Mataram Telpon (0370) 631060 Fax (0370) 647022
-
-NOMOR : {permit.ApplicationNumber}
-
-Diberikan kepada:
-Nama Perusahaan: {permit.CompanyName}
-Alamat: {permit.CompanyAddress}
-
-Untuk pengeluaran ternak:
-{string.Join("\n", permit.LivestockDetails.Select((d, i) => $"{i + 1}. {d.LivestockType}: {d.Quantity} ekor - {d.Description}"))}
-
-Asal: {permit.OriginLocation} (Pelabuhan: {permit.DeparturePort})
-Tujuan: {permit.DestinationLocation} (Pelabuhan: {permit.ArrivalPort})
-
-Berlaku: {permit.ValidFrom?.ToString("dd MMMM yyyy", culture)} s/d {permit.ValidUntil?.ToString("dd MMMM yyyy", culture)}
-
-Mataram, {permit.FinalApprovalDate?.ToString("dd MMMM yyyy", culture)}
-Plt. Kepala Dinas
-
-Hj. Eva Dewiyani, SP
-Pembina Utama Muda (IV/c)
-NIP. 19701210 199803 2 006
-";
-        }
-
-        private string GeneratePermitHtml(LivestockPermitApplication permit)
-        {
-            var culture = new CultureInfo("id-ID");
-            var livestockDetails = string.Join("\n", permit.LivestockDetails.Select((detail, index) =>
-                $"<tr><td style='text-align: center;'>{index + 1}.</td><td>{detail.LivestockType}</td><td style='text-align: center;'>{detail.Quantity} ({NumberToWords(detail.Quantity)}) ekor</td><td>{detail.Description ?? ""}</td></tr>"));
-
-            return $@"
     <div class='header'>
         <h1 style='font-size: 16pt; margin: 8px 0; line-height: 1.2;'>PEMERINTAH PROVINSI NUSA TENGGARA BARAT</h1>
         <h2 style='font-size: 14pt; margin: 4px 0;'>DINAS PENANAMAN MODAL</h2>
@@ -227,7 +124,7 @@ NIP. 19701210 199803 2 006
         <p style='font-size: 14pt; margin: 5px 0;'><strong><u>SURAT IZIN</u></strong></p>
         <p style='font-size: 14pt; margin: 5px 0;'><strong><u>PENGELUARAN TERNAK POTONG UNTUK KEPERLUAN PERDAGANGAN</u></strong></p>
         <p style='font-size: 14pt; margin: 5px 0;'><strong><u>ANTAR PULAU/ANTAR PROVINSI</u></strong></p>
-        <p style='font-size: 14pt; margin: 5px 0;'><strong><u>NOMOR : {permit.ApplicationNumber}</u></strong></p>
+        <p style='font-size: 14pt; margin: 5px 0;'><strong><u>NOMOR : 003/03-260/DPM&PTSP/2025</u></strong></p>
     </div>
 
     <div class='content'>
@@ -240,8 +137,8 @@ NIP. 19701210 199803 2 006
                 <td style='border: none; width: 18%; font-weight: bold; vertical-align: top; padding: 8px 5px;'>Memperhatikan</td>
                 <td style='border: none; width: 3%; text-align: center; padding: 8px 5px;'>:</td>
                 <td style='border: none; width: 79%; text-align: justify; padding: 8px 5px;'>
-                    a. Surat Permohonan Izin dari <strong>{permit.CompanyName}</strong> Tanggal {permit.SubmissionDate.ToString("dd MMMM yyyy", culture)} yang disertai dengan kelengkapan dokumen yang dipersyaratkan;<br><br>
-                    <strong>b. Surat Rekomendasi dari Dinas Peternakan dan Kesehatan Hewan Provinsi NTB Nomor : 500.7.2.1/1337/2025 tanggal {DateTime.Now.ToString("dd MMMM yyyy", culture)}.</strong>
+                    a. Surat Permohonan Izin dari <strong>CV AIMAN BARU</strong> Tanggal 17 Juni 2025 yang disertai dengan kelengkapan dokumen yang dipersyaratkan;<br><br>
+                    <strong>b. Surat Rekomendasi dari Dinas Peternakan dan Kesehatan Hewan Provinsi NTB Nomor : 500.7.2.1/1337/2025 tanggal 17 Juni 2025.</strong>
                 </td>
             </tr>
             <tr>
@@ -267,8 +164,8 @@ NIP. 19701210 199803 2 006
 
         <div style='margin: 15px 0; font-weight: bold;'>
             <p><strong>MEMBERIKAN IZIN PENGELUARAN</strong></p>
-            <p>Kepada : <strong>{permit.CompanyName}</strong></p>
-            <p>Alamat : {permit.CompanyAddress}</p>
+            <p>Kepada : <strong>CV AIMAN BARU</strong></p>
+            <p>Alamat : AIMAN BARU</p>
         </div>
 
         <table>
@@ -281,7 +178,8 @@ NIP. 19701210 199803 2 006
                 </tr>
             </thead>
             <tbody>
-                {livestockDetails}
+                <tr><td style='text-align: center;'>1.</td><td>Kerbau Potong</td><td style='text-align: center;'>12 (dua belas) ekor</td><td>12</td></tr>
+<tr><td style='text-align: center;'>2.</td><td>Kuda Pedaging</td><td style='text-align: center;'>212 (dua ratus dua belas) ekor</td><td></td></tr>
             </tbody>
         </table>
 
@@ -289,14 +187,14 @@ NIP. 19701210 199803 2 006
             <tr>
                 <td style='border: none; width: 10%; font-weight: bold;'>Asal</td>
                 <td style='border: none; width: 5%; text-align: center;'>:</td>
-                <td style='border: none; width: 35%; font-weight: bold;'>{permit.OriginLocation}</td>
-                <td style='border: none; width: 50%;'>Melalui pelabuhan Asal : <strong>{permit.DeparturePort}</strong></td>
+                <td style='border: none; width: 35%; font-weight: bold;'>AIMAN</td>
+                <td style='border: none; width: 50%;'>Melalui pelabuhan Asal : <strong>BALI</strong></td>
             </tr>
             <tr>
                 <td style='border: none; font-weight: bold;'>Tujuan</td>
                 <td style='border: none; text-align: center;'>:</td>
-                <td style='border: none; font-weight: bold;'>{permit.DestinationLocation}</td>
-                <td style='border: none;'>Melalui pelabuhan Bongkar : <strong>{permit.ArrivalPort}</strong></td>
+                <td style='border: none; font-weight: bold;'>AIMAN</td>
+                <td style='border: none;'>Melalui pelabuhan Bongkar : <strong>GILEM</strong></td>
             </tr>
         </table>
 
@@ -306,15 +204,15 @@ NIP. 19701210 199803 2 006
             <p style='margin: 8px 0;'>b. Pedagang harus tercatat sebagai pedagang ternak di Kantor Dinas Peternakan dan Kesehatan Hewan Provinsi NTB dan Kantor Dinas Peternakan Kabupaten/Kota setempat;</p>
             <p style='margin: 8px 0;'>c. Senantiasa taat mengikuti semua peraturan yang ditentukan dan tidak menjual belikan atau mengalihkan izin pengeluaran ternak potong yang telah diterimanya kepada perusahaan lain;</p>
             <p style='margin: 8px 0;'>d. Surat Izin ini dapat diubah dan diatur kembali, apabila terdapat kekeliruan;</p>
-            <p style='margin: 8px 0;'>e. Surat izin ini berlaku sekali muat terhitung mulai tanggal <strong>{permit.ValidFrom?.ToString("dd MMMM", culture)} sampai dengan {permit.ValidUntil?.ToString("dd MMMM yyyy", culture)}</strong>.</p>
+            <p style='margin: 8px 0;'>e. Surat izin ini berlaku sekali muat terhitung mulai tanggal <strong> sampai dengan </strong>.</p>
         </div>
 
         <div class='signature'>
             <p><strong>DITETAPKAN DI : MATARAM</strong></p>
-            <p><strong>PADA TANGGAL : {permit.FinalApprovalDate?.ToString("dd MMMM yyyy", culture)}</strong></p>
+            <p><strong>PADA TANGGAL : </strong></p>
             <p><strong>Plt. Kepala Dinas</strong></p>
             <div style='height: 60px; margin: 15px 0;'></div>
-            <p><strong><u>{(permit.KepalaDinas?.NamaLengkap ?? "Hj. Eva Dewiyani, SP")}</u></strong></p>
+            <p><strong><u>Hj. Eva Dewiyani, SP</u></strong></p>
             <p><strong>Pembina Utama Muda (IV/c)</strong></p>
             <p><strong>NIP. 19701210 199803 2 006</strong></p>
         </div>
@@ -327,55 +225,28 @@ NIP. 19701210 199803 2 006
             <p style='margin: 4px 0;'>4. Perusahaan yang bersangkutan untuk dimaklumi dan diindahkan.</p>
             <p style='margin: 4px 0;'>5. Arsip.</p>
         </div>
-    </div>";
+    </div>
+    </div>
+    <script>
+        let currentZoom = 1;
+        
+        function zoomIn() {
+            currentZoom = Math.min(currentZoom + 0.1, 2);
+            updateZoom();
         }
-
-        private string NumberToWords(int number)
-        {
-            if (number == 0) return "nol";
-
-            string[] ones = { "", "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "delapan", "sembilan",
-                             "sepuluh", "sebelas", "dua belas", "tiga belas", "empat belas", "lima belas",
-                             "enam belas", "tujuh belas", "delapan belas", "sembilan belas" };
-
-            string[] tens = { "", "", "dua puluh", "tiga puluh", "empat puluh", "lima puluh",
-                             "enam puluh", "tujuh puluh", "delapan puluh", "sembilan puluh" };
-
-            if (number < 20)
-                return ones[number];
-
-            if (number < 100)
-                return tens[number / 10] + (number % 10 != 0 ? " " + ones[number % 10] : "");
-
-            if (number < 1000)
-            {
-                string result = "";
-                if (number / 100 == 1)
-                    result = "seratus";
-                else
-                    result = ones[number / 100] + " ratus";
-
-                if (number % 100 != 0)
-                    result += " " + NumberToWords(number % 100);
-
-                return result;
-            }
-
-            if (number < 1000000)
-            {
-                string result = "";
-                if (number / 1000 == 1)
-                    result = "seribu";
-                else
-                    result = NumberToWords(number / 1000) + " ribu";
-
-                if (number % 1000 != 0)
-                    result += " " + NumberToWords(number % 1000);
-
-                return result;
-            }
-
-            return number.ToString(); // Fallback untuk angka yang sangat besar
+        
+        function zoomOut() {
+            currentZoom = Math.max(currentZoom - 0.1, 0.5);
+            updateZoom();
         }
-    }
-}
+        
+        function updateZoom() {
+            document.getElementById('documentWrapper').style.transform = `scale(${currentZoom})`;
+            document.getElementById('zoomLevel').textContent = Math.round(currentZoom * 100) + '%';
+        }
+        
+        // Auto-print when opened for final approved documents (optional)
+        // window.onload = function() { window.print(); }
+    </script>
+</body>
+</html>

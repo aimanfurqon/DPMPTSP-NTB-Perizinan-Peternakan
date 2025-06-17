@@ -17,11 +17,20 @@
                     Kembali
                 </a>
 
-                @if (Model.CanDownload)
+                @if (Model.CanDownload && Context.Session.GetString("Role") == "User")
                 {
                     <a href="@Url.Action("Download", "Permit", new { id = Model.Id })" class="btn btn-success">
                         <i class="fas fa-download"></i>
                         Download PDF
+                    </a>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.GeneratedDocumentPath) &&
+                                (Context.Session.GetString("Role") == "Verifikator" || Context.Session.GetString("Role") == "KepalaDinas"))
+                {
+                    <a href="@Url.Action("ViewDocument", "Permit", new { id = Model.Id })" class="btn btn-info">
+                        <i class="fas fa-eye"></i>
+                        Lihat Dokumen
                     </a>
                 }
 
@@ -268,6 +277,8 @@
         return action.ToLower() switch
         {
             "submit" => "primary",
+            "disetujui admin" => "success",
+            "ditolak admin" => "danger",
             "disetujui verifikator" => "success",
             "ditolak verifikator" => "danger",
             "disetujui kepala dinas" => "success",
@@ -281,6 +292,8 @@
         return action.ToLower() switch
         {
             "submit" => "fas fa-paper-plane",
+            "disetujui admin" => "fas fa-check",
+            "ditolak admin" => "fas fa-times",
             "disetujui verifikator" => "fas fa-check",
             "ditolak verifikator" => "fas fa-times",
             "disetujui kepala dinas" => "fas fa-stamp",

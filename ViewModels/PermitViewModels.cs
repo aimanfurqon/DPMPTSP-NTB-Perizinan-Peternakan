@@ -185,4 +185,15 @@ namespace PerizinanPeternakan.ViewModels
         public List<PermitListViewModel> RecentApplications { get; set; } = new List<PermitListViewModel>();
         public List<PermitListViewModel> MyPendingApprovals { get; set; } = new List<PermitListViewModel>();
     }
+
+    public class PermitDocumentViewModel
+    {
+        public int PermitId { get; set; }
+        public string ApplicationNumber { get; set; } = string.Empty;
+        public string CompanyName { get; set; } = string.Empty;
+        public PermitStatus Status { get; set; }
+        public string DocumentContent { get; set; } = string.Empty;
+        public bool CanApprove { get; set; }
+        public string UserRole { get; set; } = string.Empty;
+    }
 }
