@@ -1,0 +1,151 @@
+﻿@{
+    ViewData["Title"] = "Test Upload System";
+}
+
+<div class="container mt-4">
+    <h2>🔧 Test Upload System</h2>
+    <p class="text-muted">Development mode only - System diagnostic tools</p>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>📁 Directory & Permission Tests</h5>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.TestResults != null)
+                    {
+                        <div class="test-results">
+                            @foreach (string result in ViewBag.TestResults)
+                            {
+                                <div class="result-item">
+                                    @Html.Raw(result)
+                                </div>
+                            }
+                        </div>
+                    }
+                    <a href="@Url.Action("TestUpload")" class="btn btn-primary">
+                        <i class="fas fa-play"></i> Run Tests
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>🗂️ Document Verification</h5>
+                </div>
+                <div class="card-body">
+                    <a href="@Url.Action("CheckDocuments")" class="btn btn-info">
+                        <i class="fas fa-search"></i> Check All Documents
+                    </a>
+
+                    <form class="d-inline-block ms-2" action="@Url.Action("CleanupOrphanedFiles")" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure you want to clean up orphaned files?')">
+                            <i class="fas fa-broom"></i> Cleanup Orphaned Files
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (ViewBag.DocumentResults != null)
+    {
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>📋 Document Status Report</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Document</th>
+                                <th>Type</th>
+                                <th>Permit</th>
+                                <th>File Exists</th>
+                                <th>Size Match</th>
+                                <th>Upload Date</th>
+                                <th>Uploaded By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (dynamic doc in ViewBag.DocumentResults)
+                            {
+                                <tr class="@(doc.FileExists ? "" : "table-danger")">
+                                    <td>@doc.Id</td>
+                                    <td>@doc.DocumentName</td>
+                                    <td><small>@doc.DocumentType</small></td>
+                                    <td>@doc.PermitNumber</td>
+                                    <td>
+                                        @if (doc.FileExists)
+                                        {
+                                            <span class="badge bg-success">✅ Yes</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">❌ No</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (doc.FileExists && doc.FileSize == doc.ActualSize)
+                                        {
+                                            <span class="badge bg-success">✅ Match</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning">⚠️ @doc.FileSize vs @doc.ActualSize</span>
+                                        }
+                                    </td>
+                                    <td><small>@doc.UploadDate</small></td>
+                                    <td><small>@doc.UploadedBy</small></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (ViewBag.CleanupResults != null)
+    {
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>🧹 Cleanup Results</h5>
+            </div>
+            <div class="card-body">
+                @foreach (string result in ViewBag.CleanupResults)
+                {
+                    <div class="result-item">@Html.Raw(result)</div>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="mt-4">
+        <a href="@Url.Action("Index")" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Permits
+        </a>
+    </div>
+</div>
+
+<style>
+    .result-item {
+        padding: 5px 0;
+        font-family: monospace;
+        font-size: 14px;
+    }
+
+    .card {
+        margin-bottom: 20px;
+    }
+
+    .table-danger {
+        background-color: #f8d7da;
+    }
+</style>

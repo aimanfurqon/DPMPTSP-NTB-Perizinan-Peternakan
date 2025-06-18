@@ -26,11 +26,11 @@
                 }
 
                 @if (!string.IsNullOrEmpty(Model.GeneratedDocumentPath) &&
-                                (Context.Session.GetString("Role") == "Verifikator" || Context.Session.GetString("Role") == "KepalaDinas"))
+                    (Context.Session.GetString("Role") == "Verifikator" || Context.Session.GetString("Role") == "KepalaDinas"))
                 {
                     <a href="@Url.Action("ViewDocument", "Permit", new { id = Model.Id })" class="btn btn-info">
                         <i class="fas fa-eye"></i>
-                        Lihat Dokumen
+                        Lihat Dokumen PDF
                     </a>
                 }
 
@@ -218,6 +218,141 @@
             </div>
         </div>
 
+        <!-- Dokumen Pendukung -->
+        <div class="info-card full-width">
+            <div class="card-header">
+                <h3>
+                    <i class="fas fa-file-alt"></i>
+                    Dokumen Pendukung
+                </h3>
+                @if (Model.Documents.Count >= 7)
+                {
+                    <span class="document-status complete">
+                        <i class="fas fa-check-circle"></i>
+                        Lengkap (@Model.Documents.Count/7)
+                    </span>
+                }
+                else
+                {
+                    <span class="document-status incomplete">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Tidak Lengkap (@Model.Documents.Count/7)
+                    </span>
+                }
+            </div>
+            <div class="card-body">
+                @if (Model.Documents.Any())
+                {
+                    <div class="documents-grid">
+                        @foreach (var doc in Model.Documents)
+                        {
+                            <div class="document-card">
+                                <div class="document-header">
+                                    <div class="document-icon">
+                                        @switch (doc.FileExtension.ToLower())
+                                        {
+                                            case ".pdf":
+                                                <i class="fas fa-file-pdf text-danger"></i>
+                                                break;
+                                            case ".jpg":
+                                            case ".jpeg":
+                                            case ".png":
+                                                <i class="fas fa-file-image text-primary"></i>
+                                                break;
+                                            default:
+                                                <i class="fas fa-file text-secondary"></i>
+                                                break;
+                                        }
+                                    </div>
+                                    <div class="document-info">
+                                        <h4>@doc.DocumentDisplayName</h4>
+                                        <div class="document-meta">
+                                            <span class="file-size">@doc.FormattedFileSize</span>
+                                            <span class="upload-date">@doc.UploadDate.ToString("dd/MM/yyyy HH:mm")</span>
+                                            <span class="uploaded-by">@doc.UploadedBy</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="document-actions">
+                                    <a href="@Url.Action("DownloadDocument", "Permit", new { id = doc.Id })" 
+                                       class="btn btn-sm btn-outline-primary" 
+                                       target="_blank">
+                                        <i class="fas fa-download"></i>
+                                        Download
+                                    </a>
+                                    
+                                    @if (doc.FileExtension.ToLower() == ".pdf")
+                                    {
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-secondary"
+                                                onclick="previewDocument('@doc.FilePath', '@doc.DocumentDisplayName')">
+                                            <i class="fas fa-eye"></i>
+                                            Preview
+                                        </button>
+                                    }
+                                    else if (doc.FileExtension.ToLower() == ".jpg" || doc.FileExtension.ToLower() == ".jpeg" || doc.FileExtension.ToLower() == ".png")
+                                    {
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-secondary"
+                                                onclick="previewImage('@doc.FilePath', '@doc.DocumentDisplayName')">
+                                            <i class="fas fa-eye"></i>
+                                            Preview
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Document Requirements Checklist -->
+                    <div class="document-summary">
+                        <h4>
+                            <i class="fas fa-clipboard-check"></i>
+                            Status Kelengkapan Dokumen
+                        </h4>
+                        
+                        @{
+                            var requiredDocs = new Dictionary<string, string>
+                            {
+                                { "SURAT_PERMOHONAN", "Surat Permohonan" },
+                                { "REKOMENDASI_DINAS_PROV", "Rekomendasi Dinas Peternakan Provinsi NTB" },
+                                { "REKOMENDASI_DAERAH_TUJUAN", "Rekomendasi Pemasukan Ternak dari Daerah Tujuan" },
+                                { "SKKH_KABUPATEN_ASAL", "SKKH dari Kabupaten Asal" },
+                                { "SKKH_DINAS_PROVINSI", "SKKH dari Dinas Peternakan Provinsi NTB" },
+                                { "SURAT_JALAN_TERNAK", "Surat Keterangan Jalan Ternak/Rekomendasi Asal" },
+                                { "HASIL_PEMERIKSAAN_FISIK", "Hasil Pemeriksaan Fisik (Holding Ground)" }
+                            };
+                        }
+
+                        <div class="checklist-summary">
+                            @foreach (var requiredDoc in requiredDocs)
+                            {
+                                var hasDoc = Model.Documents.Any(d => d.DocumentType == requiredDoc.Key);
+                                <div class="summary-item @(hasDoc ? "completed" : "missing")">
+                                    <i class="fas @(hasDoc ? "fa-check-circle" : "fa-times-circle")"></i>
+                                    <span>@requiredDoc.Value</span>
+                                    @if (hasDoc)
+                                    {
+                                        var doc = Model.Documents.First(d => d.DocumentType == requiredDoc.Key);
+                                        <small class="file-info">(@doc.FormattedFileSize)</small>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="no-documents">
+                        <i class="fas fa-folder-open"></i>
+                        <h4>Tidak Ada Dokumen</h4>
+                        <p>Belum ada dokumen pendukung yang diupload untuk permohonan ini</p>
+                    </div>
+                }
+            </div>
+        </div>
+
         <!-- History Persetujuan -->
         <div class="info-card full-width">
             <div class="card-header">
@@ -271,6 +406,74 @@
     </div>
 </div>
 
+<!-- Document Preview Modal -->
+<div class="modal fade" id="documentPreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewModalTitle">
+                    <i class="fas fa-file-pdf text-danger"></i>
+                    Preview Dokumen
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="preview-container">
+                    <div class="preview-toolbar">
+                        <div class="toolbar-left">
+                            <span id="previewDocumentName">Memuat dokumen...</span>
+                        </div>
+                        <div class="toolbar-right">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="downloadFromPreview()">
+                                <i class="fas fa-download"></i>
+                                Download
+                            </button>
+                        </div>
+                    </div>
+                    <div class="preview-frame-container">
+                        <div class="loading-spinner" id="previewLoader">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Memuat preview dokumen...</p>
+                        </div>
+                        <iframe id="previewFrame" style="display: none; width: 100%; height: 600px; border: none;"></iframe>
+                        <div class="preview-error" id="previewError" style="display: none;">
+                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                            <p>Gagal memuat preview dokumen. Silakan download untuk melihat dokumen.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalTitle">
+                    <i class="fas fa-file-image text-primary"></i>
+                    Preview Gambar
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="previewImage" src="" alt="Preview" class="img-fluid" style="max-height: 600px;" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-primary" onclick="downloadFromImagePreview()">
+                    <i class="fas fa-download"></i>
+                    Download
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @functions {
     private string GetTimelineClass(string action)
     {
@@ -303,7 +506,307 @@
     }
 }
 
+@section Scripts {
+    <script>
+        let currentPreviewPath = '';
+        let currentImagePath = '';
+
+        function previewDocument(filePath, documentName) {
+            currentPreviewPath = filePath;
+            const modal = new bootstrap.Modal(document.getElementById('documentPreviewModal'));
+            
+            // Reset modal state
+            document.getElementById('previewDocumentName').textContent = documentName;
+            document.getElementById('previewLoader').style.display = 'flex';
+            document.getElementById('previewFrame').style.display = 'none';
+            document.getElementById('previewError').style.display = 'none';
+
+            // Load document in iframe
+            const iframe = document.getElementById('previewFrame');
+            iframe.src = filePath;
+
+            // Handle iframe load
+            iframe.onload = function() {
+                document.getElementById('previewLoader').style.display = 'none';
+                iframe.style.display = 'block';
+            };
+
+            iframe.onerror = function() {
+                document.getElementById('previewLoader').style.display = 'none';
+                document.getElementById('previewError').style.display = 'flex';
+            };
+
+            // Fallback timeout
+            setTimeout(() => {
+                if (document.getElementById('previewLoader').style.display !== 'none') {
+                    document.getElementById('previewLoader').style.display = 'none';
+                    iframe.style.display = 'block';
+                }
+            }, 3000);
+
+            modal.show();
+        }
+
+        function previewImage(imagePath, imageName) {
+            currentImagePath = imagePath;
+            const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+            
+            document.getElementById('imageModalTitle').innerHTML = `<i class="fas fa-file-image text-primary"></i> ${imageName}`;
+            document.getElementById('previewImage').src = imagePath;
+
+            modal.show();
+        }
+
+        function downloadFromPreview() {
+            if (currentPreviewPath) {
+                window.open(currentPreviewPath, '_blank');
+            }
+        }
+
+        function downloadFromImagePreview() {
+            if (currentImagePath) {
+                window.open(currentImagePath, '_blank');
+            }
+        }
+
+        // Clean up when modals are closed
+        document.getElementById('documentPreviewModal').addEventListener('hidden.bs.modal', function() {
+            const iframe = document.getElementById('previewFrame');
+            iframe.src = 'about:blank';
+            currentPreviewPath = '';
+        });
+
+        document.getElementById('imagePreviewModal').addEventListener('hidden.bs.modal', function() {
+            document.getElementById('previewImage').src = '';
+            currentImagePath = '';
+        });
+    </script>
+}
+
 <style>
+    /* Document Display Styles */
+    .documents-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .document-card {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        transition: all 0.3s;
+        background: #f8f9fa;
+    }
+
+    .document-card:hover {
+        border-color: #667eea;
+        transform: translateY(-2px);
+    }
+
+    .document-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .document-icon {
+        font-size: 32px;
+        flex-shrink: 0;
+        margin-top: 5px;
+    }
+
+    .document-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .document-info h4 {
+        margin: 0 0 8px 0;
+        color: #333;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.3;
+    }
+
+    .document-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 12px;
+        color: #666;
+    }
+
+    .document-meta span {
+        display: block;
+    }
+
+    .document-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .document-actions .btn {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+
+    .document-summary {
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .document-summary h4 {
+        margin: 0 0 15px 0;
+        color: #333;
+        font-size: 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .document-summary h4 i {
+        color: #667eea;
+    }
+
+    .checklist-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 10px;
+    }
+
+    .summary-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .summary-item.completed {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .summary-item.completed i {
+        color: #28a745;
+    }
+
+    .summary-item.missing {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .summary-item.missing i {
+        color: #dc3545;
+    }
+
+    .file-info {
+        font-size: 11px;
+        opacity: 0.8;
+        margin-left: auto;
+    }
+
+    .document-status {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .document-status.complete {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .document-status.incomplete {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .no-documents {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+    }
+
+    .no-documents i {
+        font-size: 48px;
+        color: #e9ecef;
+        margin-bottom: 15px;
+    }
+
+    .no-documents h4 {
+        margin: 0 0 10px 0;
+        color: #333;
+    }
+
+    .no-documents p {
+        margin: 0;
+    }
+
+    /* Preview Modal Styles */
+    .preview-container {
+        width: 100%;
+    }
+
+    .preview-toolbar {
+        background: #f8f9fa;
+        padding: 15px 20px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .toolbar-left {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .toolbar-right {
+        display: flex;
+        gap: 10px;
+    }
+
+    .preview-frame-container {
+        position: relative;
+        background: #f8f9fa;
+        min-height: 600px;
+    }
+
+    .loading-spinner, .preview-error {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 400px;
+        color: #666;
+    }
+
+    .loading-spinner p, .preview-error p {
+        margin-top: 15px;
+        margin-bottom: 0;
+    }
+
+    .preview-error i {
+        font-size: 48px;
+        margin-bottom: 15px;
+    }
+
+    /* Existing styles from original Detail.cshtml */
     .permit-detail-container {
         padding: 20px;
         max-width: 1200px;
@@ -333,10 +836,10 @@
         font-weight: 600;
     }
 
-        .detail-title i {
-            margin-right: 12px;
-            color: #667eea;
-        }
+    .detail-title i {
+        margin-right: 12px;
+        color: #667eea;
+    }
 
     .header-actions {
         display: flex;
@@ -404,27 +907,30 @@
         overflow: hidden;
     }
 
-        .info-card.full-width {
-            grid-column: 1 / -1;
-        }
+    .info-card.full-width {
+        grid-column: 1 / -1;
+    }
 
     .card-header {
         background: #f8f9fa;
         padding: 20px;
         border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
-        .card-header h3 {
-            margin: 0;
-            color: #333;
-            font-size: 18px;
-            font-weight: 600;
-        }
+    .card-header h3 {
+        margin: 0;
+        color: #333;
+        font-size: 18px;
+        font-weight: 600;
+    }
 
-        .card-header i {
-            margin-right: 10px;
-            color: #667eea;
-        }
+    .card-header i {
+        margin-right: 10px;
+        color: #667eea;
+    }
 
     .card-body {
         padding: 25px;
@@ -441,27 +947,27 @@
         flex-direction: column;
     }
 
-        .info-item.full-width {
-            grid-column: 1 / -1;
-        }
+    .info-item.full-width {
+        grid-column: 1 / -1;
+    }
 
-        .info-item label {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
+    .info-item label {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
 
-        .info-item .value {
-            font-size: 16px;
-            color: #333;
-            font-weight: 600;
-        }
+    .info-item .value {
+        font-size: 16px;
+        color: #333;
+        font-weight: 600;
+    }
 
-            .info-item .value.highlight {
-                color: #667eea;
-                font-size: 18px;
-            }
+    .info-item .value.highlight {
+        color: #667eea;
+        font-size: 18px;
+    }
 
     .shipping-route {
         display: flex;
@@ -488,13 +994,13 @@
         color: white;
     }
 
-        .route-icon.origin {
-            background: #28a745;
-        }
+    .route-icon.origin {
+        background: #28a745;
+    }
 
-        .route-icon.destination {
-            background: #dc3545;
-        }
+    .route-icon.destination {
+        background: #dc3545;
+    }
 
     .route-content h4 {
         margin: 0 0 5px 0;
@@ -530,22 +1036,22 @@
         margin: 0;
     }
 
-        .livestock-table th,
-        .livestock-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #e9ecef;
-        }
+    .livestock-table th,
+    .livestock-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #e9ecef;
+    }
 
-        .livestock-table th {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: #333;
-        }
+    .livestock-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #333;
+    }
 
-        .livestock-table tbody tr:hover {
-            background: #f8f9fa;
-        }
+    .livestock-table tbody tr:hover {
+        background: #f8f9fa;
+    }
 
     .total-row {
         background: #f8f9fa;
@@ -556,15 +1062,15 @@
         position: relative;
     }
 
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 25px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: #e9ecef;
-        }
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 25px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e9ecef;
+    }
 
     .timeline-item {
         position: relative;
@@ -586,21 +1092,21 @@
         z-index: 2;
     }
 
-        .timeline-marker.primary {
-            background: #007bff;
-        }
+    .timeline-marker.primary {
+        background: #007bff;
+    }
 
-        .timeline-marker.success {
-            background: #28a745;
-        }
+    .timeline-marker.success {
+        background: #28a745;
+    }
 
-        .timeline-marker.danger {
-            background: #dc3545;
-        }
+    .timeline-marker.danger {
+        background: #dc3545;
+    }
 
-        .timeline-marker.secondary {
-            background: #6c757d;
-        }
+    .timeline-marker.secondary {
+        background: #6c757d;
+    }
 
     .timeline-content {
         flex: 1;
@@ -617,12 +1123,12 @@
         margin-bottom: 10px;
     }
 
-        .timeline-header h4 {
-            margin: 0;
-            color: #333;
-            font-size: 16px;
-            font-weight: 600;
-        }
+    .timeline-header h4 {
+        margin: 0;
+        color: #333;
+        font-size: 16px;
+        font-weight: 600;
+    }
 
     .timeline-date {
         color: #666;
@@ -649,54 +1155,67 @@
     }
 
     @@media (max-width: 768px) {
-        .permit-detail-container
+        .permit-detail-container {
+            padding: 15px;
+        }
 
-    {
-        padding: 15px;
-    }
+        .header-content {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
 
-    .header-content {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
-    }
+        .header-actions {
+            width: 100%;
+            justify-content: flex-start;
+        }
 
-    .header-actions {
-        width: 100%;
-        justify-content: flex-start;
-    }
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
 
-    .content-grid {
-        grid-template-columns: 1fr;
-    }
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
 
-    .info-grid {
-        grid-template-columns: 1fr;
-    }
+        .shipping-route {
+            flex-direction: column;
+            gap: 20px;
+        }
 
-    .shipping-route {
-        flex-direction: column;
-        gap: 20px;
-    }
+        .route-arrow {
+            transform: rotate(90deg);
+            margin: 10px 0;
+        }
 
-    .route-arrow {
-        transform: rotate(90deg);
-        margin: 10px 0;
-    }
+        .detail-title {
+            font-size: 24px;
+        }
 
-    .detail-title {
-        font-size: 24px;
-    }
+        .timeline::before {
+            left: 20px;
+        }
 
-    .timeline::before {
-        left: 20px;
-    }
+        .timeline-marker {
+            width: 40px;
+            height: 40px;
+            font-size: 14px;
+        }
 
-    .timeline-marker {
-        width: 40px;
-        height: 40px;
-        font-size: 14px;
-    }
+        .documents-grid {
+            grid-template-columns: 1fr;
+        }
 
+        .checklist-summary {
+            grid-template-columns: 1fr;
+        }
+
+        .document-actions {
+            flex-direction: column;
+        }
+
+        .document-actions .btn {
+            width: 100%;
+        }
     }
 </style>

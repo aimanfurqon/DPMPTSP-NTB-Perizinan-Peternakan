@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using PerizinanPeternakan.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace PerizinanPeternakan.ViewModels
 {
@@ -37,6 +38,28 @@ namespace PerizinanPeternakan.ViewModels
 
         [Display(Name = "Detail Ternak")]
         public List<LivestockDetailViewModel> LivestockDetails { get; set; } = new List<LivestockDetailViewModel>();
+
+        // Document Upload Properties
+        [Display(Name = "Surat Permohonan")]
+        public IFormFile? SuratPermohonan { get; set; }
+
+        [Display(Name = "Surat Rekomendasi dari Dinas Peternakan Provinsi NTB")]
+        public IFormFile? RekomendasiDinasProv { get; set; }
+
+        [Display(Name = "Rekomendasi Pemasukan Ternak dari Daerah Tujuan")]
+        public IFormFile? RekomendasiDaerahTujuan { get; set; }
+
+        [Display(Name = "SKKH dari Kabupaten Asal")]
+        public IFormFile? SKKHKabupatenAsal { get; set; }
+
+        [Display(Name = "SKKH dari Dinas Peternakan Provinsi NTB")]
+        public IFormFile? SKKHDinasProvinsi { get; set; }
+
+        [Display(Name = "Surat Keterangan Jalan Ternak/Rekomendasi Asal")]
+        public IFormFile? SuratJalanTernak { get; set; }
+
+        [Display(Name = "Hasil Pemeriksaan Fisik (Holding Ground)")]
+        public IFormFile? HasilPemeriksaanFisik { get; set; }
     }
 
     public class LivestockDetailViewModel
@@ -90,6 +113,10 @@ namespace PerizinanPeternakan.ViewModels
 
         [Display(Name = "Aksi")]
         public string Action { get; set; } = string.Empty; // "Approve" atau "Reject"
+
+        // Document Information untuk ditampilkan di approval page
+        [Display(Name = "Dokumen Pendukung")]
+        public List<DocumentViewModel> Documents { get; set; } = new List<DocumentViewModel>();
     }
 
     public class PermitListViewModel
@@ -118,6 +145,10 @@ namespace PerizinanPeternakan.ViewModels
         public string? AdminName { get; set; }
         public string? VerifikatorName { get; set; }
         public string? KepalaDinasName { get; set; }
+
+        // Document count for quick overview
+        public int DocumentCount { get; set; }
+        public bool HasAllRequiredDocuments { get; set; }
     }
 
     public class PermitDetailViewModel
@@ -155,6 +186,51 @@ namespace PerizinanPeternakan.ViewModels
         public string? VerifikatorName { get; set; }
         public string? KepalaDinasName { get; set; }
         public int CurrentApprovalLevel { get; set; }
+
+        // Document Information
+        public List<DocumentViewModel> Documents { get; set; } = new List<DocumentViewModel>();
+    }
+
+    public class DocumentViewModel
+    {
+        public int Id { get; set; }
+        public string DocumentName { get; set; } = string.Empty;
+        public string DocumentType { get; set; } = string.Empty;
+        public string FilePath { get; set; } = string.Empty;
+        public long FileSize { get; set; }
+        public string FileExtension { get; set; } = string.Empty;
+        public DateTime UploadDate { get; set; }
+        public string UploadedBy { get; set; } = string.Empty;
+        public string FormattedFileSize => FormatFileSize(FileSize);
+        public string DocumentDisplayName => GetDocumentDisplayName(DocumentType);
+
+        private string FormatFileSize(long bytes)
+        {
+            string[] sizes = { "B", "KB", "MB", "GB" };
+            double len = bytes;
+            int order = 0;
+            while (len >= 1024 && order < sizes.Length - 1)
+            {
+                order++;
+                len = len / 1024;
+            }
+            return $"{len:0.##} {sizes[order]}";
+        }
+
+        private string GetDocumentDisplayName(string documentType)
+        {
+            return documentType switch
+            {
+                "SURAT_PERMOHONAN" => "Surat Permohonan",
+                "REKOMENDASI_DINAS_PROV" => "Rekomendasi Dinas Peternakan Provinsi NTB",
+                "REKOMENDASI_DAERAH_TUJUAN" => "Rekomendasi Pemasukan Ternak dari Daerah Tujuan",
+                "SKKH_KABUPATEN_ASAL" => "SKKH dari Kabupaten Asal",
+                "SKKH_DINAS_PROVINSI" => "SKKH dari Dinas Peternakan Provinsi NTB",
+                "SURAT_JALAN_TERNAK" => "Surat Keterangan Jalan Ternak/Rekomendasi Asal",
+                "HASIL_PEMERIKSAAN_FISIK" => "Hasil Pemeriksaan Fisik (Holding Ground)",
+                _ => documentType
+            };
+        }
     }
 
     public class ApprovalHistoryViewModel

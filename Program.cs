@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using PerizinanPeternakan.Data;
 using PerizinanPeternakan.Services;
@@ -30,6 +32,22 @@ builder.Services.Configure<IISServerOptions>(options =>
     options.MaxRequestBodySize = 52428800; // 50MB
 });
 
+builder.Services.Configure<KestrelServerOptions>(options =>
+{
+    options.Limits.MaxRequestBodySize = 52428800; // 50MB
+});
+
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.ValueLengthLimit = int.MaxValue;
+    options.MultipartBodyLengthLimit = 52428800; // 50MB
+    options.MultipartHeadersLengthLimit = 16384;
+    options.BufferBody = true;
+    options.BufferBodyLengthLimit = 52428800; // 50MB
+    options.ValueCountLimit = 1024;
+    options.KeyLengthLimit = 2048;
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -40,7 +58,17 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        // Set cache headers untuk file dokumen
+        if (ctx.File.Name.StartsWith("documents"))
+        {
+            ctx.Context.Response.Headers.Append("Cache-Control", "private, max-age=600");
+        }
+    }
+});
 app.UseRouting();
 
 // Enable session before authorization
