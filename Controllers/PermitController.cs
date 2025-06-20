@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using PerizinanPeternakan.Data;
 using PerizinanPeternakan.Models;
-using PerizinanPeternakan.ViewModels;
 using PerizinanPeternakan.Services;
+using PerizinanPeternakan.ViewModels;
 
 namespace PerizinanPeternakan.Controllers
 {
@@ -20,7 +21,515 @@ namespace PerizinanPeternakan.Controllers
             _environment = environment;
         }
 
-        // GET: Permit/Index - Daftar permohonan berdasarkan role
+        public async Task<IActionResult> AdminHistory(
+    DateTime? startDate = null,
+    DateTime? endDate = null,
+    PermitStatus? statusFilter = null,
+    string searchTerm = null,
+    int page = 1)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return RedirectToAction("Login", "Auth");
+
+            var userRole = HttpContext.Session.GetString("Role");
+            if (userRole != "Admin")
+            {
+                TempData["ErrorMessage"] = "Akses ditolak. Halaman ini hanya untuk Admin.";
+                return RedirectToAction("Index", "Dashboard");
+            }
+
+            try
+            {
+                int pageSize = 10;
+
+                // Query dasar untuk admin history
+                var query = _context.PermitApplications
+                    .Where(p => p.AdminId == userId.Value &&
+                               (p.Status >= PermitStatus.AdminApproved || p.Status == PermitStatus.AdminRejected))
+                    .Include(p => p.User)
+                    .Include(p => p.ApprovalHistory.Where(h => h.UserId == userId.Value))
+                    .Include(p => p.Documents)
+                    .AsQueryable();
+
+                // Apply filters
+                if (startDate.HasValue)
+                {
+                    query = query.Where(p => p.AdminApprovalDate >= startDate.Value);
+                }
+
+                if (endDate.HasValue)
+                {
+                    query = query.Where(p => p.AdminApprovalDate <= endDate.Value);
+                }
+
+                if (statusFilter.HasValue)
+                {
+                    query = query.Where(p => p.Status == statusFilter.Value);
+                }
+
+                if (!string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    query = query.Where(p =>
+                        p.ApplicationNumber.Contains(searchTerm) ||
+                        p.User.NamaLengkap.Contains(searchTerm) ||
+                        p.CompanyName.Contains(searchTerm));
+                }
+
+                // Get total count for pagination
+                var totalItems = await query.CountAsync();
+                var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+                // Get paged data
+                var adminHistoryList = await query
+                    .OrderByDescending(p => p.AdminApprovalDate ?? p.SubmissionDate)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(p => new AdminHistoryViewModel
+                    {
+                        Id = p.Id,
+                        ApplicationNumber = p.ApplicationNumber,
+                        CompanyName = p.CompanyName,
+                        ApplicantName = p.User.NamaLengkap,
+                        Status = p.Status,
+                        SubmissionDate = p.SubmissionDate,
+                        AdminApprovalDate = p.AdminApprovalDate,
+                        AdminComments = p.ApprovalHistory
+                            .Where(h => h.UserId == userId.Value && h.Action.Contains("Admin"))
+                            .OrderByDescending(h => h.ActionDate)
+                            .Select(h => h.Comments)
+                            .FirstOrDefault(),
+                        AdminAction = p.ApprovalHistory
+                            .Where(h => h.UserId == userId.Value && h.Action.Contains("Admin"))
+                            .OrderByDescending(h => h.ActionDate)
+                            .Select(h => h.Action)
+                            .FirstOrDefault(),
+                        DocumentCount = p.Documents.Count,
+                        CanView = true
+                    })
+                    .ToListAsync();
+
+                // Get statistics
+                var allAdminHistory = await _context.PermitApplications
+                    .Where(p => p.AdminId == userId.Value)
+                    .ToListAsync();
+
+                ViewBag.AdminName = HttpContext.Session.GetString("NamaLengkap");
+                ViewBag.TotalReviewed = allAdminHistory.Count;
+                ViewBag.TotalApproved = allAdminHistory.Count(h =>
+                    h.Status == PermitStatus.AdminApproved ||
+                    h.Status == PermitStatus.VerifikatorApproved ||
+                    h.Status == PermitStatus.FinalApproved);
+                ViewBag.TotalRejected = allAdminHistory.Count(h => h.Status == PermitStatus.AdminRejected);
+                ViewBag.FilteredCount = totalItems;
+
+                // Pagination info
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
+                ViewBag.HasPreviousPage = page > 1;
+                ViewBag.HasNextPage = page < totalPages;
+
+                // Filter values untuk form
+                ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
+                ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
+                ViewBag.StatusFilter = statusFilter;
+                ViewBag.SearchTerm = searchTerm;
+
+                // HAPUS BAGIAN INI - tidak diperlukan lagi:
+                // ViewBag.StatusOptions = new SelectList(...);
+
+                return View(adminHistoryList);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Terjadi kesalahan saat memuat riwayat review.";
+                return View(new List<AdminHistoryViewModel>());
+            }
+        }
+
+        // GET: Permit/TestAddAdminHistory - Form untuk testing manual add (hanya untuk development)
+        [HttpGet]
+        public async Task<IActionResult> TestAddAdminHistory()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return RedirectToAction("Login", "Auth");
+
+            var userRole = HttpContext.Session.GetString("Role");
+            if (userRole != "Admin")
+            {
+                TempData["ErrorMessage"] = "Akses ditolak.";
+                return RedirectToAction("Index", "Dashboard");
+            }
+
+            // Get permits yang bisa ditambahkan history
+            var availablePermits = await _context.PermitApplications
+                .Where(p => p.Status == PermitStatus.Submitted)
+                .Select(p => new SelectListItem
+                {
+                    Value = p.Id.ToString(),
+                    Text = $"{p.ApplicationNumber} - {p.CompanyName}"
+                })
+                .ToListAsync();
+
+            ViewBag.AvailablePermits = availablePermits;
+            return View();
+        }
+
+        // POST: Permit/TestAddAdminHistory - Submit manual add
+        [HttpPost]
+        public async Task<IActionResult> TestAddAdminHistory(int permitId, string action, string comments)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return RedirectToAction("Login", "Auth");
+
+            var userRole = HttpContext.Session.GetString("Role");
+            if (userRole != "Admin")
+            {
+                return Json(new { success = false, message = "Akses ditolak" });
+            }
+
+            try
+            {
+                var permit = await _context.PermitApplications.FindAsync(permitId);
+                if (permit == null)
+                {
+                    TempData["ErrorMessage"] = "Permohonan tidak ditemukan";
+                    return RedirectToAction("TestAddAdminHistory");
+                }
+
+                // Cek apakah sudah ada history admin untuk permit ini dari user yang sama
+                var existingHistory = await _context.PermitApprovalHistories
+                    .AnyAsync(h => h.PermitApplicationId == permitId &&
+                                  h.UserId == userId.Value &&
+                                  h.Action.Contains("Admin"));
+
+                if (existingHistory)
+                {
+                    TempData["ErrorMessage"] = "Anda sudah memberikan review untuk permohonan ini";
+                    return RedirectToAction("TestAddAdminHistory");
+                }
+
+                var fromStatus = permit.Status;
+                var toStatus = action == "approve" ? PermitStatus.AdminApproved : PermitStatus.AdminRejected;
+                var actionText = action == "approve" ? "Disetujui Admin" : "Ditolak Admin";
+
+                var history = new PermitApprovalHistory
+                {
+                    PermitApplicationId = permitId,
+                    UserId = userId.Value,
+                    FromStatus = fromStatus,
+                    ToStatus = toStatus,
+                    Action = actionText,
+                    Comments = comments ?? "Review admin manual",
+                    ActionDate = DateTime.Now
+                };
+
+                _context.PermitApprovalHistories.Add(history);
+
+                // Update permit
+                permit.Status = toStatus;
+                permit.AdminId = userId.Value;
+                permit.AdminApprovalDate = DateTime.Now;
+
+                if (action == "reject")
+                {
+                    permit.RejectionReason = comments;
+                }
+
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = $"History admin berhasil ditambahkan untuk {permit.ApplicationNumber}";
+                return RedirectToAction("AdminHistory");
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Terjadi kesalahan saat menambahkan history";
+                return RedirectToAction("TestAddAdminHistory");
+            }
+        }
+
+        // GET: Permit/BulkSeedAdminHistory - Seed bulk data untuk testing
+        public async Task<IActionResult> BulkSeedAdminHistory()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return RedirectToAction("Login", "Auth");
+
+            var userRole = HttpContext.Session.GetString("Role");
+            if (userRole != "Admin")
+            {
+                return Json(new { success = false, message = "Akses ditolak" });
+            }
+
+            try
+            {
+                // Menggunakan seeder untuk bulk add
+                AdminHistorySeeder.SeedAdminHistoryData(_context);
+                AdminHistorySeeder.GenerateTestingAdminHistory(_context);
+
+                TempData["SuccessMessage"] = "Bulk admin history data berhasil ditambahkan";
+                return RedirectToAction("AdminHistory");
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Gagal menambahkan bulk data: " + ex.Message;
+                return RedirectToAction("AdminHistory");
+            }
+        }
+
+        // API endpoint untuk mendapatkan data admin history (untuk chart/dashboard)
+        [HttpGet]
+        public async Task<IActionResult> GetAdminHistoryChart(int months = 6)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return Unauthorized();
+
+            var userRole = HttpContext.Session.GetString("Role");
+            if (userRole != "Admin") return Forbid();
+
+            try
+            {
+                var startDate = DateTime.Now.AddMonths(-months);
+
+                var monthlyData = await _context.PermitApprovalHistories
+                    .Where(h => h.UserId == userId.Value &&
+                               h.Action.Contains("Admin") &&
+                               h.ActionDate >= startDate)
+                    .GroupBy(h => new {
+                        Year = h.ActionDate.Year,
+                        Month = h.ActionDate.Month
+                    })
+                    .Select(g => new
+                    {
+                        year = g.Key.Year,
+                        month = g.Key.Month,
+                        monthName = new DateTime(g.Key.Year, g.Key.Month, 1).ToString("MMM yyyy"),
+                        totalReviewed = g.Count(),
+                        totalApproved = g.Count(h => h.Action.Contains("Disetujui")),
+                        totalRejected = g.Count(h => h.Action.Contains("Ditolak"))
+                    })
+                    .OrderBy(x => x.year).ThenBy(x => x.month)
+                    .ToListAsync();
+
+                return Json(new { success = true, data = monthlyData });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Helper method untuk mendapatkan ringkasan aktivitas admin
+        public async Task<IActionResult> GetAdminActivitySummary()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return Unauthorized();
+
+            var userRole = HttpContext.Session.GetString("Role");
+            if (userRole != "Admin") return Forbid();
+
+            try
+            {
+                var today = DateTime.Today;
+                var thisWeek = today.AddDays(-7);
+                var thisMonth = new DateTime(today.Year, today.Month, 1);
+
+                var summary = new
+                {
+                    todayReviews = await _context.PermitApprovalHistories
+                        .CountAsync(h => h.UserId == userId.Value &&
+                                       h.Action.Contains("Admin") &&
+                                       h.ActionDate.Date == today),
+
+                    weekReviews = await _context.PermitApprovalHistories
+                        .CountAsync(h => h.UserId == userId.Value &&
+                                       h.Action.Contains("Admin") &&
+                                       h.ActionDate >= thisWeek),
+
+                    monthReviews = await _context.PermitApprovalHistories
+                        .CountAsync(h => h.UserId == userId.Value &&
+                                       h.Action.Contains("Admin") &&
+                                       h.ActionDate >= thisMonth),
+
+                    pendingReviews = await _context.PermitApplications
+                        .CountAsync(p => p.Status == PermitStatus.Submitted),
+
+                    avgProcessingTime = await _context.PermitApplications
+                        .Where(p => p.AdminId == userId.Value &&
+                                   p.SubmissionDate != null &&
+                                   p.AdminApprovalDate.HasValue)
+                        .Select(p => EF.Functions.DateDiffDay(p.SubmissionDate, p.AdminApprovalDate.Value))
+                        .AverageAsync()
+                };
+
+                return Json(new { success = true, data = summary });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // POST: Permit/AddAdminHistory - Menambahkan history admin baru (untuk testing/manual entry)
+        [HttpPost]
+        public async Task<IActionResult> AddAdminHistory(int permitId, string action, string comments)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return RedirectToAction("Login", "Auth");
+
+            var userRole = HttpContext.Session.GetString("Role");
+            if (userRole != "Admin")
+            {
+                return Json(new { success = false, message = "Akses ditolak" });
+            }
+
+            try
+            {
+                var permit = await _context.PermitApplications.FindAsync(permitId);
+                if (permit == null)
+                {
+                    return Json(new { success = false, message = "Permohonan tidak ditemukan" });
+                }
+
+                var fromStatus = permit.Status;
+                var toStatus = action.Contains("Disetujui") ?
+                    PermitStatus.AdminApproved : PermitStatus.AdminRejected;
+
+                var history = new PermitApprovalHistory
+                {
+                    PermitApplicationId = permitId,
+                    UserId = userId.Value,
+                    FromStatus = fromStatus,
+                    ToStatus = toStatus,
+                    Action = action,
+                    Comments = comments ?? $"Review admin untuk permohonan {permit.ApplicationNumber}",
+                    ActionDate = DateTime.Now
+                };
+
+                _context.PermitApprovalHistories.Add(history);
+
+                // Update permit
+                permit.Status = toStatus;
+                permit.AdminId = userId.Value;
+                permit.AdminApprovalDate = DateTime.Now;
+
+                if (toStatus == PermitStatus.AdminRejected)
+                {
+                    permit.RejectionReason = comments;
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Json(new
+                {
+                    success = true,
+                    message = $"History admin berhasil ditambahkan untuk {permit.ApplicationNumber}"
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Terjadi kesalahan saat menambahkan history" });
+            }
+        }
+
+        // GET: Permit/AdminStatistics - API untuk statistik admin (untuk AJAX calls)
+        public async Task<IActionResult> AdminStatistics()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return Unauthorized();
+
+            var userRole = HttpContext.Session.GetString("Role");
+            if (userRole != "Admin") return Forbid();
+
+            try
+            {
+                var currentMonth = DateTime.Now.Month;
+                var currentYear = DateTime.Now.Year;
+
+                var stats = new
+                {
+                    totalReviewed = await _context.PermitApplications.CountAsync(p => p.AdminId == userId.Value),
+                    totalApproved = await _context.PermitApplications.CountAsync(p =>
+                        p.AdminId == userId.Value &&
+                        (p.Status == PermitStatus.AdminApproved ||
+                         p.Status == PermitStatus.VerifikatorApproved ||
+                         p.Status == PermitStatus.FinalApproved)),
+                    totalRejected = await _context.PermitApplications.CountAsync(p =>
+                        p.AdminId == userId.Value && p.Status == PermitStatus.AdminRejected),
+                    thisMonthReviewed = await _context.PermitApplications.CountAsync(p =>
+                        p.AdminId == userId.Value &&
+                        p.AdminApprovalDate.HasValue &&
+                        p.AdminApprovalDate.Value.Month == currentMonth &&
+                        p.AdminApprovalDate.Value.Year == currentYear)
+                };
+
+                return Json(stats);
+            }
+            catch (Exception)
+            {
+                return Json(new { error = "Failed to load statistics" });
+            }
+        }
+
+        //public async Task<IActionResult> AdminHistory()
+        //{
+        //    var userId = GetCurrentUserId();
+        //    if (userId == null) return RedirectToAction("Login", "Auth");
+
+        //    var userRole = HttpContext.Session.GetString("Role");
+        //    if (userRole != "Admin")
+        //    {
+        //        TempData["ErrorMessage"] = "Akses ditolak. Halaman ini hanya untuk Admin.";
+        //        return RedirectToAction("Index", "Dashboard");
+        //    }
+
+        //    try
+        //    {
+        //        // Ambil semua permohonan yang pernah di-review oleh admin
+        //        var adminHistoryList = await _context.PermitApplications
+        //            .Where(p => p.Status >= PermitStatus.AdminApproved || p.Status == PermitStatus.AdminRejected)
+        //            .Include(p => p.User)
+        //            .Include(p => p.ApprovalHistory.Where(h => h.UserId == userId.Value))
+        //            .Include(p => p.Documents)
+        //            .OrderByDescending(p => p.AdminApprovalDate ?? p.SubmissionDate)
+        //            .Select(p => new AdminHistoryViewModel
+        //            {
+        //                Id = p.Id,
+        //                ApplicationNumber = p.ApplicationNumber,
+        //                CompanyName = p.CompanyName,
+        //                ApplicantName = p.User.NamaLengkap,
+        //                Status = p.Status,
+        //                SubmissionDate = p.SubmissionDate,
+        //                AdminApprovalDate = p.AdminApprovalDate,
+        //                AdminComments = p.ApprovalHistory
+        //                    .Where(h => h.UserId == userId.Value && h.Action.Contains("Admin"))
+        //                    .OrderByDescending(h => h.ActionDate)
+        //                    .Select(h => h.Comments)
+        //                    .FirstOrDefault(),
+        //                AdminAction = p.ApprovalHistory
+        //                    .Where(h => h.UserId == userId.Value && h.Action.Contains("Admin"))
+        //                    .OrderByDescending(h => h.ActionDate)
+        //                    .Select(h => h.Action)
+        //                    .FirstOrDefault(),
+        //                DocumentCount = p.Documents.Count,
+        //                CanView = true
+        //            })
+        //            .ToListAsync();
+
+        //        ViewBag.AdminName = HttpContext.Session.GetString("NamaLengkap");
+        //        ViewBag.TotalReviewed = adminHistoryList.Count;
+        //        ViewBag.TotalApproved = adminHistoryList.Count(h => h.Status == PermitStatus.AdminApproved ||
+        //                                                           h.Status == PermitStatus.VerifikatorApproved ||
+        //                                                           h.Status == PermitStatus.FinalApproved);
+        //        ViewBag.TotalRejected = adminHistoryList.Count(h => h.Status == PermitStatus.AdminRejected);
+
+        //        return View(adminHistoryList);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        TempData["ErrorMessage"] = "Terjadi kesalahan saat memuat riwayat review.";
+        //        return View(new List<AdminHistoryViewModel>());
+        //    }
+        //}
+
         public async Task<IActionResult> Index()
         {
             var userId = GetCurrentUserId();

@@ -1,0 +1,359 @@
+﻿@{
+    ViewData["Title"] = "Test Add Admin History";
+}
+
+<div class="test-admin-history-page">
+    <div class="page-header">
+        <h1>
+            <i class="fas fa-plus-circle"></i>
+            Test Add Admin History
+        </h1>
+        <p class="page-description">Form untuk testing manual penambahan history admin</p>
+    </div>
+
+    <div class="form-container">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-edit"></i> Tambah History Admin</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="TestAddAdminHistory" method="post" id="addHistoryForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="permitId" class="form-label">Pilih Permohonan</label>
+                                <select name="permitId" id="permitId" class="form-control" required>
+                                    <option value="">-- Pilih Permohonan --</option>
+                                    @foreach (var permit in ViewBag.AvailablePermits)
+                                    {
+                                        <option value="@permit.Value">@permit.Text</option>
+                                    }
+                                </select>
+                                <small class="form-text text-muted">Pilih permohonan yang akan diberi review</small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="action" class="form-label">Aksi Admin</label>
+                                <select name="action" id="action" class="form-control" required>
+                                    <option value="">-- Pilih Aksi --</option>
+                                    <option value="approve">Setujui</option>
+                                    <option value="reject">Tolak</option>
+                                </select>
+                                <small class="form-text text-muted">Pilih aksi yang akan diambil</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="comments" class="form-label">Komentar</label>
+                        <textarea name="comments" id="comments" class="form-control" rows="4"
+                                  placeholder="Masukkan komentar/alasan untuk aksi yang diambil..." required></textarea>
+                        <small class="form-text text-muted">Berikan komentar yang jelas tentang keputusan review</small>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Tambah History
+                        </button>
+                        <a href="@Url.Action("AdminHistory")" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Kembali ke History
+                        </a>
+                        <a href="@Url.Action("BulkSeedAdminHistory")" class="btn btn-info"
+                           onclick="return confirm('Yakin ingin menambahkan bulk data testing?')">
+                            <i class="fas fa-database"></i> Bulk Seed Data
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Section -->
+    <div class="preview-container" id="previewContainer" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-eye"></i> Preview History</h4>
+            </div>
+            <div class="card-body">
+                <div class="preview-content">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Permohonan:</strong>
+                            <span id="previewPermit">-</span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Aksi:</strong>
+                            <span id="previewAction" class="badge">-</span>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <strong>Komentar:</strong>
+                        <p id="previewComments" class="text-muted">-</p>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="fas fa-clock"></i> Tanggal: <span id="previewDate">@DateTime.Now.ToString("dd MMM yyyy HH:mm")</span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-bolt"></i> Quick Actions</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-outline-success btn-block" onclick="fillQuickApprove()">
+                            <i class="fas fa-check"></i> Quick Approve
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-outline-danger btn-block" onclick="fillQuickReject()">
+                            <i class="fas fa-times"></i> Quick Reject
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-outline-secondary btn-block" onclick="clearForm()">
+                            <i class="fas fa-eraser"></i> Clear Form
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .test-admin-history-page {
+        padding: 20px;
+    }
+
+    .page-header {
+        margin-bottom: 30px;
+    }
+
+        .page-header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .page-header .page-description {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+
+    .form-container, .preview-container, .quick-actions {
+        margin-bottom: 20px;
+    }
+
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border: none;
+    }
+
+    .card-header {
+        background: #34495e;
+        color: white;
+        border-radius: 10px 10px 0 0 !important;
+        padding: 15px 20px;
+    }
+
+        .card-header h4 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #bdc3c7;
+        padding: 10px 15px;
+    }
+
+        .form-control:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 600;
+    }
+
+    .preview-content .badge {
+        font-size: 14px;
+        padding: 8px 12px;
+    }
+
+    .quick-actions .btn-block {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    @@media (max-width: 768px) {
+        .form-actions
+
+    {
+        flex-direction: column;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    }
+</style>
+
+<script>
+    // Form validation dan preview
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('addHistoryForm');
+        const permitSelect = document.getElementById('permitId');
+        const actionSelect = document.getElementById('action');
+        const commentsTextarea = document.getElementById('comments');
+        const previewContainer = document.getElementById('previewContainer');
+
+        // Update preview when form changes
+        [permitSelect, actionSelect, commentsTextarea].forEach(element => {
+            element.addEventListener('change', updatePreview);
+            element.addEventListener('input', updatePreview);
+        });
+
+        function updatePreview() {
+            const permit = permitSelect.selectedOptions[0]?.text || '-';
+            const action = actionSelect.value;
+            const comments = commentsTextarea.value;
+
+            if (permit !== '-' && action && comments) {
+                document.getElementById('previewPermit').textContent = permit;
+
+                const actionBadge = document.getElementById('previewAction');
+                actionBadge.textContent = action === 'approve' ? 'Disetujui Admin' : 'Ditolak Admin';
+                actionBadge.className = action === 'approve' ? 'badge bg-success' : 'badge bg-danger';
+
+                document.getElementById('previewComments').textContent = comments;
+
+                previewContainer.style.display = 'block';
+            } else {
+                previewContainer.style.display = 'none';
+            }
+        }
+
+        // Form submission
+        form.addEventListener('submit', function(e) {
+            if (!validateForm()) {
+                e.preventDefault();
+                return false;
+            }
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+            submitBtn.disabled = true;
+        });
+
+        function validateForm() {
+            const permit = permitSelect.value;
+            const action = actionSelect.value;
+            const comments = commentsTextarea.value.trim();
+
+            if (!permit) {
+                alert('Pilih permohonan terlebih dahulu');
+                permitSelect.focus();
+                return false;
+            }
+
+            if (!action) {
+                alert('Pilih aksi admin terlebih dahulu');
+                actionSelect.focus();
+                return false;
+            }
+
+            if (!comments || comments.length < 10) {
+                alert('Komentar harus diisi minimal 10 karakter');
+                commentsTextarea.focus();
+                return false;
+            }
+
+            return true;
+        }
+    });
+
+    // Quick action functions
+    function fillQuickApprove() {
+        document.getElementById('action').value = 'approve';
+        document.getElementById('comments').value = 'Data permohonan telah direview dan dinyatakan lengkap. Semua dokumen pendukung sesuai dengan persyaratan yang berlaku. PDF dokumen izin telah digenerate dan siap untuk tahap verifikasi selanjutnya.';
+        updatePreview();
+    }
+
+    function fillQuickReject() {
+        document.getElementById('action').value = 'reject';
+        document.getElementById('comments').value = 'Permohonan ditolak karena data yang disubmit tidak lengkap. Beberapa dokumen pendukung masih kurang dan format tidak sesuai standar yang ditetapkan. Mohon lengkapi dokumen dan ajukan kembali.';
+        updatePreview();
+    }
+
+    function clearForm() {
+        document.getElementById('addHistoryForm').reset();
+        document.getElementById('previewContainer').style.display = 'none';
+    }
+
+    // Character counter untuk textarea
+    document.getElementById('comments').addEventListener('input', function() {
+        const maxLength = 500;
+        const currentLength = this.value.length;
+
+        // Tambahkan counter jika belum ada
+        let counter = document.getElementById('commentCounter');
+        if (!counter) {
+            counter = document.createElement('small');
+            counter.id = 'commentCounter';
+            counter.className = 'form-text text-muted';
+            this.parentNode.appendChild(counter);
+        }
+
+        counter.textContent = `${currentLength}/${maxLength} karakter`;
+
+        if (currentLength > maxLength) {
+            counter.className = 'form-text text-danger';
+            this.value = this.value.substring(0, maxLength);
+        } else {
+            counter.className = 'form-text text-muted';
+        }
+    });
+
+    // Auto-resize textarea
+    document.getElementById('comments').addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+
+    // Konfirmasi sebelum bulk seed
+    function confirmBulkSeed() {
+        return confirm('Yakin ingin menambahkan data testing dalam jumlah besar? Ini akan menambahkan banyak history admin untuk testing.');
+    }
+</script>

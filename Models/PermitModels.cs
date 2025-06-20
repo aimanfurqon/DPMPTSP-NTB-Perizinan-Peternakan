@@ -207,23 +207,42 @@ namespace PerizinanPeternakan.Models
             };
         }
 
+        //public static string GetStatusClass(PermitStatus status)
+        //{
+        //    return status switch
+        //    {
+        //        PermitStatus.Draft => "secondary",
+        //        PermitStatus.Submitted => "info",
+        //        PermitStatus.UnderAdminReview => "warning",
+        //        PermitStatus.AdminApproved => "primary",
+        //        PermitStatus.AdminRejected => "danger",
+        //        PermitStatus.UnderVerifikatorReview => "warning",
+        //        PermitStatus.VerifikatorApproved => "primary",
+        //        PermitStatus.VerifikatorRejected => "danger",
+        //        PermitStatus.PendingKepalaDinas => "warning",
+        //        PermitStatus.KepalaDinasRejected => "danger",
+        //        PermitStatus.FinalApproved => "success",
+        //        PermitStatus.FinalRejected => "danger",
+        //        _ => "secondary"
+        //    };
+        //}
+
         public static string GetStatusClass(PermitStatus status)
         {
             return status switch
             {
-                PermitStatus.Draft => "secondary",
-                PermitStatus.Submitted => "info",
-                PermitStatus.UnderAdminReview => "warning",
-                PermitStatus.AdminApproved => "primary",
-                PermitStatus.AdminRejected => "danger",
-                PermitStatus.UnderVerifikatorReview => "warning",
-                PermitStatus.VerifikatorApproved => "primary",
-                PermitStatus.VerifikatorRejected => "danger",
-                PermitStatus.PendingKepalaDinas => "warning",
-                PermitStatus.KepalaDinasRejected => "danger",
-                PermitStatus.FinalApproved => "success",
-                PermitStatus.FinalRejected => "danger",
-                _ => "secondary"
+                PermitStatus.Draft => "status-draft",
+                PermitStatus.Submitted => "status-submitted",
+                PermitStatus.UnderAdminReview => "status-under-review",
+                PermitStatus.AdminApproved => "status-admin-approved",
+                PermitStatus.AdminRejected => "status-rejected",
+                PermitStatus.UnderVerifikatorReview => "status-under-review",
+                PermitStatus.VerifikatorApproved => "status-verifikator-approved",
+                PermitStatus.VerifikatorRejected => "status-rejected",
+                PermitStatus.PendingKepalaDinas => "status-pending",
+                PermitStatus.FinalApproved => "status-approved",
+                PermitStatus.KepalaDinasRejected => "status-rejected",
+                _ => "status-unknown"
             };
         }
 

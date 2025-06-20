@@ -62,6 +62,25 @@ namespace PerizinanPeternakan.ViewModels
         public IFormFile? HasilPemeriksaanFisik { get; set; }
     }
 
+    public class AdminHistoryViewModel
+    {
+        public int Id { get; set; }
+        public string ApplicationNumber { get; set; }
+        public string CompanyName { get; set; }
+        public string ApplicantName { get; set; }
+        public PermitStatus Status { get; set; }
+        public DateTime SubmissionDate { get; set; }
+        public DateTime? AdminApprovalDate { get; set; }
+        public string AdminComments { get; set; }
+        public string AdminAction { get; set; }
+        public int DocumentCount { get; set; }
+        public bool CanView { get; set; }
+
+        // Helper properties
+        public string StatusText => PermitStatusHelper.GetStatusText(Status);
+        public string StatusClass => PermitStatusHelper.GetStatusClass(Status);
+        public string FormattedAdminApprovalDate => AdminApprovalDate?.ToString("dd MMM yyyy HH:mm") ?? "-";
+    }
     public class LivestockDetailViewModel
     {
         [Required(ErrorMessage = "Jenis ternak harus diisi")]
