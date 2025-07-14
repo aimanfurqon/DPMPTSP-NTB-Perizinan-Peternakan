@@ -1955,13 +1955,73 @@ namespace PerizinanPeternakan.Controllers
             var year = DateTime.Now.Year;
             var month = DateTime.Now.Month;
 
-            var lastNumber = await _context.PermitApplications
-                .Where(p => p.SubmissionDate.Year == year && p.SubmissionDate.Month == month)
-                .CountAsync();
+            // Gunakan transaction untuk memastikan atomicity
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
-            return $"{(lastNumber + 1).ToString().PadLeft(3, '0')}/03-260/DPM&PTSP/{year}";
+            try
+            {
+                // Lock table untuk mencegah race condition
+                await _context.Database.ExecuteSqlRawAsync("SELECT 1 FROM PermitApplications WITH (TABLOCKX)");
+
+                // Ambil nomor terakhir dengan pattern yang benar untuk bulan/tahun ini
+                var prefix = $"%/03-260/DPM&PTSP/{year}";
+
+                var lastApplication = await _context.PermitApplications
+                    .Where(p => p.ApplicationNumber.EndsWith($"/03-260/DPM&PTSP/{year}") &&
+                               p.SubmissionDate.Year == year &&
+                               p.SubmissionDate.Month == month)
+                    .OrderByDescending(p => p.ApplicationNumber)
+                    .FirstOrDefaultAsync();
+
+                int nextNumber = 1;
+
+                if (lastApplication != null)
+                {
+                    // Extract nomor urut dari ApplicationNumber (format: XXX/03-260/DPM&PTSP/YYYY)
+                    var numberPart = lastApplication.ApplicationNumber.Split('/')[0];
+                    if (int.TryParse(numberPart, out int currentNumber))
+                    {
+                        nextNumber = currentNumber + 1;
+                    }
+                }
+
+                // Generate nomor dengan retry mechanism
+                string applicationNumber;
+                int maxRetries = 10;
+                int retryCount = 0;
+
+                do
+                {
+                    applicationNumber = $"{nextNumber.ToString().PadLeft(3, '0')}/03-260/DPM&PTSP/{year}";
+
+                    // Check apakah sudah ada
+                    var exists = await _context.PermitApplications
+                        .AnyAsync(p => p.ApplicationNumber == applicationNumber);
+
+                    if (!exists)
+                    {
+                        break; // Nomor unik ditemukan
+                    }
+
+                    nextNumber++;
+                    retryCount++;
+
+                    if (retryCount >= maxRetries)
+                    {
+                        throw new InvalidOperationException("Tidak dapat menggenerate nomor aplikasi unik setelah beberapa percobaan");
+                    }
+
+                } while (true);
+
+                await transaction.CommitAsync();
+                return applicationNumber;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
-
         private bool CanUserApprove(string userRole, PermitStatus status)
         {
             return userRole switch
