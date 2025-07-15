@@ -33,6 +33,11 @@
 		<None Include="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Content Remove="wwwroot\css\multi-step-form.css" />
+	  <Content Remove="wwwroot\js\multi-step-form.js" />
+	</ItemGroup>
+
 	<!-- Optional: Add DinkToPdf for better PDF generation -->
 	<!--
   <ItemGroup>
