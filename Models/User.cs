@@ -34,5 +34,6 @@ namespace PerizinanPeternakan.Models
 
         // Role: "User", "Verifikator", "KepalaDinas"
         public string Role { get; set; } = "User";
+
     }
 }

@@ -3,31 +3,24 @@ using Microsoft.EntityFrameworkCore;
 using PerizinanPeternakan.Data;
 using PerizinanPeternakan.Models;
 using PerizinanPeternakan.ViewModels;
+using PerizinanPeternakan.Services;
 using BCrypt.Net;
+using System.Security.Cryptography;
 
 namespace PerizinanPeternakan.Controllers
 {
     public class AuthController : Controller
     {
         private readonly ApplicationDbContext _context;
+        //private readonly IEmailSender _emailSender;
 
-        public AuthController(ApplicationDbContext context)
+        public AuthController(ApplicationDbContext context /*, IEmailSender emailSender*/)
         {
             _context = context;
+        //    _emailSender = emailSender;
         }
 
-        // GET: Login
-        [HttpGet]
-        public IActionResult Login()
-        {
-            if (IsUserLoggedIn())
-            {
-                return RedirectToAction(nameof(DashboardController.Index), "Dashboard");
-            }
-            return View();
-        }
-
-        // POST: Login
+        // POST: Login (Diperbarui dengan Bypass)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
@@ -40,19 +33,61 @@ namespace PerizinanPeternakan.Controllers
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => (u.Username == model.Username || u.Email == model.Username) && u.IsActive);
 
-            if (user == null || !BCrypt.Net.BCrypt.Verify(model.Password, user.Password))
+            if (user == null)
             {
                 TempData["ErrorMessage"] = "Username atau Password tidak valid.";
                 return View(model);
             }
+
+            // --- PERUBAHAN: BYPASS PASSWORD UNTUK 'kepaladinas' ---
+            bool isPasswordValid;
+
+            if (user.Username.Equals("kepaladinas", StringComparison.OrdinalIgnoreCase))
+            {
+                isPasswordValid = true; // Langsung dianggap valid jika username adalah 'kepaladinas'
+                TempData["InfoMessage"] = "Login sebagai Kepala Dinas (Mode Bypass Password Aktif).";
+            } else if (user.Username.Equals("admin1", StringComparison.OrdinalIgnoreCase))
+            {
+                isPasswordValid = true; // Langsung dianggap valid jika username adalah 'kepaladinas'
+                TempData["InfoMessage"] = "Login sebagai Admin1 (Mode Bypass Password Aktif).";
+            }
+            else
+            {
+                // Verifikasi password normal untuk user lain
+                isPasswordValid = BCrypt.Net.BCrypt.Verify(model.Password, user.Password);
+            }
+
+            if (!isPasswordValid)
+            {
+                TempData["ErrorMessage"] = "Username atau Password tidak valid.";
+                return View(model);
+            }
+            // --- AKHIR PERUBAHAN ---
+
+            //if (!user.IsEmailVerified)
+            //{
+            //    TempData["ErrorMessage"] = "Akun Anda belum diverifikasi. Silakan cek email Anda.";
+            //    return View(model);
+            //}
 
             SetUserSession(user);
             TempData["SuccessMessage"] = $"Selamat datang kembali, {user.NamaLengkap}!";
             return RedirectToAction(nameof(DashboardController.Index), "Dashboard");
         }
 
-        // GET: Register
+        // ... (Sisa kode Anda: Register, Logout, Profile, dll. tetap sama)
+        // GET: Login
         [HttpGet]
+        public IActionResult Login()
+        {
+            if (IsUserLoggedIn())
+            {
+                return RedirectToAction(nameof(DashboardController.Index), "Dashboard");
+            }
+            return View();
+        }
+        // GET: Register
+        [HttpGet]
         public IActionResult Register()
         {
             if (IsUserLoggedIn())
@@ -61,9 +96,8 @@ namespace PerizinanPeternakan.Controllers
             }
             return View();
         }
-
         // POST: Register
-        [HttpPost]
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
@@ -72,6 +106,7 @@ namespace PerizinanPeternakan.Controllers
                 return View(model);
             }
 
+            // Cek duplikasi
             if (await _context.Users.AnyAsync(u => u.Username == model.Username))
             {
                 ModelState.AddModelError(nameof(model.Username), "Username sudah digunakan.");
@@ -83,6 +118,9 @@ namespace PerizinanPeternakan.Controllers
                 return View(model);
             }
 
+            // Buat token verifikasi yang aman
+            var verificationToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
+
             var newUser = new User
             {
                 Username = model.Username,
@@ -93,18 +131,71 @@ namespace PerizinanPeternakan.Controllers
                 Alamat = model.Alamat,
                 Role = "User",
                 TanggalDaftar = DateTime.UtcNow,
-                IsActive = true
-            };
+                IsActive = true, // Tetap aktif, tapi verifikasi email jadi penentu
+            //    IsEmailVerified = false, // <-- PENTING
+            //    VerificationToken = verificationToken,
+            //    VerificationTokenExpires = DateTime.UtcNow.AddDays(1) // Token berlaku 1 hari
+            };
 
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "Registrasi berhasil! Silakan login dengan akun baru Anda.";
-            return RedirectToAction(nameof(Login));
+            // Kirim email verifikasi
+        //    var verificationLink = Url.Action("VerifyEmail", "Auth",
+        //new { userId = newUser.Id, token = verificationToken },
+        //Request.Scheme);
+
+        //    var emailMessage = $"<h1>Verifikasi Akun Anda</h1>" +
+        //             $"<p>Terima kasih telah mendaftar. Silakan klik link di bawah ini untuk mengaktifkan akun Anda:</p>" +
+        //             $"<a href='{verificationLink}'>Verifikasi Akun Saya</a>" +
+        //             $"<p>Jika Anda tidak merasa mendaftar, abaikan email ini.</p>";
+
+        //    await _emailSender.SendEmailAsync(newUser.Email, "Verifikasi Akun - Sistem Perizinan", emailMessage);
+
+            // Redirect ke halaman informasi
+            return RedirectToAction(nameof(RegistrationPending));
+        }
+
+        [HttpGet]
+        public IActionResult RegistrationPending()
+        {
+            return View();
+        }
+
+        //[HttpGet]
+        //public async Task<IActionResult> VerifyEmail(int userId, string token)
+        //{
+        //    if (userId == 0 || string.IsNullOrEmpty(token))
+        //    {
+        //        return RedirectToAction(nameof(VerificationFailed));
+        //    }
+
+        //    var user = await _context.Users.FindAsync(userId);
+
+        //    if (user == null || user.VerificationToken != token || user.VerificationTokenExpires < DateTime.UtcNow)
+        //    {
+        //        return RedirectToAction(nameof(VerificationFailed));
+        //    }
+
+        //    user.IsEmailVerified = true;
+        //    user.VerificationToken = null; // Hapus token setelah digunakan
+        //    user.VerificationTokenExpires = null;
+        //    await _context.SaveChangesAsync();
+
+        //    // Opsional: Langsung login setelah verifikasi berhasil
+        //    SetUserSession(user);
+        //    TempData["SuccessMessage"] = "Email berhasil diverifikasi! Anda telah login.";
+        //    return RedirectToAction(nameof(DashboardController.Index), "Dashboard");
+        //}
+
+        [HttpGet]
+        public IActionResult VerificationFailed()
+        {
+            return View();
         }
 
         // POST: Logout
-        [HttpPost]
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Logout()
         {
@@ -113,10 +204,8 @@ namespace PerizinanPeternakan.Controllers
             return RedirectToAction(nameof(Login));
         }
 
-        // --- FUNGSI PROFILE DIKEMBALIKAN ---
-
-        // GET: Profile
-        [HttpGet]
+        // GET: Profile
+        [HttpGet]
         public async Task<IActionResult> Profile()
         {
             var userId = GetCurrentUserId();
@@ -134,7 +223,7 @@ namespace PerizinanPeternakan.Controllers
 
             var model = new ProfileViewModel
             {
-                Username = user.Username, // Username tidak bisa diubah, jadi hanya ditampilkan
+                Username = user.Username,
                 Email = user.Email,
                 NamaLengkap = user.NamaLengkap,
                 NoTelepon = user.NoTelepon,
@@ -144,15 +233,15 @@ namespace PerizinanPeternakan.Controllers
             return View(model);
         }
 
-        // POST: Profile
-        [HttpPost]
+        // POST: Profile
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Profile(ProfileViewModel model)
         {
             var userId = GetCurrentUserId();
             if (userId == null)
             {
-                return Challenge(); // Atau RedirectToAction(nameof(Login))
+                return Challenge();
             }
 
             if (!ModelState.IsValid)
@@ -166,20 +255,17 @@ namespace PerizinanPeternakan.Controllers
                 return NotFound();
             }
 
-            // Cek apakah email baru sudah digunakan oleh user lain
             if (await _context.Users.AnyAsync(u => u.Email == model.Email && u.Id != userId.Value))
             {
                 ModelState.AddModelError(nameof(model.Email), "Email ini sudah terdaftar untuk akun lain.");
                 return View(model);
             }
 
-            // Update data user
             userToUpdate.Email = model.Email;
             userToUpdate.NamaLengkap = model.NamaLengkap;
             userToUpdate.NoTelepon = model.NoTelepon;
             userToUpdate.Alamat = model.Alamat;
 
-            // Update password hanya jika diisi
             if (!string.IsNullOrWhiteSpace(model.ConfirmPassword))
             {
                 userToUpdate.Password = BCrypt.Net.BCrypt.HashPassword(model.ConfirmPassword);
@@ -188,15 +274,11 @@ namespace PerizinanPeternakan.Controllers
             _context.Update(userToUpdate);
             await _context.SaveChangesAsync();
 
-            // Update session jika nama lengkap berubah
             HttpContext.Session.SetString("NamaLengkap", userToUpdate.NamaLengkap);
 
             TempData["SuccessMessage"] = "Profil berhasil diperbarui.";
             return RedirectToAction(nameof(Profile));
         }
-
-
-        // --- Private Helper Methods ---
 
         private bool IsUserLoggedIn()
         {
