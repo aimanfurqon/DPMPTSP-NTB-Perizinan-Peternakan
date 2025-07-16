@@ -5,6 +5,8 @@
 
 <link rel="stylesheet" href="~/css/multi-step-form.css" />
 
+
+
 <div class="create-container">
     <!-- Page Header -->
     <div class="page-header">
@@ -124,6 +126,7 @@
             </div>
 
             <!-- Step 2: Detail Pengiriman -->
+            <!-- Step 2: Detail Pengiriman - Complete Version -->
             <div class="form-step" data-step="2">
                 <div class="step-content">
                     <div class="step-header">
@@ -138,49 +141,117 @@
 
                     <div class="form-body">
                         <div class="form-grid">
+                            <!-- Asal Ternak -->
                             <div class="form-group">
-                                <label asp-for="OriginLocation" class="form-label required">
+                                <label class="form-label required">
                                     <i class="fas fa-map-marker-alt text-success"></i>
                                     Asal Ternak
                                 </label>
-                                <input asp-for="OriginLocation" class="form-control"
-                                       placeholder="Contoh: Kab. Bima, NTB" />
+                                <div class="location-dropdown">
+                                    <select id="originProvinceSelect" class="form-control select2-province" style="margin-bottom: 10px; width: 100%;">
+                                        <option value="">Pilih Provinsi</option>
+                                    </select>
+                                    <select id="originRegencySelect" class="form-control select2-regency" disabled style="width: 100%;">
+                                        <option value="">Pilih Kabupaten/Kota</option>
+                                    </select>
+                                </div>
+                                <input asp-for="OriginLocation" id="originLocationHidden" type="hidden" />
                                 <span asp-validation-for="OriginLocation" class="text-danger"></span>
                             </div>
 
+                            <!-- Tujuan Pengiriman -->
                             <div class="form-group">
-                                <label asp-for="DestinationLocation" class="form-label required">
+                                <label class="form-label required">
                                     <i class="fas fa-map-marker-alt text-danger"></i>
                                     Tujuan Pengiriman
                                 </label>
-                                <input asp-for="DestinationLocation" class="form-control"
-                                       placeholder="Contoh: Kab. Jeneponto, Sulawesi Selatan" />
+                                <div class="location-dropdown">
+                                    <select id="destinationProvinceSelect" class="form-control select2-province" style="margin-bottom: 10px; width: 100%;">
+                                        <option value="">Pilih Provinsi</option>
+                                    </select>
+                                    <select id="destinationRegencySelect" class="form-control select2-regency" disabled style="width: 100%;">
+                                        <option value="">Pilih Kabupaten/Kota</option>
+                                    </select>
+                                </div>
+                                <input asp-for="DestinationLocation" id="destinationLocationHidden" type="hidden" />
                                 <span asp-validation-for="DestinationLocation" class="text-danger"></span>
                             </div>
 
+                            <!-- Pelabuhan Keberangkatan -->
                             <div class="form-group">
-                                <label asp-for="DeparturePort" class="form-label required">
-                                    <i class="fas fa-anchor"></i>
+                                <label class="form-label required">
+                                    <i class="fas fa-anchor text-primary"></i>
                                     Pelabuhan Keberangkatan
                                 </label>
-                                <input asp-for="DeparturePort" class="form-control"
-                                       placeholder="Contoh: Pelabuhan Sape, Kab. Bima" />
+                                <select id="departurePortSelect" class="form-control select2-port" disabled>
+                                    <option value="">Pilih provinsi asal terlebih dahulu</option>
+                                </select>
+                                <input asp-for="DeparturePort" id="departurePortHidden" type="hidden" />
                                 <span asp-validation-for="DeparturePort" class="text-danger"></span>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i>
+                                    Pelabuhan akan muncul setelah memilih provinsi asal
+                                </small>
                             </div>
 
+                            <!-- Pelabuhan Tujuan -->
                             <div class="form-group">
-                                <label asp-for="ArrivalPort" class="form-label required">
-                                    <i class="fas fa-anchor"></i>
+                                <label class="form-label required">
+                                    <i class="fas fa-anchor text-warning"></i>
                                     Pelabuhan Tujuan
                                 </label>
-                                <input asp-for="ArrivalPort" class="form-control"
-                                       placeholder="Contoh: Pelabuhan Bungeng, Kab. Jeneponto" />
+                                <select id="arrivalPortSelect" class="form-control select2-port" disabled>
+                                    <option value="">Pilih provinsi tujuan terlebih dahulu</option>
+                                </select>
+                                <input asp-for="ArrivalPort" id="arrivalPortHidden" type="hidden" />
                                 <span asp-validation-for="ArrivalPort" class="text-danger"></span>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i>
+                                    Pelabuhan akan muncul setelah memilih provinsi tujuan
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Summary Card -->
+                        <div class="shipping-summary" id="shippingSummary" style="display: none;">
+                            <div class="summary-card">
+                                <div class="summary-header">
+                                    <i class="fas fa-route"></i>
+                                    <span>Ringkasan Rute Pengiriman</span>
+                                </div>
+                                <div class="summary-content">
+                                    <div class="route-info">
+                                        <div class="route-point origin">
+                                            <div class="point-icon">
+                                                <i class="fas fa-circle text-success"></i>
+                                            </div>
+                                            <div class="point-details">
+                                                <div class="point-label">Asal</div>
+                                                <div class="point-location" id="summaryOrigin">-</div>
+                                                <div class="point-port" id="summaryDeparturePort">-</div>
+                                            </div>
+                                        </div>
+                                        <div class="route-arrow">
+                                            <i class="fas fa-arrow-right"></i>
+                                        </div>
+                                        <div class="route-point destination">
+                                            <div class="point-icon">
+                                                <i class="fas fa-circle text-danger"></i>
+                                            </div>
+                                            <div class="point-details">
+                                                <div class="point-label">Tujuan</div>
+                                                <div class="point-location" id="summaryDestination">-</div>
+                                                <div class="point-port" id="summaryArrivalPort">-</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
 
             <!-- Step 3: Detail Ternak -->
             <div class="form-step" data-step="3">
@@ -192,10 +263,28 @@
                         <div class="step-text">
                             <h2>Detail Ternak</h2>
                             <p>Tambahkan informasi lengkap mengenai jenis dan jumlah ternak yang akan dikirim</p>
+                            <small class="text-info">
+                                <i class="fas fa-info-circle"></i>
+                                Kuota akan ditampilkan secara real-time berdasarkan asal ternak yang dipilih
+                            </small>
                         </div>
                     </div>
 
                     <div class="form-body">
+                        <!-- Quota Information Panel -->
+                        <div class="quota-info-panel" id="quotaInfoPanel" style="display: none;">
+                            <div class="panel-header">
+                                <i class="fas fa-chart-pie"></i>
+                                <span>Informasi Kuota Ternak 2025</span>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="refreshQuotaBtn">
+                                    <i class="fas fa-sync-alt"></i> Refresh
+                                </button>
+                            </div>
+                            <div class="panel-content" id="quotaInfoContent">
+                                <!-- Quota info will be loaded here -->
+                            </div>
+                        </div>
+
                         <div class="livestock-container" id="livestockContainer">
                             @for (int i = 0; i < Math.Max(Model.LivestockDetails?.Count ?? 0, 1); i++)
                             {
@@ -215,8 +304,12 @@
                                             <label class="form-label required">
                                                 <i class="fas fa-paw"></i>
                                                 Jenis Ternak
+                                                <span class="quota-indicator" data-index="@i" style="display: none;">
+                                                    <i class="fas fa-info-circle text-primary"></i>
+                                                    <span class="quota-text">Loading...</span>
+                                                </span>
                                             </label>
-                                            <select name="LivestockDetails[@i].LivestockType" class="form-control livestock-type" required>
+                                            <select name="LivestockDetails[@i].LivestockType" class="form-control livestock-type" data-index="@i" required>
                                                 <option value="">Pilih Jenis Ternak</option>
                                                 <option value="Sapi Potong">Sapi Potong</option>
                                                 <option value="Kerbau Potong">Kerbau Potong</option>
@@ -230,10 +323,17 @@
                                             <label class="form-label required">
                                                 <i class="fas fa-calculator"></i>
                                                 Jumlah (ekor)
+                                                <span class="quota-limit" data-index="@i" style="display: none;">
+                                                    <small class="text-muted">Maks: <span class="max-quota">-</span> ekor</small>
+                                                </span>
                                             </label>
                                             <input type="number" name="LivestockDetails[@i].Quantity"
-                                                   class="form-control livestock-quantity" min="1" max="10000"
+                                                   class="form-control livestock-quantity" data-index="@i"
+                                                   min="1" max="1"
                                                    placeholder="Masukkan jumlah ternak" required />
+                                            <div class="quantity-feedback" data-index="@i" style="display: none;">
+                                                <small class="feedback-text">-</small>
+                                            </div>
                                         </div>
 
                                         <div class="form-group">
@@ -265,12 +365,29 @@
                                     <span class="label">Total Ekor</span>
                                     <span class="value" id="totalQuantity">0</span>
                                 </div>
+                                <div class="summary-item quota-usage" style="display: none;">
+                                    <span class="label">Status Kuota</span>
+                                    <span class="value" id="quotaStatus">
+                                        <i class="fas fa-check-circle text-success"></i>
+                                        Dalam Batas
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quota Validation Summary -->
+                        <div class="quota-validation-summary" id="quotaValidationSummary" style="display: none;">
+                            <div class="validation-header">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Validasi Kuota</span>
+                            </div>
+                            <div class="validation-content" id="validationContent">
+                                <!-- Validation results will be shown here -->
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
             <!-- Step 4: Dokumen Pendukung -->
             <div class="form-step" data-step="4">
                 <div class="step-content">
@@ -672,6 +789,1114 @@
 </div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />    
+    <partial name="_ValidationScriptsPartial" />
     <script src="~/js/multi-step-form.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        /* Additional CSS for enhanced port selection */
+        .shipping-summary {
+            margin-top: 20px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @@keyframes fadeIn {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        }
+
+        .summary-card {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            background: #f8f9fa;
+            overflow: hidden;
+        }
+
+        .summary-header {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 12px 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .summary-content {
+            padding: 20px;
+        }
+
+        .route-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .route-point {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .point-icon {
+            font-size: 20px;
+        }
+
+        .point-details {
+            flex: 1;
+        }
+
+        .point-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .point-location {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .point-port {
+            font-size: 13px;
+            color: #007bff;
+            font-weight: 500;
+        }
+
+        .route-arrow {
+            color: #007bff;
+            font-size: 24px;
+            animation: pulse 2s infinite;
+        }
+
+        @@keyframes pulse {
+            0%, 100%
+
+        {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.1);
+        }
+
+        }
+
+        .select2-port .select2-selection {
+            border-color: #007bff;
+            min-height: 40px;
+        }
+
+            .select2-port .select2-selection:focus {
+                border-color: #0056b3;
+                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            }
+
+        .form-text.text-muted {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+            .form-text.text-muted i {
+                margin-right: 4px;
+            }
+
+        /* Port dropdown custom styling */
+        .select2-results__option--highlighted .select2-result-port__title {
+            color: white;
+        }
+
+        .select2-result-port {
+            padding: 8px 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+            .select2-result-port:last-child {
+                border-bottom: none;
+            }
+
+        .select2-result-port__title {
+            font-weight: 500;
+            color: #333;
+            line-height: 1.4;
+        }
+    </style>
+
+    <script>
+                $(document).ready(function() {
+            // Variable untuk tracking state
+            let isLoadingOriginPorts = false;
+            let isLoadingDestinationPorts = false;
+
+            function initializeSelect2() {
+                const select2Options = {
+                    placeholder: 'Pilih dari daftar',
+                    allowClear: true,
+                    width: '100%',
+                    theme: 'bootstrap-5'
+                };
+
+                // Initialize basic dropdowns
+                $('#originProvinceSelect, #destinationProvinceSelect').select2({
+                    ...select2Options,
+                    placeholder: 'Pilih Provinsi'
+                });
+
+                $('#originRegencySelect, #destinationRegencySelect').select2({
+                    ...select2Options,
+                    placeholder: 'Pilih Kabupaten/Kota'
+                });
+
+                // Initialize port dropdowns - PERBAIKAN: Gunakan static initialization dulu
+                $('#departurePortSelect').select2({
+                    ...select2Options,
+                    placeholder: 'Pilih pelabuhan keberangkatan'
+                });
+
+                $('#arrivalPortSelect').select2({
+                    ...select2Options,
+                    placeholder: 'Pilih pelabuhan tujuan'
+                });
+            }
+
+            function loadProvinces() {
+                console.log('Loading provinces...');
+                $.get('/Location/GetProvinces', function(response) {
+                    console.log('Provinces response:', response);
+                    const provinces = response.data || response;
+                    if (Array.isArray(provinces)) {
+                        const options = provinces.map(province =>
+                            `<option value="${province.code}">${province.name}</option>`
+                        );
+                        $('#originProvinceSelect, #destinationProvinceSelect').append(options.join(''));
+                        console.log('Provinces loaded successfully');
+                    }
+                }).fail(function(xhr, status, error) {
+                    console.error('Failed to load provinces:', error);
+                    showNotification('error', 'Gagal memuat data provinsi. Silakan refresh halaman.');
+                });
+            }
+
+            function loadRegencies(provinceId, targetSelect) {
+                const $target = $(targetSelect);
+                console.log('Loading regencies for province:', provinceId, 'target:', targetSelect);
+
+                // Reset state
+                $target.html('<option value="">Memuat...</option>').prop('disabled', true);
+
+                $.get('/Location/GetRegencies', { provinceId: provinceId }, function(response) {
+                    const regencies = response.data || response;
+                    let options = '<option value="">Pilih Kabupaten/Kota</option>';
+                    if (Array.isArray(regencies)) {
+                        options += regencies.map(regency =>
+                            `<option value="${regency.code}">${regency.name}</option>`
+                        ).join('');
+                    }
+                    $target.html(options).prop('disabled', false).trigger('change');
+                    console.log('Regencies loaded for:', targetSelect);
+                }).fail(function(xhr, status, error) {
+                    console.error('Failed to load regencies:', error);
+                    $target.html('<option value="">Gagal memuat</option>').prop('disabled', true);
+                });
+            }
+
+            // PERBAIKAN: Fungsi yang lebih stabil untuk load ports
+            function loadPortsByProvince(provinceCode, targetSelect, placeholderText, isOrigin = true) {
+                const $target = $(targetSelect);
+                const loadingVar = isOrigin ? 'isLoadingOriginPorts' : 'isLoadingDestinationPorts';
+
+                console.log('Loading ports for province:', provinceCode, 'target:', targetSelect);
+
+                // Prevent multiple simultaneous requests
+                if (window[loadingVar]) {
+                    console.log('Already loading ports for', targetSelect);
+                    return;
+                }
+
+                // Set loading state
+                window[loadingVar] = true;
+
+                // Reset dropdown
+                $target.empty();
+                $target.append(`<option value="">Memuat pelabuhan...</option>`);
+                $target.prop('disabled', true);
+
+                // Destroy dan reinitialize Select2 untuk memastikan state bersih
+                $target.select2('destroy');
+                $target.select2({
+                    placeholder: placeholderText,
+                    allowClear: true,
+                    width: '100%',
+                    theme: 'bootstrap-5'
+                });
+
+                if (!provinceCode) {
+                    $target.empty();
+                    $target.append(`<option value="">${placeholderText}</option>`);
+                    $target.prop('disabled', true);
+                    window[loadingVar] = false;
+                    return;
+                }
+
+                // Load ports from database
+                $.get('/Port/GetByProvince', { provinceCode: provinceCode })
+                    .done(function(response) {
+                        console.log('Ports response for', provinceCode, ':', response);
+
+                        const ports = response.results || [];
+
+                        // Clear dan rebuild options
+                        $target.empty();
+                        $target.append(`<option value="">${placeholderText}</option>`);
+
+                        if (Array.isArray(ports) && ports.length > 0) {
+                            ports.forEach(port => {
+                                $target.append(`<option value="${port.id}">${port.text}</option>`);
+                            });
+                            $target.prop('disabled', false);
+                            console.log(`${ports.length} ports loaded for ${targetSelect}`);
+                            showNotification('success', `${ports.length} pelabuhan tersedia`);
+                        } else {
+                            $target.append('<option value="">Tidak ada pelabuhan tersedia</option>');
+                            $target.prop('disabled', true);
+                            showNotification('warning', 'Tidak ada pelabuhan tersedia untuk provinsi ini');
+                        }
+
+                        // Trigger change untuk update
+                        $target.trigger('change');
+                    })
+                    .fail(function(xhr, status, error) {
+                        console.error('Failed to load ports:', error);
+                        $target.empty();
+                        $target.append('<option value="">Gagal memuat pelabuhan</option>');
+                        $target.prop('disabled', true);
+                        showNotification('error', 'Gagal memuat data pelabuhan');
+                    })
+                    .always(function() {
+                        // Reset loading state
+                        window[loadingVar] = false;
+                    });
+            }
+
+            // Update shipping summary
+            function updateShippingSummary() {
+                const originLocation = $('#originLocationHidden').val();
+                const destinationLocation = $('#destinationLocationHidden').val();
+                const departurePort = $('#departurePortHidden').val();
+                const arrivalPort = $('#arrivalPortHidden').val();
+
+                $('#summaryOrigin').text(originLocation || '-');
+                $('#summaryDestination').text(destinationLocation || '-');
+                $('#summaryDeparturePort').text(departurePort || '-');
+                $('#summaryArrivalPort').text(arrivalPort || '-');
+
+                if (originLocation && destinationLocation && departurePort && arrivalPort) {
+                    $('#shippingSummary').slideDown();
+                } else {
+                    $('#shippingSummary').slideUp();
+                }
+            }
+
+            function showNotification(type, message) {
+                console.log(`${type.toUpperCase()}: ${message}`);
+
+                // Simple notification - you can enhance this
+                const alertClass = type === 'error' ? 'danger' : type === 'success' ? 'success' : 'warning';
+                const notification = $(`
+                    <div class="alert alert-${alertClass} alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; max-width: 350px;">
+                        <i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `);
+
+                $('body').append(notification);
+
+                // Auto remove after 4 seconds
+                setTimeout(() => {
+                    notification.alert('close');
+                }, 4000);
+            }
+
+            function updateLocation(provinceSel, regencySel, hiddenInput) {
+                const provinceName = $(provinceSel + ' option:selected').text();
+                const regencyName = $(regencySel + ' option:selected').text();
+
+                if ($(provinceSel).val() && $(regencySel).val() &&
+                    provinceName !== "Pilih Provinsi" && regencyName !== "Pilih Kabupaten/Kota") {
+                    $(hiddenInput).val(`${regencyName}, ${provinceName}`);
+                } else {
+                    $(hiddenInput).val('');
+                }
+                updateShippingSummary();
+            }
+
+            // PERBAIKAN: Event listeners yang lebih robust
+            function setupEventListeners() {
+                // Origin Province Change - dengan debouncing
+                let originProvinceTimeout;
+                $('#originProvinceSelect').on('change', function() {
+                    const provinceId = $(this).val();
+                    console.log('Origin province changed to:', provinceId);
+
+                    // Clear timeout untuk debouncing
+                    clearTimeout(originProvinceTimeout);
+
+                    originProvinceTimeout = setTimeout(() => {
+                        if (provinceId) {
+                            loadRegencies(provinceId, '#originRegencySelect');
+                            loadPortsByProvince(provinceId, '#departurePortSelect', 'Pilih pelabuhan keberangkatan', true);
+                        } else {
+                            // Reset regency dan port
+                            $('#originRegencySelect').html('<option value="">Pilih Kabupaten/Kota</option>')
+                                .prop('disabled', true).trigger('change');
+
+                            $('#departurePortSelect').empty()
+                                .append('<option value="">Pilih provinsi asal terlebih dahulu</option>')
+                                .prop('disabled', true).trigger('change');
+
+                            $('#departurePortHidden').val('');
+                        }
+                    }, 300); // 300ms debounce
+                });
+
+                // Destination Province Change - dengan debouncing
+                let destinationProvinceTimeout;
+                $('#destinationProvinceSelect').on('change', function() {
+                    const provinceId = $(this).val();
+                    console.log('Destination province changed to:', provinceId);
+
+                    clearTimeout(destinationProvinceTimeout);
+
+                    destinationProvinceTimeout = setTimeout(() => {
+                        if (provinceId) {
+                            loadRegencies(provinceId, '#destinationRegencySelect');
+                            loadPortsByProvince(provinceId, '#arrivalPortSelect', 'Pilih pelabuhan tujuan', false);
+                        } else {
+                            // Reset regency dan port
+                            $('#destinationRegencySelect').html('<option value="">Pilih Kabupaten/Kota</option>')
+                                .prop('disabled', true).trigger('change');
+
+                            $('#arrivalPortSelect').empty()
+                                .append('<option value="">Pilih provinsi tujuan terlebih dahulu</option>')
+                                .prop('disabled', true).trigger('change');
+
+                            $('#arrivalPortHidden').val('');
+                        }
+                    }, 300); // 300ms debounce
+                });
+
+                // Port Selection Events
+                $('#departurePortSelect').on('change', function() {
+                    const selectedPort = $(this).val();
+                    const selectedText = $(this).find('option:selected').text();
+                    $('#departurePortHidden').val(selectedPort);
+                    console.log('Departure port selected:', selectedPort, selectedText);
+                    updateShippingSummary();
+                });
+
+                $('#arrivalPortSelect').on('change', function() {
+                    const selectedPort = $(this).val();
+                    const selectedText = $(this).find('option:selected').text();
+                    $('#arrivalPortHidden').val(selectedPort);
+                    console.log('Arrival port selected:', selectedPort, selectedText);
+                    updateShippingSummary();
+                });
+
+                // Location updates
+                $('#originProvinceSelect, #originRegencySelect').on('change', () =>
+                    updateLocation('#originProvinceSelect', '#originRegencySelect', '#originLocationHidden')
+                );
+
+                $('#destinationProvinceSelect, #destinationRegencySelect').on('change', () =>
+                    updateLocation('#destinationProvinceSelect', '#destinationRegencySelect', '#destinationLocationHidden')
+                );
+            }
+
+            // Initialize everything
+            initializeSelect2();
+            loadProvinces();
+            setupEventListeners();
+
+            // Form validation
+            function validateShippingDetails() {
+                const requiredFields = [
+                    { field: '#originLocationHidden', name: 'Asal Ternak' },
+                    { field: '#destinationLocationHidden', name: 'Tujuan Pengiriman' },
+                    { field: '#departurePortHidden', name: 'Pelabuhan Keberangkatan' },
+                    { field: '#arrivalPortHidden', name: 'Pelabuhan Tujuan' }
+                ];
+
+                const missingFields = requiredFields.filter(item => !$(item.field).val());
+
+                if (missingFields.length > 0) {
+                    const fieldNames = missingFields.map(item => item.name).join(', ');
+                    showNotification('error', `Mohon lengkapi: ${fieldNames}`);
+                    return false;
+                }
+
+                return true;
+            }
+
+            // Hook to form navigation
+            $(document).on('click', '#nextBtn', function(e) {
+                const currentStep = $('.form-step.active').data('step');
+                if (currentStep === 2) {
+                    if (!validateShippingDetails()) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+            });
+
+            // Debug function - bisa dipanggil dari console
+            window.debugPortDropdown = function() {
+                console.log('Current state:');
+                console.log('Origin Province:', $('#originProvinceSelect').val());
+                console.log('Origin Regency:', $('#originRegencySelect').val());
+                console.log('Departure Port:', $('#departurePortSelect').val());
+                console.log('Destination Province:', $('#destinationProvinceSelect').val());
+                console.log('Destination Regency:', $('#destinationRegencySelect').val());
+                console.log('Arrival Port:', $('#arrivalPortSelect').val());
+                console.log('Loading states:', {
+                    originPorts: isLoadingOriginPorts,
+                    destinationPorts: isLoadingDestinationPorts
+                });
+            };
+        });
+    </script>
+    <script>
+        $(document).ready(function() {
+            let livestockIndex = 1;
+            let quotaCache = {};
+            let originProvinceCode = '';
+
+            // Monitor origin province changes untuk load quota info
+            function monitorOriginProvince() {
+                $('#originProvinceSelect').on('change', function() {
+                    originProvinceCode = $(this).val();
+                    if (originProvinceCode) {
+                        loadQuotaInfo(originProvinceCode);
+                        refreshAllQuotaValidations();
+                    } else {
+                        hideQuotaInfo();
+                    }
+                });
+            }
+
+            // Load quota information untuk provinsi
+            function loadQuotaInfo(provinceCode) {
+                console.log('Loading quota info for province:', provinceCode);
+
+                $('#quotaInfoPanel').show();
+                $('#quotaInfoContent').html('<div class="text-center"><div class="quota-loading"></div> Memuat informasi kuota...</div>');
+
+                $.get('/Quota/GetQuotasByProvince', { provinceCode: provinceCode })
+                    .done(function(response) {
+                        if (response.success && response.data.length > 0) {
+                            displayQuotaInfo(response.data);
+                        } else {
+                            $('#quotaInfoContent').html('<div class="alert alert-warning">Tidak ada data kuota untuk provinsi ini.</div>');
+                        }
+                    })
+                    .fail(function() {
+                        $('#quotaInfoContent').html('<div class="alert alert-danger">Gagal memuat data kuota.</div>');
+                    });
+            }
+
+            // Display quota information
+            function displayQuotaInfo(quotas) {
+                let html = '<div class="row">';
+
+                quotas.forEach(quota => {
+                    const usagePercentage = quota.usagePercentage;
+                    const progressColor = usagePercentage < 50 ? '#28a745' :
+                                         usagePercentage < 80 ? '#ffc107' : '#dc3545';
+                    const iconColor = usagePercentage < 50 ? 'background: #28a745' :
+                                     usagePercentage < 80 ? 'background: #ffc107' : 'background: #dc3545';
+
+                    html += `
+                        <div class="col-md-6 col-lg-4">
+                            <div class="quota-card">
+                                <div class="quota-info">
+                                    <div class="quota-icon" style="${iconColor}">
+                                        <i class="fas fa-paw"></i>
+                                    </div>
+                                    <div class="quota-details">
+                                        <h6>${quota.livestockType}</h6>
+                                        <p>Tersedia: ${quota.remainingQuota.toLocaleString()} ekor</p>
+                                    </div>
+                                </div>
+                                <div class="quota-stats">
+                                    <p class="quota-number" style="color: ${progressColor}">${quota.remainingQuota.toLocaleString()}</p>
+                                    <p class="quota-label">dari ${quota.totalQuota.toLocaleString()}</p>
+                                    <div class="quota-progress">
+                                        <div class="quota-progress-bar" style="width: ${usagePercentage}%; background: ${progressColor}"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                $('#quotaInfoContent').html(html);
+
+                // Cache quota data
+                quotas.forEach(quota => {
+                    quotaCache[quota.livestockType] = quota;
+                });
+            }
+
+            // Hide quota info
+            function hideQuotaInfo() {
+                $('#quotaInfoPanel').hide();
+                quotaCache = {};
+            }
+
+            // Setup livestock type change handler
+            function setupLivestockTypeHandler() {
+                $(document).on('change', '.livestock-type', function() {
+                    const index = $(this).data('index');
+                    const selectedType = $(this).val();
+
+                    if (selectedType && originProvinceCode) {
+                        validateQuotaForType(selectedType, index);
+                    } else {
+                        hideQuotaIndicator(index);
+                    }
+                });
+            }
+
+            // Setup quantity change handler dengan real-time validation
+            function setupQuantityHandler() {
+                $(document).on('input change', '.livestock-quantity', function() {
+                    const index = $(this).data('index');
+                    const quantity = parseInt($(this).val()) || 0;
+                    const livestockType = $(`.livestock-type[data-index="${index}"]`).val();
+
+                    if (livestockType && originProvinceCode && quantity > 0) {
+                        validateQuantityRealtime(livestockType, originProvinceCode, quantity, index);
+                    }
+
+                    updateSummary();
+                });
+            }
+
+            // Validate quota untuk livestock type
+            function validateQuotaForType(livestockType, index) {
+                const quota = quotaCache[livestockType];
+                const $quantityInput = $(`.livestock-quantity[data-index="${index}"]`);
+                const $quotaIndicator = $(`.quota-indicator[data-index="${index}"]`);
+                const $quotaLimit = $(`.quota-limit[data-index="${index}"]`);
+
+                if (quota) {
+                    // Update UI dengan quota info
+                    $quotaIndicator.show().find('.quota-text').text(`Kuota: ${quota.remainingQuota.toLocaleString()} ekor`);
+                    $quotaLimit.show().find('.max-quota').text(quota.remainingQuota.toLocaleString());
+
+                    // Set max attribute untuk input
+                    $quantityInput.attr('max', quota.remainingQuota);
+
+                    // Validate current quantity jika ada
+                    const currentQuantity = parseInt($quantityInput.val()) || 0;
+                    if (currentQuantity > 0) {
+                        validateQuantityRealtime(livestockType, originProvinceCode, currentQuantity, index);
+                    }
+                } else {
+                    // Load quota dari server jika tidak ada di cache
+                    loadQuotaForType(livestockType, index);
+                }
+            }
+
+            // Load quota dari server untuk specific type
+            function loadQuotaForType(livestockType, index) {
+                $.get('/Quota/GetQuota', {
+                    livestockType: livestockType,
+                    provinceCode: originProvinceCode
+                })
+                .done(function(response) {
+                    const $quantityInput = $(`.livestock-quantity[data-index="${index}"]`);
+                    const $quotaIndicator = $(`.quota-indicator[data-index="${index}"]`);
+                    const $quotaLimit = $(`.quota-limit[data-index="${index}"]`);
+
+                    if (response.isValid && response.availableQuota > 0) {
+                        $quotaIndicator.show().find('.quota-text').text(`Kuota: ${response.availableQuota.toLocaleString()} ekor`);
+                        $quotaLimit.show().find('.max-quota').text(response.availableQuota.toLocaleString());
+                        $quantityInput.attr('max', response.availableQuota);
+
+                        // Cache response
+                        quotaCache[livestockType] = {
+                            livestockType: livestockType,
+                            remainingQuota: response.availableQuota,
+                            totalQuota: response.totalQuota,
+                            usedQuota: response.usedQuota
+                        };
+                    } else {
+                        $quotaIndicator.show().find('.quota-text').text('Kuota habis').parent().addClass('text-danger');
+                        $quantityInput.attr('max', 0);
+                        showQuantityFeedback(index, 'error', 'Kuota untuk jenis ternak ini sudah habis');
+                    }
+                })
+                .fail(function() {
+                    showQuantityFeedback(index, 'error', 'Gagal memuat data kuota');
+                });
+            }
+
+            // Real-time quantity validation
+            function validateQuantityRealtime(livestockType, provinceCode, quantity, index) {
+                const validationData = {
+                    livestockType: livestockType,
+                    provinceCode: provinceCode,
+                    requestedQuantity: quantity
+                };
+
+                $.ajax({
+                    url: '/Quota/ValidateQuota',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(validationData),
+                    success: function(response) {
+                        const $quantityInput = $(`.livestock-quantity[data-index="${index}"]`);
+
+                        if (response.isValid) {
+                            $quantityInput.removeClass('error').addClass('success');
+                            showQuantityFeedback(index, 'success', response.message);
+                        } else {
+                            $quantityInput.removeClass('success').addClass('error');
+                            showQuantityFeedback(index, 'error', response.message);
+                        }
+
+                        updateQuotaValidationSummary();
+                    },
+                    error: function() {
+                        showQuantityFeedback(index, 'error', 'Gagal validasi kuota');
+                    }
+                });
+            }
+
+            // Show quantity feedback
+            function showQuantityFeedback(index, type, message) {
+                const $feedback = $(`.quantity-feedback[data-index="${index}"]`);
+                $feedback.show().find('.feedback-text')
+                    .removeClass('success warning error')
+                    .addClass(type)
+                    .text(message);
+            }
+
+            // Hide quota indicator
+            function hideQuotaIndicator(index) {
+                $(`.quota-indicator[data-index="${index}"]`).hide();
+                $(`.quota-limit[data-index="${index}"]`).hide();
+                $(`.quantity-feedback[data-index="${index}"]`).hide();
+            }
+
+            // Update quota validation summary
+            function updateQuotaValidationSummary() {
+                const hasErrors = $('.livestock-quantity.error').length > 0;
+                const hasSuccess = $('.livestock-quantity.success').length > 0;
+
+                if (hasSuccess || hasErrors) {
+                    $('#quotaValidationSummary').show();
+                    $('.quota-usage').show();
+
+                    if (hasErrors) {
+                        $('#quotaStatus').html('<i class="fas fa-exclamation-triangle text-warning"></i> Ada Masalah');
+                    } else {
+                        $('#quotaStatus').html('<i class="fas fa-check-circle text-success"></i> Dalam Batas');
+                    }
+                } else {
+                    $('#quotaValidationSummary').hide();
+                    $('.quota-usage').hide();
+                }
+            }
+
+            // Refresh all quota validations
+            function refreshAllQuotaValidations() {
+                $('.livestock-type').each(function() {
+                    const index = $(this).data('index');
+                    const selectedType = $(this).val();
+                    if (selectedType) {
+                        validateQuotaForType(selectedType, index);
+                    }
+                });
+            }
+
+            // Update summary
+            function updateSummary() {
+                const totalTypes = $('.livestock-item').length;
+                let totalQuantity = 0;
+
+                $('.livestock-quantity').each(function() {
+                    totalQuantity += parseInt($(this).val()) || 0;
+                });
+
+                $('#totalTypes').text(totalTypes);
+                $('#totalQuantity').text(totalQuantity.toLocaleString());
+            }
+
+            // Add livestock item
+            $('#addLivestock').on('click', function() {
+                const template = `
+                    <div class="livestock-item" data-index="${livestockIndex}">
+                        <div class="livestock-header">
+                            <h4>Ternak #<span class="livestock-number">${livestockIndex + 1}</span></h4>
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-livestock">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        <div class="livestock-form">
+                            <div class="form-group">
+                                <label class="form-label required">
+                                    <i class="fas fa-paw"></i>
+                                    Jenis Ternak
+                                    <span class="quota-indicator" data-index="${livestockIndex}" style="display: none;">
+                                        <i class="fas fa-info-circle text-primary"></i>
+                                        <span class="quota-text">Loading...</span>
+                                    </span>
+                                </label>
+                                <select name="LivestockDetails[${livestockIndex}].LivestockType" class="form-control livestock-type" data-index="${livestockIndex}" required>
+                                    <option value="">Pilih Jenis Ternak</option>
+                                    <option value="Sapi Potong">Sapi Potong</option>
+                                    <option value="Kerbau Potong">Kerbau Potong</option>
+                                    <option value="Kuda Pedaging">Kuda Pedaging</option>
+                                    <option value="Kambing">Kambing</option>
+                                    <option value="Domba">Domba</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label required">
+                                    <i class="fas fa-calculator"></i>
+                                    Jumlah (ekor)
+                                    <span class="quota-limit" data-index="${livestockIndex}" style="display: none;">
+                                        <small class="text-muted">Maks: <span class="max-quota">-</span> ekor</small>
+                                    </span>
+                                </label>
+                                <input type="number" name="LivestockDetails[${livestockIndex}].Quantity"
+                                       class="form-control livestock-quantity" data-index="${livestockIndex}"
+                                       min="1" max="1" placeholder="Masukkan jumlah ternak" required />
+                                <div class="quantity-feedback" data-index="${livestockIndex}" style="display: none;">
+                                    <small class="feedback-text">-</small>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-comment"></i>
+                                    Keterangan
+                                </label>
+                                <textarea name="LivestockDetails[${livestockIndex}].Description"
+                                          class="form-control" rows="2"
+                                          placeholder="Keterangan tambahan (opsional)"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                $('#livestockContainer').append(template);
+                livestockIndex++;
+                updateLivestockNumbers();
+                updateSummary();
+            });
+
+            // Remove livestock item
+            $(document).on('click', '.remove-livestock', function() {
+                $(this).closest('.livestock-item').remove();
+                updateLivestockNumbers();
+                updateSummary();
+                updateQuotaValidationSummary();
+            });
+
+            // Update livestock numbers
+            function updateLivestockNumbers() {
+                $('.livestock-item').each(function(index) {
+                    $(this).find('.livestock-number').text(index + 1);
+                });
+            }
+
+            // Refresh quota button
+            $('#refreshQuotaBtn').on('click', function() {
+                if (originProvinceCode) {
+                    quotaCache = {};
+                    loadQuotaInfo(originProvinceCode);
+                    refreshAllQuotaValidations();
+                }
+            });
+
+            // Initialize
+            monitorOriginProvince();
+            setupLivestockTypeHandler();
+            setupQuantityHandler();
+            updateSummary();
+
+            // Form validation before submit
+            $(document).on('click', '#nextBtn, #submitBtn', function(e) {
+                const currentStep = $('.form-step.active').data('step');
+                if (currentStep === 3) {
+                    const hasErrors = $('.livestock-quantity.error').length > 0;
+                    if (hasErrors) {
+                        e.preventDefault();
+                        alert('Masih ada masalah dengan kuota ternak. Silakan periksa kembali jumlah yang diminta.');
+                        return false;
+                    }
+                }
+            });
+        });
+    </script>
+    <style>
+        /* Quota-specific styles */
+        .quota-info-panel {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        }
+
+        .panel-header {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+        }
+
+            .panel-header i {
+                margin-right: 10px;
+            }
+
+        .panel-content {
+            padding: 20px;
+        }
+
+        .quota-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+
+            .quota-card:hover {
+                box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+                transform: translateY(-2px);
+            }
+
+        .quota-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .quota-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+        }
+
+        .quota-details h6 {
+            margin: 0 0 5px 0;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .quota-details p {
+            margin: 0;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .quota-stats {
+            text-align: right;
+        }
+
+        .quota-number {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .quota-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin: 0;
+        }
+
+        .quota-progress {
+            width: 100px;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .quota-progress-bar {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .quota-indicator {
+            margin-left: 10px;
+            padding: 2px 8px;
+            background: #e3f2fd;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #1976d2;
+        }
+
+        .quota-limit {
+            margin-left: 10px;
+        }
+
+        .quantity-feedback {
+            margin-top: 5px;
+        }
+
+        .feedback-text.success {
+            color: #28a745;
+        }
+
+        .feedback-text.warning {
+            color: #ffc107;
+        }
+
+        .feedback-text.error {
+            color: #dc3545;
+        }
+
+        .quota-validation-summary {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .validation-header {
+            background: #6c757d;
+            color: white;
+            padding: 12px 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .validation-content {
+            padding: 16px;
+        }
+
+        .validation-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #dee2e6;
+        }
+
+            .validation-item.success {
+                border-left-color: #28a745;
+            }
+
+            .validation-item.warning {
+                border-left-color: #ffc107;
+            }
+
+            .validation-item.error {
+                border-left-color: #dc3545;
+            }
+
+        .livestock-quantity.error {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+
+        .livestock-quantity.success {
+            border-color: #28a745;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        }
+
+        .quota-usage {
+            border-left: 3px solid #007bff;
+            padding-left: 10px;
+        }
+
+        /* Loading states */
+        .quota-loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @@keyframes spin {
+            0%
+
+        {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+
+        }
+
+        /* Responsive design */
+        @@media (max-width: 768px) {
+            .quota-card
+
+        {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .quota-stats {
+            text-align: left;
+            width: 100%;
+        }
+
+        .quota-progress {
+            width: 100%;
+        }
+
+        }
+    </style>
 }

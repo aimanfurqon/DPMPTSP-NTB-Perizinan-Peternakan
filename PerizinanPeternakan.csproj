@@ -24,6 +24,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Folder Include="Helpers\" />
 		<Folder Include="Migrations\" />
 		<Folder Include="wwwroot\documents\permits\" />
 		<Folder Include="wwwroot\images\" />
@@ -35,7 +36,9 @@
 
 	<ItemGroup>
 	  <Content Remove="wwwroot\css\multi-step-form.css" />
+	  <Content Remove="wwwroot\css\permit-index.css" />
 	  <Content Remove="wwwroot\js\multi-step-form.js" />
+	  <Content Remove="wwwroot\js\permit-index-simple.js" />
 	</ItemGroup>
 
 	<!-- Optional: Add DinkToPdf for better PDF generation -->
