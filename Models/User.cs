@@ -50,7 +50,15 @@ namespace PerizinanPeternakan.Models
         /// Waktu kedaluwarsa untuk token verifikasi.
         /// </summary>
         public DateTime? VerificationTokenExpires { get; set; }
- 
-        
+
+        /// <summary>
+        /// Token unik untuk mereset password.
+        /// </summary>
+        public string? PasswordResetToken { get; set; }
+
+        /// <summary>
+        /// Waktu kedaluwarsa untuk token reset password.
+        /// </summary>
+        public DateTime? ResetTokenExpires { get; set; }
     }
 }

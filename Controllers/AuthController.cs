@@ -302,5 +302,97 @@ namespace PerizinanPeternakan.Controllers
             HttpContext.Session.SetString("NamaLengkap", user.NamaLengkap);
             HttpContext.Session.SetString("Role", user.Role);
         }
+
+        // GET: /Auth/ForgotPassword
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        // POST: /Auth/ForgotPassword
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
+            if (user != null)
+            {
+                // Buat token reset
+                var resetToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
+                user.PasswordResetToken = resetToken;
+                user.ResetTokenExpires = DateTime.UtcNow.AddHours(1); // Token berlaku 1 jam
+                await _context.SaveChangesAsync();
+
+                // Kirim email reset
+                var resetLink = Url.Action("ResetPassword", "Auth",
+                    new { email = user.Email, token = resetToken },
+                    Request.Scheme);
+
+                var emailMessage = $"<h1>Reset Password Akun Anda</h1>" +
+                                   $"<p>Anda menerima email ini karena ada permintaan untuk mereset password akun Anda. " +
+                                   $"Silakan klik link di bawah ini untuk melanjutkan:</p>" +
+                                   $"<a href='{resetLink}'>Reset Password Saya</a>" +
+                                   $"<p>Link ini akan kedaluwarsa dalam 1 jam. Jika Anda tidak merasa meminta ini, abaikan email ini.</p>";
+
+                await _emailSender.SendEmailAsync(user.Email, "Reset Password - Sistem Perizinan", emailMessage);
+            }
+
+            // Selalu tampilkan halaman konfirmasi, bahkan jika email tidak ditemukan.
+            // Ini adalah praktik keamanan untuk mencegah orang menebak-nebak email yang terdaftar.
+            return RedirectToAction(nameof(ForgotPasswordConfirmation));
+        }
+
+        [HttpGet]
+        public IActionResult ForgotPasswordConfirmation()
+        {
+            return View();
+        }
+
+        // GET: /Auth/ResetPassword
+        [HttpGet]
+        public IActionResult ResetPassword(string email, string token)
+        {
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(token))
+            {
+                return RedirectToAction("Login"); // Atau tampilkan halaman error
+            }
+
+            var model = new ResetPasswordViewModel { Email = email, Token = token };
+            return View(model);
+        }
+
+        // POST: /Auth/ResetPassword
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
+
+            if (user == null || user.PasswordResetToken != model.Token || user.ResetTokenExpires < DateTime.UtcNow)
+            {
+                TempData["ErrorMessage"] = "Link reset password tidak valid atau sudah kedaluwarsa. Silakan coba lagi.";
+                return RedirectToAction(nameof(ForgotPassword));
+            }
+
+            // Update password
+            user.Password = BCrypt.Net.BCrypt.HashPassword(model.Password);
+            user.PasswordResetToken = null; // Hapus token setelah digunakan
+            user.ResetTokenExpires = null;
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Password Anda telah berhasil direset. Silakan login dengan password baru.";
+            return RedirectToAction(nameof(Login));
+        }
     }
 }
