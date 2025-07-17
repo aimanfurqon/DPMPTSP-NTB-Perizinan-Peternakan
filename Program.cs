@@ -26,6 +26,8 @@ builder.Services.AddSession(options =>
 
 // Register services
 builder.Services.AddScoped<IPdfGeneratorService, PdfGeneratorService>();
+builder.Services.AddTransient<IEmailSender, MailKitEmailSender>();
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 
 // Add file upload services
 builder.Services.Configure<IISServerOptions>(options =>

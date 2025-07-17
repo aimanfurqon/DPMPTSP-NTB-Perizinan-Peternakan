@@ -35,5 +35,22 @@ namespace PerizinanPeternakan.Models
         // Role: "User", "Verifikator", "KepalaDinas"
         public string Role { get; set; } = "User";
 
+
+        /// <summary>
+        /// Menandakan apakah email pengguna sudah diverifikasi.
+        /// </summary>
+        public bool IsEmailVerified { get; set; } = false;
+
+        /// <summary>
+        /// Token unik yang dikirim ke email untuk verifikasi.
+        /// </summary>
+        public string? VerificationToken { get; set; }
+
+        /// <summary>
+        /// Waktu kedaluwarsa untuk token verifikasi.
+        /// </summary>
+        public DateTime? VerificationTokenExpires { get; set; }
+ 
+        
     }
 }

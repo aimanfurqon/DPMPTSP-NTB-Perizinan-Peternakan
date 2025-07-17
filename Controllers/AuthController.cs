@@ -12,12 +12,12 @@ namespace PerizinanPeternakan.Controllers
     public class AuthController : Controller
     {
         private readonly ApplicationDbContext _context;
-        //private readonly IEmailSender _emailSender;
+        private readonly IEmailSender _emailSender;
 
-        public AuthController(ApplicationDbContext context /*, IEmailSender emailSender*/)
+        public AuthController(ApplicationDbContext context, IEmailSender emailSender)
         {
             _context = context;
-        //    _emailSender = emailSender;
+            _emailSender = emailSender;
         }
 
         // POST: Login (Diperbarui dengan Bypass)
@@ -64,11 +64,11 @@ namespace PerizinanPeternakan.Controllers
             }
             // --- AKHIR PERUBAHAN ---
 
-            //if (!user.IsEmailVerified)
-            //{
-            //    TempData["ErrorMessage"] = "Akun Anda belum diverifikasi. Silakan cek email Anda.";
-            //    return View(model);
-            //}
+            if (!user.IsEmailVerified)
+            {
+                TempData["ErrorMessage"] = "Akun Anda belum diverifikasi. Silakan cek email Anda.";
+                return View(model);
+            }
 
             SetUserSession(user);
             TempData["SuccessMessage"] = $"Selamat datang kembali, {user.NamaLengkap}!";
@@ -132,25 +132,25 @@ namespace PerizinanPeternakan.Controllers
                 Role = "User",
                 TanggalDaftar = DateTime.UtcNow,
                 IsActive = true, // Tetap aktif, tapi verifikasi email jadi penentu
-            //    IsEmailVerified = false, // <-- PENTING
-            //    VerificationToken = verificationToken,
-            //    VerificationTokenExpires = DateTime.UtcNow.AddDays(1) // Token berlaku 1 hari
+                IsEmailVerified = false, // <-- PENTING
+                VerificationToken = verificationToken,
+                VerificationTokenExpires = DateTime.UtcNow.AddDays(1) // Token berlaku 1 hari
             };
 
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
             // Kirim email verifikasi
-        //    var verificationLink = Url.Action("VerifyEmail", "Auth",
-        //new { userId = newUser.Id, token = verificationToken },
-        //Request.Scheme);
+            var verificationLink = Url.Action("VerifyEmail", "Auth",
+        new { userId = newUser.Id, token = verificationToken },
+        Request.Scheme);
 
-        //    var emailMessage = $"<h1>Verifikasi Akun Anda</h1>" +
-        //             $"<p>Terima kasih telah mendaftar. Silakan klik link di bawah ini untuk mengaktifkan akun Anda:</p>" +
-        //             $"<a href='{verificationLink}'>Verifikasi Akun Saya</a>" +
-        //             $"<p>Jika Anda tidak merasa mendaftar, abaikan email ini.</p>";
+            var emailMessage = $"<h1>Verifikasi Akun Anda</h1>" +
+                     $"<p>Terima kasih telah mendaftar. Silakan klik link di bawah ini untuk mengaktifkan akun Anda:</p>" +
+                     $"<a href='{verificationLink}'>Verifikasi Akun Saya</a>" +
+                     $"<p>Jika Anda tidak merasa mendaftar, abaikan email ini.</p>";
 
-        //    await _emailSender.SendEmailAsync(newUser.Email, "Verifikasi Akun - Sistem Perizinan", emailMessage);
+            await _emailSender.SendEmailAsync(newUser.Email, "Verifikasi Akun - Sistem Perizinan", emailMessage);
 
             // Redirect ke halaman informasi
             return RedirectToAction(nameof(RegistrationPending));
@@ -162,31 +162,31 @@ namespace PerizinanPeternakan.Controllers
             return View();
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> VerifyEmail(int userId, string token)
-        //{
-        //    if (userId == 0 || string.IsNullOrEmpty(token))
-        //    {
-        //        return RedirectToAction(nameof(VerificationFailed));
-        //    }
+        [HttpGet]
+        public async Task<IActionResult> VerifyEmail(int userId, string token)
+        {
+            if (userId == 0 || string.IsNullOrEmpty(token))
+            {
+                return RedirectToAction(nameof(VerificationFailed));
+            }
 
-        //    var user = await _context.Users.FindAsync(userId);
+            var user = await _context.Users.FindAsync(userId);
 
-        //    if (user == null || user.VerificationToken != token || user.VerificationTokenExpires < DateTime.UtcNow)
-        //    {
-        //        return RedirectToAction(nameof(VerificationFailed));
-        //    }
+            if (user == null || user.VerificationToken != token || user.VerificationTokenExpires < DateTime.UtcNow)
+            {
+                return RedirectToAction(nameof(VerificationFailed));
+            }
 
-        //    user.IsEmailVerified = true;
-        //    user.VerificationToken = null; // Hapus token setelah digunakan
-        //    user.VerificationTokenExpires = null;
-        //    await _context.SaveChangesAsync();
+            user.IsEmailVerified = true;
+            user.VerificationToken = null; // Hapus token setelah digunakan
+            user.VerificationTokenExpires = null;
+            await _context.SaveChangesAsync();
 
-        //    // Opsional: Langsung login setelah verifikasi berhasil
-        //    SetUserSession(user);
-        //    TempData["SuccessMessage"] = "Email berhasil diverifikasi! Anda telah login.";
-        //    return RedirectToAction(nameof(DashboardController.Index), "Dashboard");
-        //}
+            // Opsional: Langsung login setelah verifikasi berhasil
+            SetUserSession(user);
+            TempData["SuccessMessage"] = "Email berhasil diverifikasi! Anda telah login.";
+            return RedirectToAction(nameof(DashboardController.Index), "Dashboard");
+        }
 
         [HttpGet]
         public IActionResult VerificationFailed()
