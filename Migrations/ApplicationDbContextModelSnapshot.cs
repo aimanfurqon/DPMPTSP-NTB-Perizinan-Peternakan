@@ -49,7 +49,7 @@ namespace PerizinanPeternakan.Migrations
 
                     b.HasIndex("PermitApplicationId");
 
-                    b.ToTable("LivestockDetails");
+                    b.ToTable("LivestockDetails", (string)null);
                 });
 
             modelBuilder.Entity("PerizinanPeternakan.Models.LivestockPermitApplication", b =>
@@ -156,7 +156,7 @@ namespace PerizinanPeternakan.Migrations
 
                     b.HasIndex("VerifikatorId");
 
-                    b.ToTable("PermitApplications");
+                    b.ToTable("PermitApplications", (string)null);
                 });
 
             modelBuilder.Entity("PerizinanPeternakan.Models.PermitApprovalHistory", b =>
@@ -199,7 +199,7 @@ namespace PerizinanPeternakan.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PermitApprovalHistories");
+                    b.ToTable("PermitApprovalHistories", (string)null);
                 });
 
             modelBuilder.Entity("PerizinanPeternakan.Models.PermitDocument", b =>
@@ -248,7 +248,7 @@ namespace PerizinanPeternakan.Migrations
 
                     b.HasIndex("UploadedByUserId");
 
-                    b.ToTable("PermitDocuments");
+                    b.ToTable("PermitDocuments", (string)null);
                 });
 
             modelBuilder.Entity("PerizinanPeternakan.Models.User", b =>
@@ -307,7 +307,7 @@ namespace PerizinanPeternakan.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
 
                     b.HasData(
                         new

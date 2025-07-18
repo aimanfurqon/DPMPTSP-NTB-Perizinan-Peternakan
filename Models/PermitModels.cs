@@ -187,185 +187,296 @@ namespace PerizinanPeternakan.Models
     // Updated Helper class
     public static class PermitStatusHelper
     {
+        /// <summary>
+        /// Mendapatkan CSS class untuk status badge
+        /// </summary>
+        /// <param name="status">Status permit</param>
+        /// <returns>CSS class name</returns>
+        public static string GetStatusClass(PermitStatus status)
+        {
+            return status switch
+            {
+                PermitStatus.Draft => "secondary",
+                PermitStatus.Submitted => "warning",
+                PermitStatus.UnderAdminReview => "info",
+                PermitStatus.AdminApproved => "primary",
+                PermitStatus.AdminRejected => "danger",
+                PermitStatus.UnderVerifikatorReview => "info",
+                PermitStatus.VerifikatorApproved => "primary",
+                PermitStatus.VerifikatorRejected => "danger",
+                PermitStatus.PendingKepalaDinas => "info",
+                PermitStatus.KepalaDinasRejected => "danger",
+                PermitStatus.FinalApproved => "success",
+                _ => "secondary"
+            };
+        }
+
+        /// <summary>
+        /// Mendapatkan teks display untuk status
+        /// </summary>
+        /// <param name="status">Status permit</param>
+        /// <returns>Teks status</returns>
         public static string GetStatusText(PermitStatus status)
         {
             return status switch
             {
                 PermitStatus.Draft => "Draft",
                 PermitStatus.Submitted => "Diajukan",
-                PermitStatus.UnderAdminReview => "Sedang Dicek Admin",
+                PermitStatus.UnderAdminReview => "Review Admin",
                 PermitStatus.AdminApproved => "Disetujui Admin",
                 PermitStatus.AdminRejected => "Ditolak Admin",
-                PermitStatus.UnderVerifikatorReview => "Sedang Diverifikasi",
+                PermitStatus.UnderVerifikatorReview => "Review Verifikator",
                 PermitStatus.VerifikatorApproved => "Disetujui Verifikator",
                 PermitStatus.VerifikatorRejected => "Ditolak Verifikator",
                 PermitStatus.PendingKepalaDinas => "Menunggu Kepala Dinas",
                 PermitStatus.KepalaDinasRejected => "Ditolak Kepala Dinas",
-                PermitStatus.FinalApproved => "Disetujui",
-                PermitStatus.FinalRejected => "Ditolak",
+                PermitStatus.FinalApproved => "Disetujui Final",
                 _ => "Tidak Diketahui"
             };
         }
 
-        //public static string GetStatusClass(PermitStatus status)
-        //{
-        //    return status switch
-        //    {
-        //        PermitStatus.Draft => "secondary",
-        //        PermitStatus.Submitted => "info",
-        //        PermitStatus.UnderAdminReview => "warning",
-        //        PermitStatus.AdminApproved => "primary",
-        //        PermitStatus.AdminRejected => "danger",
-        //        PermitStatus.UnderVerifikatorReview => "warning",
-        //        PermitStatus.VerifikatorApproved => "primary",
-        //        PermitStatus.VerifikatorRejected => "danger",
-        //        PermitStatus.PendingKepalaDinas => "warning",
-        //        PermitStatus.KepalaDinasRejected => "danger",
-        //        PermitStatus.FinalApproved => "success",
-        //        PermitStatus.FinalRejected => "danger",
-        //        _ => "secondary"
-        //    };
-        //}
-
-        public static string GetStatusClass(PermitStatus status)
-        {
-            return status switch
-            {
-                PermitStatus.Draft => "status-draft",
-                PermitStatus.Submitted => "status-submitted",
-                PermitStatus.UnderAdminReview => "status-under-review",
-                PermitStatus.AdminApproved => "status-admin-approved",
-                PermitStatus.AdminRejected => "status-rejected",
-                PermitStatus.UnderVerifikatorReview => "status-under-review",
-                PermitStatus.VerifikatorApproved => "status-verifikator-approved",
-                PermitStatus.VerifikatorRejected => "status-rejected",
-                PermitStatus.PendingKepalaDinas => "status-pending",
-                PermitStatus.FinalApproved => "status-approved",
-                PermitStatus.KepalaDinasRejected => "status-rejected",
-                _ => "status-unknown"
-            };
-        }
-
-        public static string GetStatusIcon(PermitStatus status)
-        {
-            return status switch
-            {
-                PermitStatus.Draft => "fas fa-edit",
-                PermitStatus.Submitted => "fas fa-paper-plane",
-                PermitStatus.UnderAdminReview => "fas fa-clock",
-                PermitStatus.AdminApproved => "fas fa-check",
-                PermitStatus.AdminRejected => "fas fa-times",
-                PermitStatus.UnderVerifikatorReview => "fas fa-search",
-                PermitStatus.VerifikatorApproved => "fas fa-check-circle",
-                PermitStatus.VerifikatorRejected => "fas fa-times-circle",
-                PermitStatus.PendingKepalaDinas => "fas fa-user-tie",
-                PermitStatus.KepalaDinasRejected => "fas fa-ban",
-                PermitStatus.FinalApproved => "fas fa-stamp",
-                PermitStatus.FinalRejected => "fas fa-times-circle",
-                _ => "fas fa-question-circle"
-            };
-        }
-
-        public static string GetNextStepText(PermitStatus status)
-        {
-            return status switch
-            {
-                PermitStatus.Draft => "Siap untuk diajukan",
-                PermitStatus.Submitted => "Menunggu review dari Admin",
-                PermitStatus.UnderAdminReview => "Sedang dalam review Admin",
-                PermitStatus.AdminApproved => "Menunggu verifikasi dari Verifikator",
-                PermitStatus.AdminRejected => "Permohonan ditolak oleh Admin",
-                PermitStatus.UnderVerifikatorReview => "Sedang dalam verifikasi",
-                PermitStatus.VerifikatorApproved => "Menunggu persetujuan dari Kepala Dinas",
-                PermitStatus.VerifikatorRejected => "Permohonan ditolak oleh Verifikator",
-                PermitStatus.PendingKepalaDinas => "Menunggu keputusan Kepala Dinas",
-                PermitStatus.KepalaDinasRejected => "Permohonan ditolak oleh Kepala Dinas",
-                PermitStatus.FinalApproved => "Izin telah diterbitkan",
-                PermitStatus.FinalRejected => "Permohonan ditolak final",
-                _ => "Status tidak diketahui"
-            };
-        }
-
-        public static bool CanDownload(PermitStatus status, string userRole)
-        {
-            if (userRole == "User")
-            {
-                return status == PermitStatus.FinalApproved;
-            }
-
-            // Admin, Verifikator, KepalaDinas bisa download jika sudah ada dokumen
-            return status >= PermitStatus.AdminApproved;
-        }
-
-        public static bool CanView(PermitStatus status, string userRole)
-        {
-            return userRole switch
-            {
-                "User" => true, // User bisa lihat semua permohonannya
-                "Admin" => status >= PermitStatus.Submitted,
-                "Verifikator" => status >= PermitStatus.AdminApproved,
-                "KepalaDinas" => status >= PermitStatus.VerifikatorApproved,
-                _ => false
-            };
-        }
-
-        public static bool CanApprove(PermitStatus status, string userRole)
-        {
-            return userRole switch
-            {
-                "Admin" => status == PermitStatus.Submitted || status == PermitStatus.UnderAdminReview,
-                "Verifikator" => status == PermitStatus.AdminApproved || status == PermitStatus.UnderVerifikatorReview,
-                "KepalaDinas" => status == PermitStatus.VerifikatorApproved || status == PermitStatus.PendingKepalaDinas,
-                _ => false
-            };
-        }
-
-        public static PermitStatus GetNextApprovalStatus(PermitStatus currentStatus)
-        {
-            return currentStatus switch
-            {
-                PermitStatus.Submitted => PermitStatus.AdminApproved,
-                PermitStatus.UnderAdminReview => PermitStatus.AdminApproved,
-                PermitStatus.AdminApproved => PermitStatus.VerifikatorApproved,
-                PermitStatus.UnderVerifikatorReview => PermitStatus.VerifikatorApproved,
-                PermitStatus.VerifikatorApproved => PermitStatus.FinalApproved,
-                PermitStatus.PendingKepalaDinas => PermitStatus.FinalApproved,
-                _ => currentStatus
-            };
-        }
-
-        public static string GetApproverRoleForStatus(PermitStatus status)
-        {
-            return status switch
-            {
-                PermitStatus.Submitted => "Admin",
-                PermitStatus.UnderAdminReview => "Admin",
-                PermitStatus.AdminApproved => "Verifikator",
-                PermitStatus.UnderVerifikatorReview => "Verifikator",
-                PermitStatus.VerifikatorApproved => "KepalaDinas",
-                PermitStatus.PendingKepalaDinas => "KepalaDinas",
-                _ => ""
-            };
-        }
-
+        /// <summary>
+        /// Mendapatkan persentase progress berdasarkan status
+        /// </summary>
+        /// <param name="status">Status permit</param>
+        /// <returns>Persentase progress (0-100)</returns>
         public static int GetProgressPercentage(PermitStatus status)
         {
             return status switch
             {
                 PermitStatus.Draft => 0,
                 PermitStatus.Submitted => 25,
-                PermitStatus.UnderAdminReview => 25,
+                PermitStatus.UnderAdminReview => 30,
                 PermitStatus.AdminApproved => 50,
-                PermitStatus.UnderVerifikatorReview => 50,
-                PermitStatus.VerifikatorApproved => 75,
-                PermitStatus.PendingKepalaDinas => 75,
-                PermitStatus.FinalApproved => 100,
                 PermitStatus.AdminRejected => 0,
+                PermitStatus.UnderVerifikatorReview => 60,
+                PermitStatus.VerifikatorApproved => 75,
                 PermitStatus.VerifikatorRejected => 0,
+                PermitStatus.PendingKepalaDinas => 85,
                 PermitStatus.KepalaDinasRejected => 0,
-                PermitStatus.FinalRejected => 0,
+                PermitStatus.FinalApproved => 100,
                 _ => 0
             };
         }
+
+        /// <summary>
+        /// Mendapatkan teks progress berdasarkan status
+        /// </summary>
+        /// <param name="status">Status permit</param>
+        /// <returns>Teks progress</returns>
+        public static string GetProgressText(PermitStatus status)
+        {
+            return status switch
+            {
+                PermitStatus.Draft => "Belum Diajukan",
+                PermitStatus.Submitted => "Diajukan",
+                PermitStatus.UnderAdminReview => "Review Admin",
+                PermitStatus.AdminApproved => "Disetujui Admin",
+                PermitStatus.AdminRejected => "Ditolak Admin",
+                PermitStatus.UnderVerifikatorReview => "Review Verifikator",
+                PermitStatus.VerifikatorApproved => "Disetujui Verifikator",
+                PermitStatus.VerifikatorRejected => "Ditolak Verifikator",
+                PermitStatus.PendingKepalaDinas => "Menunggu Kepala Dinas",
+                PermitStatus.KepalaDinasRejected => "Ditolak Kepala Dinas",
+                PermitStatus.FinalApproved => "Selesai",
+                _ => "Tidak Diketahui"
+            };
+        }
+
+        /// <summary>
+        /// Mendapatkan icon untuk status
+        /// </summary>
+        /// <param name="status">Status permit</param>
+        /// <returns>CSS class icon</returns>
+        public static string GetStatusIcon(PermitStatus status)
+        {
+            return status switch
+            {
+                PermitStatus.Draft => "fas fa-edit",
+                PermitStatus.Submitted => "fas fa-paper-plane",
+                PermitStatus.UnderAdminReview => "fas fa-search",
+                PermitStatus.AdminApproved => "fas fa-user-check",
+                PermitStatus.AdminRejected => "fas fa-user-times",
+                PermitStatus.UnderVerifikatorReview => "fas fa-clipboard-check",
+                PermitStatus.VerifikatorApproved => "fas fa-clipboard-check",
+                PermitStatus.VerifikatorRejected => "fas fa-clipboard-list",
+                PermitStatus.PendingKepalaDinas => "fas fa-user-tie",
+                PermitStatus.KepalaDinasRejected => "fas fa-user-slash",
+                PermitStatus.FinalApproved => "fas fa-award",
+                _ => "fas fa-question"
+            };
+        }
+
+        /// <summary>
+        /// Mendapatkan daftar step progress dengan status completion
+        /// </summary>
+        /// <param name="currentStatus">Status saat ini</param>
+        /// <returns>List progress steps</returns>
+        public static List<ProgressStep> GetProgressSteps(PermitStatus currentStatus)
+        {
+            var steps = new List<ProgressStep>
+            {
+                new ProgressStep
+                {
+                    Title = "Diajukan",
+                    Icon = "fas fa-paper-plane",
+                    IsCompleted = currentStatus >= PermitStatus.Submitted,
+                    IsCurrent = currentStatus == PermitStatus.Submitted
+                },
+                new ProgressStep
+                {
+                    Title = "Review Admin",
+                    Icon = "fas fa-user-check",
+                    IsCompleted = currentStatus >= PermitStatus.AdminApproved,
+                    IsCurrent = currentStatus == PermitStatus.UnderAdminReview || currentStatus == PermitStatus.AdminApproved
+                },
+                new ProgressStep
+                {
+                    Title = "Verifikasi",
+                    Icon = "fas fa-clipboard-check",
+                    IsCompleted = currentStatus >= PermitStatus.VerifikatorApproved,
+                    IsCurrent = currentStatus == PermitStatus.UnderVerifikatorReview || currentStatus == PermitStatus.VerifikatorApproved
+                },
+                new ProgressStep
+                {
+                    Title = "Persetujuan Final",
+                    Icon = "fas fa-award",
+                    IsCompleted = currentStatus == PermitStatus.FinalApproved,
+                    IsCurrent = currentStatus == PermitStatus.PendingKepalaDinas || currentStatus == PermitStatus.FinalApproved
+                }
+            };
+
+            // Handle rejected status
+            if (IsRejectedStatus(currentStatus))
+            {
+                var rejectedStep = steps.FirstOrDefault(s => s.IsCurrent);
+                if (rejectedStep != null)
+                {
+                    rejectedStep.IsRejected = true;
+                    rejectedStep.IsCurrent = true;
+                    rejectedStep.IsCompleted = false;
+                }
+            }
+
+            return steps;
+        }
+
+        /// <summary>
+        /// Cek apakah status adalah status rejected
+        /// </summary>
+        /// <param name="status">Status permit</param>
+        /// <returns>True jika rejected</returns>
+        public static bool IsRejectedStatus(PermitStatus status)
+        {
+            return status == PermitStatus.AdminRejected ||
+                   status == PermitStatus.VerifikatorRejected ||
+                   status == PermitStatus.KepalaDinasRejected;
+        }
+
+        /// <summary>
+        /// Mendapatkan level approval berdasarkan status
+        /// </summary>
+        /// <param name="status">Status permit</param>
+        /// <returns>Level approval (1-4)</returns>
+        public static int GetApprovalLevel(PermitStatus status)
+        {
+            return status switch
+            {
+                PermitStatus.Draft => 0,
+                PermitStatus.Submitted => 1,
+                PermitStatus.UnderAdminReview => 1,
+                PermitStatus.AdminApproved => 2,
+                PermitStatus.AdminRejected => 1,
+                PermitStatus.UnderVerifikatorReview => 2,
+                PermitStatus.VerifikatorApproved => 3,
+                PermitStatus.VerifikatorRejected => 2,
+                PermitStatus.PendingKepalaDinas => 3,
+                PermitStatus.KepalaDinasRejected => 3,
+                PermitStatus.FinalApproved => 4,
+                _ => 0
+            };
+        }
+
+        /// <summary>
+        /// Mendapatkan estimasi waktu proses berdasarkan status
+        /// </summary>
+        /// <param name="status">Status permit</param>
+        /// <returns>Estimasi waktu dalam hari</returns>
+        public static int GetEstimatedProcessingDays(PermitStatus status)
+        {
+            return status switch
+            {
+                PermitStatus.Submitted => 3,
+                PermitStatus.UnderAdminReview => 2,
+                PermitStatus.AdminApproved => 5,
+                PermitStatus.UnderVerifikatorReview => 3,
+                PermitStatus.VerifikatorApproved => 7,
+                PermitStatus.PendingKepalaDinas => 5,
+                PermitStatus.FinalApproved => 0,
+                _ => 0
+            };
+        }
+
+        /// <summary>
+        /// Mendapatkan deskripsi status untuk user
+        /// </summary>
+        /// <param name="status">Status permit</param>
+        /// <returns>Deskripsi status</returns>
+        public static string GetStatusDescription(PermitStatus status)
+        {
+            return status switch
+            {
+                PermitStatus.Draft => "Permohonan sedang disusun dan belum diajukan",
+                PermitStatus.Submitted => "Permohonan telah diajukan dan menunggu review dari admin",
+                PermitStatus.UnderAdminReview => "Permohonan sedang dalam review oleh admin",
+                PermitStatus.AdminApproved => "Permohonan telah disetujui admin dan akan diverifikasi",
+                PermitStatus.AdminRejected => "Permohonan ditolak oleh admin",
+                PermitStatus.UnderVerifikatorReview => "Permohonan sedang dalam proses verifikasi",
+                PermitStatus.VerifikatorApproved => "Permohonan telah diverifikasi dan menunggu persetujuan final",
+                PermitStatus.VerifikatorRejected => "Permohonan ditolak oleh verifikator",
+                PermitStatus.PendingKepalaDinas => "Permohonan menunggu persetujuan dari Kepala Dinas",
+                PermitStatus.KepalaDinasRejected => "Permohonan ditolak oleh Kepala Dinas",
+                PermitStatus.FinalApproved => "Permohonan telah disetujui secara final dan dapat diunduh",
+                _ => "Status tidak diketahui"
+            };
+        }
+
+        /// <summary>
+        /// Mendapatkan warna progress bar berdasarkan status
+        /// </summary>
+        /// <param name="status">Status permit</param>
+        /// <returns>CSS class untuk warna</returns>
+        public static string GetProgressBarColor(PermitStatus status)
+        {
+            if (IsRejectedStatus(status))
+            {
+                return "bg-danger";
+            }
+
+            return status switch
+            {
+                PermitStatus.Draft => "bg-secondary",
+                PermitStatus.Submitted => "bg-warning",
+                PermitStatus.UnderAdminReview => "bg-info",
+                PermitStatus.AdminApproved => "bg-primary",
+                PermitStatus.UnderVerifikatorReview => "bg-info",
+                PermitStatus.VerifikatorApproved => "bg-primary",
+                PermitStatus.PendingKepalaDinas => "bg-info",
+                PermitStatus.FinalApproved => "bg-success",
+                _ => "bg-secondary"
+            };
+        }
+    }
+
+    /// <summary>
+    /// Class untuk progress step
+    /// </summary>
+    public class ProgressStep
+    {
+        public string Title { get; set; } = "";
+        public string Icon { get; set; } = "";
+        public bool IsCompleted { get; set; }
+        public bool IsCurrent { get; set; }
+        public bool IsRejected { get; set; }
     }
 }

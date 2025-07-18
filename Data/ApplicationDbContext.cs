@@ -9,14 +9,20 @@ namespace PerizinanPeternakan.Data
         {
         }
 
+        public DbSet<Port> Ports { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<LivestockPermitApplication> PermitApplications { get; set; }
         public DbSet<LivestockDetail> LivestockDetails { get; set; }
         public DbSet<PermitApprovalHistory> PermitApprovalHistories { get; set; }
         public DbSet<PermitDocument> PermitDocuments { get; set; }
 
+        public DbSet<LivestockQuota> LivestockQuotas { get; set; }
+        public DbSet<QuotaUsage> QuotaUsages { get; set; }
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+
             base.OnModelCreating(modelBuilder);
 
             // Konfigurasi tabel User
@@ -49,29 +55,33 @@ namespace PerizinanPeternakan.Data
                 entity.Property(e => e.RejectionReason).HasMaxLength(1000);
                 entity.Property(e => e.GeneratedDocumentPath).HasMaxLength(500);
 
-                // Relationships - SEMUA MENGGUNAKAN NoAction untuk menghindari cascade conflicts
+                // Relasi ke Pemohon (User) - JANGAN DIHAPUS JIKA ADA PERMOHONAN
                 entity.HasOne(d => d.User)
                       .WithMany()
                       .HasForeignKey(d => d.UserId)
                       .OnDelete(DeleteBehavior.NoAction);
 
+                // --- PERBAIKAN UTAMA ADA DI SINI ---
+                // Jika Admin, Verifikator, atau KepalaDinas dihapus,
+                // set kolom foreign key di tabel ini menjadi NULL, JANGAN hapus permohonannya.
+
                 entity.HasOne(d => d.Admin)
                       .WithMany()
                       .HasForeignKey(d => d.AdminId)
                       .IsRequired(false)
-                      .OnDelete(DeleteBehavior.NoAction);
+                      .OnDelete(DeleteBehavior.SetNull); // <-- DIUBAH
 
                 entity.HasOne(d => d.Verifikator)
                       .WithMany()
                       .HasForeignKey(d => d.VerifikatorId)
                       .IsRequired(false)
-                      .OnDelete(DeleteBehavior.NoAction);
+                      .OnDelete(DeleteBehavior.SetNull); // <-- DIUBAH
 
                 entity.HasOne(d => d.KepalaDinas)
                       .WithMany()
                       .HasForeignKey(d => d.KepalaDinasId)
                       .IsRequired(false)
-                      .OnDelete(DeleteBehavior.NoAction);
+                      .OnDelete(DeleteBehavior.SetNull); // <-- DIUBAH
 
                 entity.HasIndex(e => e.ApplicationNumber).IsUnique();
                 entity.HasIndex(e => e.Status);
@@ -131,128 +141,58 @@ namespace PerizinanPeternakan.Data
                       .OnDelete(DeleteBehavior.NoAction);
             });
 
-            // Seed data with Admin role
-            modelBuilder.Entity<User>().HasData(
-                // Kepala Dinas
-                new User
-                {
-                    Id = 1,
-                    Username = "kepaladinas",
-                    Email = "kepaladinas@dpmptsp-ntb.go.id",
-                    Password = BCrypt.Net.BCrypt.HashPassword("kepala123"),
-                    NamaLengkap = "Hj. Eva Dewiyani, SP",
-                    NoTelepon = "081234567890",
-                    Alamat = "Kantor DPMPTSP NTB, Jl. Udayana No. 4 Mataram",
-                    Role = "KepalaDinas",
-                    TanggalDaftar = new DateTime(2024, 1, 1),
-                    IsActive = true
-                },
+            modelBuilder.Entity<LivestockQuota>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.LivestockType).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.ProvinceCode).IsRequired().HasMaxLength(5);
+                entity.Property(e => e.ProvinceName).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Year).IsRequired();
+                entity.Property(e => e.TotalQuota).IsRequired();
+                entity.Property(e => e.UsedQuota).IsRequired();
+                entity.Property(e => e.Notes).HasMaxLength(500);
+                entity.Property(e => e.RegulationReference).HasMaxLength(100);
 
-                // Admin 1 (menggantikan role verifikator lama)
-                new User
-                {
-                    Id = 2,
-                    Username = "admin1",
-                    Email = "admin1@dpmptsp-ntb.go.id",
-                    Password = BCrypt.Net.BCrypt.HashPassword("admin123"),
-                    NamaLengkap = "Ahmad Admin, S.Pt",
-                    NoTelepon = "081234567891",
-                    Alamat = "Kantor DPMPTSP NTB, Jl. Udayana No. 4 Mataram",
-                    Role = "Admin",
-                    TanggalDaftar = new DateTime(2024, 1, 15),
-                    IsActive = true
-                },
+                // Indexes untuk performance
+                entity.HasIndex(e => new { e.LivestockType, e.ProvinceCode, e.Year })
+                      .IsUnique()
+                      .HasDatabaseName("IX_LivestockQuotas_Type_Province_Year");
+                entity.HasIndex(e => e.ProvinceCode);
+                entity.HasIndex(e => e.Year);
+            });
 
-                // Admin 2 (backup)
-                new User
-                {
-                    Id = 3,
-                    Username = "admin2",
-                    Email = "admin2@dpmptsp-ntb.go.id",
-                    Password = BCrypt.Net.BCrypt.HashPassword("admin123"),
-                    NamaLengkap = "Siti Admin, S.Pt",
-                    NoTelepon = "081234567893",
-                    Alamat = "Kantor DPMPTSP NTB, Jl. Udayana No. 4 Mataram",
-                    Role = "Admin",
-                    TanggalDaftar = new DateTime(2024, 1, 20),
-                    IsActive = true
-                },
+            // QuotaUsage Configuration
+            modelBuilder.Entity<QuotaUsage>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Quantity).IsRequired();
+                entity.Property(e => e.Status).IsRequired().HasMaxLength(20);
+                entity.Property(e => e.Notes).HasMaxLength(200);
 
-                // Verifikator 1 (sekarang role baru)
-                new User
-                {
-                    Id = 4,
-                    Username = "verifikator1",
-                    Email = "verifikator1@dpmptsp-ntb.go.id",
-                    Password = BCrypt.Net.BCrypt.HashPassword("verifikator123"),
-                    NamaLengkap = "Budi Verifikator, S.Pt, M.Si",
-                    NoTelepon = "081234567894",
-                    Alamat = "Kantor DPMPTSP NTB, Jl. Udayana No. 4 Mataram",
-                    Role = "Verifikator",
-                    TanggalDaftar = new DateTime(2024, 1, 25),
-                    IsActive = true
-                },
+                // Foreign key relationships
+                entity.HasOne(e => e.LivestockQuota)
+                      .WithMany(lq => lq.QuotaUsages)
+                      .HasForeignKey(e => e.LivestockQuotaId)
+                      .OnDelete(DeleteBehavior.Cascade);
 
-                // Verifikator 2 (backup)
-                new User
-                {
-                    Id = 5,
-                    Username = "verifikator2",
-                    Email = "verifikator2@dpmptsp-ntb.go.id",
-                    Password = BCrypt.Net.BCrypt.HashPassword("verifikator123"),
-                    NamaLengkap = "Rina Verifikator, S.Pt",
-                    NoTelepon = "081234567895",
-                    Alamat = "Kantor DPMPTSP NTB, Jl. Udayana No. 4 Mataram",
-                    Role = "Verifikator",
-                    TanggalDaftar = new DateTime(2024, 1, 30),
-                    IsActive = true
-                },
+                entity.HasOne(e => e.PermitApplication)
+                      .WithMany()
+                      .HasForeignKey(e => e.PermitApplicationId)
+                      .OnDelete(DeleteBehavior.Restrict);
 
-                // User Demo 1
-                new User
-                {
-                    Id = 6,
-                    Username = "user1",
-                    Email = "user1@example.com",
-                    Password = BCrypt.Net.BCrypt.HashPassword("user123"),
-                    NamaLengkap = "Budi Peternak",
-                    NoTelepon = "081234567896",
-                    Alamat = "Desa Suka Maju, Kec. Praya, Lombok Tengah",
-                    Role = "User",
-                    TanggalDaftar = new DateTime(2024, 2, 1),
-                    IsActive = true
-                },
+                // Indexes
+                entity.HasIndex(e => new { e.LivestockQuotaId, e.Status });
+                entity.HasIndex(e => e.PermitApplicationId);
+            });
 
-                // User Demo 2 (CV/Perusahaan)
-                new User
-                {
-                    Id = 7,
-                    Username = "cvdena",
-                    Email = "cvdena@example.com",
-                    Password = BCrypt.Net.BCrypt.HashPassword("cvdena123"),
-                    NamaLengkap = "CV. DENA BERSAUDARA",
-                    NoTelepon = "081234567897",
-                    Alamat = "Desa Dena, Kec. Madapangga, Kab. Bima",
-                    Role = "User",
-                    TanggalDaftar = new DateTime(2024, 3, 1),
-                    IsActive = true
-                },
+            // Data seeding untuk Port
+            modelBuilder.Entity<Port>()
+                .HasIndex(p => p.Code)
+                .IsUnique();
 
-                // User Demo 3
-                new User
-                {
-                    Id = 8,
-                    Username = "sarimakmur",
-                    Email = "sarimakmur@example.com",
-                    Password = BCrypt.Net.BCrypt.HashPassword("sari123"),
-                    NamaLengkap = "PT. Sari Makmur Ternak",
-                    NoTelepon = "081234567898",
-                    Alamat = "Jl. Peternakan No. 15, Mataram",
-                    Role = "User",
-                    TanggalDaftar = new DateTime(2024, 3, 15),
-                    IsActive = true
-                }
-            );
+            modelBuilder.Entity<Port>()
+                .HasIndex(p => new { p.ProvinceCode, p.Name });
+
         }
     }
 }

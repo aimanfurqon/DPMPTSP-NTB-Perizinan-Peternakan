@@ -3,16 +3,20 @@
     ViewData["Title"] = "Permohonan Baru";
 }
 
+<link rel="stylesheet" href="~/css/multi-step-form.css" />
+
+
+
 <div class="create-container">
+    <!-- Page Header -->
     <div class="page-header">
         <div class="header-content">
             <h1 class="page-title">
                 <i class="fas fa-plus-circle"></i>
                 Permohonan Izin Baru
             </h1>
-            <p class="page-subtitle">Buat permohonan izin pengeluaran ternak potong</p>
+            <p class="page-subtitle">Buat permohonan izin pengeluaran ternak potong dengan mudah</p>
         </div>
-
         <div class="header-actions">
             <a href="@Url.Action("Index", "Permit")" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left"></i>
@@ -21,524 +25,717 @@
         </div>
     </div>
 
+    <!-- Multi-Step Progress Indicator -->
+    <div class="step-progress">
+        <div class="step-indicators">
+            <div class="step-indicator active" data-step="1">
+                <div class="step-circle">
+                    <span class="step-number">1</span>
+                    <i class="fas fa-check step-check"></i>
+                </div>
+                <div class="step-info">
+                    <span class="step-title">Informasi Perusahaan</span>
+                    <span class="step-subtitle">Data perusahaan pemohon</span>
+                </div>
+            </div>
+
+            <div class="step-line"></div>
+
+            <div class="step-indicator" data-step="2">
+                <div class="step-circle">
+                    <span class="step-number">2</span>
+                    <i class="fas fa-check step-check"></i>
+                </div>
+                <div class="step-info">
+                    <span class="step-title">Detail Pengiriman</span>
+                    <span class="step-subtitle">Lokasi asal dan tujuan</span>
+                </div>
+            </div>
+
+            <div class="step-line"></div>
+
+            <div class="step-indicator" data-step="3">
+                <div class="step-circle">
+                    <span class="step-number">3</span>
+                    <i class="fas fa-check step-check"></i>
+                </div>
+                <div class="step-info">
+                    <span class="step-title">Detail Ternak</span>
+                    <span class="step-subtitle">Jenis dan jumlah ternak</span>
+                </div>
+            </div>
+
+            <div class="step-line"></div>
+
+            <div class="step-indicator" data-step="4">
+                <div class="step-circle">
+                    <span class="step-number">4</span>
+                    <i class="fas fa-check step-check"></i>
+                </div>
+                <div class="step-info">
+                    <span class="step-title">Dokumen Pendukung</span>
+                    <span class="step-subtitle">Upload dokumen wajib</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Multi-Step Form -->
     <form asp-action="Create" method="post" enctype="multipart/form-data" class="permit-form" id="permitForm">
-        <div class="form-sections">
-            <!-- Informasi Perusahaan -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h3>
-                        <i class="fas fa-building"></i>
-                        Informasi Perusahaan
-                    </h3>
-                    <span class="section-number">1</span>
-                </div>
+        @Html.AntiForgeryToken()
 
-                <div class="section-body">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label asp-for="CompanyName" class="form-label required">
-                                <i class="fas fa-building"></i>
-                                Nama Perusahaan
-                            </label>
-                            <input asp-for="CompanyName" class="form-control"
-                                   placeholder="Contoh: CV. DENA BERSAUDARA" />
-                            <span asp-validation-for="CompanyName" class="text-danger"></span>
+        <div class="form-steps-container">
+            <!-- Step 1: Informasi Perusahaan -->
+            <div class="form-step active" data-step="1">
+                <div class="step-content">
+                    <div class="step-header">
+                        <div class="step-icon">
+                            <i class="fas fa-building"></i>
                         </div>
+                        <div class="step-text">
+                            <h2>Informasi Perusahaan</h2>
+                            <p>Masukkan data lengkap perusahaan atau pemohon yang akan mengajukan izin</p>
+                        </div>
+                    </div>
 
-                        <div class="form-group full-width">
-                            <label asp-for="CompanyAddress" class="form-label required">
-                                <i class="fas fa-map-marker-alt"></i>
-                                Alamat Perusahaan
-                            </label>
-                            <textarea asp-for="CompanyAddress" class="form-control" rows="3"
-                                      placeholder="Masukkan alamat lengkap perusahaan"></textarea>
-                            <span asp-validation-for="CompanyAddress" class="text-danger"></span>
+                    <div class="form-body">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label asp-for="CompanyName" class="form-label required">
+                                    <i class="fas fa-building"></i>
+                                    Nama Perusahaan
+                                </label>
+                                <input asp-for="CompanyName" class="form-control"
+                                       placeholder="Contoh: CV. DENA BERSAUDARA"
+                                       autocomplete="organization" />
+                                <span asp-validation-for="CompanyName" class="text-danger"></span>
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label asp-for="CompanyAddress" class="form-label required">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    Alamat Perusahaan
+                                </label>
+                                <textarea asp-for="CompanyAddress" class="form-control" rows="3"
+                                          placeholder="Masukkan alamat lengkap perusahaan termasuk kota dan provinsi"></textarea>
+                                <span asp-validation-for="CompanyAddress" class="text-danger"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Detail Pengiriman -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h3>
-                        <i class="fas fa-shipping-fast"></i>
-                        Detail Pengiriman
-                    </h3>
-                    <span class="section-number">2</span>
-                </div>
-
-                <div class="section-body">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label asp-for="OriginLocation" class="form-label required">
-                                <i class="fas fa-map-marker-alt text-success"></i>
-                                Asal Ternak
-                            </label>
-                            <input asp-for="OriginLocation" class="form-control"
-                                   placeholder="Contoh: Kab. Bima" />
-                            <span asp-validation-for="OriginLocation" class="text-danger"></span>
+            <!-- Step 2: Detail Pengiriman -->
+            <!-- Step 2: Detail Pengiriman - Complete Version -->
+            <div class="form-step" data-step="2">
+                <div class="step-content">
+                    <div class="step-header">
+                        <div class="step-icon">
+                            <i class="fas fa-shipping-fast"></i>
                         </div>
-
-                        <div class="form-group">
-                            <label asp-for="DestinationLocation" class="form-label required">
-                                <i class="fas fa-map-marker-alt text-danger"></i>
-                                Tujuan Pengiriman
-                            </label>
-                            <input asp-for="DestinationLocation" class="form-control"
-                                   placeholder="Contoh: Kab. Jeneponto, Sulawesi Selatan" />
-                            <span asp-validation-for="DestinationLocation" class="text-danger"></span>
-                        </div>
-
-                        <div class="form-group">
-                            <label asp-for="DeparturePort" class="form-label required">
-                                <i class="fas fa-anchor"></i>
-                                Pelabuhan Asal
-                            </label>
-                            <input asp-for="DeparturePort" class="form-control"
-                                   placeholder="Contoh: Pelabuhan Sape, Kab. Bima" />
-                            <span asp-validation-for="DeparturePort" class="text-danger"></span>
-                        </div>
-
-                        <div class="form-group">
-                            <label asp-for="ArrivalPort" class="form-label required">
-                                <i class="fas fa-anchor"></i>
-                                Pelabuhan Bongkar
-                            </label>
-                            <input asp-for="ArrivalPort" class="form-control"
-                                   placeholder="Contoh: Pelabuhan Bungeng, Kab. Jeneponto" />
-                            <span asp-validation-for="ArrivalPort" class="text-danger"></span>
+                        <div class="step-text">
+                            <h2>Detail Pengiriman</h2>
+                            <p>Tentukan lokasi asal ternak dan tujuan pengiriman dengan detail pelabuhan</p>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Detail Ternak -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h3>
-                        <i class="fas fa-paw"></i>
-                        Detail Ternak
-                    </h3>
-                    <span class="section-number">3</span>
-                </div>
-
-                <div class="section-body">
-                    <div class="livestock-container" id="livestockContainer">
-                        @for (int i = 0; i < Math.Max(Model.LivestockDetails?.Count ?? 0, 1); i++)
-                        {
-                            <div class="livestock-item" data-index="@i">
-                                <div class="livestock-header">
-                                    <h4>Ternak #<span class="livestock-number">@(i + 1)</span></h4>
-                                    @if (i > 0)
-                                    {
-                                        <button type="button" class="btn btn-sm btn-outline-danger remove-livestock">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    }
+                    <div class="form-body">
+                        <div class="form-grid">
+                            <!-- Asal Ternak -->
+                            <div class="form-group">
+                                <label class="form-label required">
+                                    <i class="fas fa-map-marker-alt text-success"></i>
+                                    Asal Ternak
+                                </label>
+                                <div class="location-dropdown">
+                                    <select id="originProvinceSelect" class="form-control select2-province" style="margin-bottom: 10px; width: 100%;">
+                                        <option value="">Pilih Provinsi</option>
+                                    </select>
+                                    <select id="originRegencySelect" class="form-control select2-regency" disabled style="width: 100%;">
+                                        <option value="">Pilih Kabupaten/Kota</option>
+                                    </select>
                                 </div>
+                                <input asp-for="OriginLocation" id="originLocationHidden" type="hidden" />
+                                <span asp-validation-for="OriginLocation" class="text-danger"></span>
+                            </div>
 
-                                <div class="livestock-form">
-                                    <div class="form-group">
-                                        <label class="form-label required">
-                                            <i class="fas fa-paw"></i>
-                                            Jenis Ternak
-                                        </label>
-                                        <select name="LivestockDetails[@i].LivestockType" class="form-control livestock-type" required>
-                                            <option value="">Pilih Jenis Ternak</option>
-                                            <option value="Sapi Potong">Sapi Potong</option>
-                                            <option value="Kerbau Potong">Kerbau Potong</option>
-                                            <option value="Kuda Pedaging">Kuda Pedaging</option>
-                                            <option value="Kambing">Kambing</option>
-                                            <option value="Domba">Domba</option>
-                                        </select>
-                                    </div>
+                            <!-- Tujuan Pengiriman -->
+                            <div class="form-group">
+                                <label class="form-label required">
+                                    <i class="fas fa-map-marker-alt text-danger"></i>
+                                    Tujuan Pengiriman
+                                </label>
+                                <div class="location-dropdown">
+                                    <select id="destinationProvinceSelect" class="form-control select2-province" style="margin-bottom: 10px; width: 100%;">
+                                        <option value="">Pilih Provinsi</option>
+                                    </select>
+                                    <select id="destinationRegencySelect" class="form-control select2-regency" disabled style="width: 100%;">
+                                        <option value="">Pilih Kabupaten/Kota</option>
+                                    </select>
+                                </div>
+                                <input asp-for="DestinationLocation" id="destinationLocationHidden" type="hidden" />
+                                <span asp-validation-for="DestinationLocation" class="text-danger"></span>
+                            </div>
 
-                                    <div class="form-group">
-                                        <label class="form-label required">
-                                            <i class="fas fa-calculator"></i>
-                                            Jumlah (ekor)
-                                        </label>
-                                        <input type="number" name="LivestockDetails[@i].Quantity"
-                                               class="form-control livestock-quantity" min="1" max="10000"
-                                               placeholder="Masukkan jumlah ternak" required />
-                                    </div>
+                            <!-- Pelabuhan Keberangkatan -->
+                            <div class="form-group">
+                                <label class="form-label required">
+                                    <i class="fas fa-anchor text-primary"></i>
+                                    Pelabuhan Keberangkatan
+                                </label>
+                                <select id="departurePortSelect" class="form-control select2-port" disabled>
+                                    <option value="">Pilih provinsi asal terlebih dahulu</option>
+                                </select>
+                                <input asp-for="DeparturePort" id="departurePortHidden" type="hidden" />
+                                <span asp-validation-for="DeparturePort" class="text-danger"></span>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i>
+                                    Pelabuhan akan muncul setelah memilih provinsi asal
+                                </small>
+                            </div>
 
-                                    <div class="form-group">
-                                        <label class="form-label">
-                                            <i class="fas fa-comment"></i>
-                                            Keterangan
-                                        </label>
-                                        <textarea name="LivestockDetails[@i].Description"
-                                              class="form-control" rows="2"
-                                              placeholder="Keterangan tambahan (opsional)"></textarea>
+                            <!-- Pelabuhan Tujuan -->
+                            <div class="form-group">
+                                <label class="form-label required">
+                                    <i class="fas fa-anchor text-warning"></i>
+                                    Pelabuhan Tujuan
+                                </label>
+                                <select id="arrivalPortSelect" class="form-control select2-port" disabled>
+                                    <option value="">Pilih provinsi tujuan terlebih dahulu</option>
+                                </select>
+                                <input asp-for="ArrivalPort" id="arrivalPortHidden" type="hidden" />
+                                <span asp-validation-for="ArrivalPort" class="text-danger"></span>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i>
+                                    Pelabuhan akan muncul setelah memilih provinsi tujuan
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Summary Card -->
+                        <div class="shipping-summary" id="shippingSummary" style="display: none;">
+                            <div class="summary-card">
+                                <div class="summary-header">
+                                    <i class="fas fa-route"></i>
+                                    <span>Ringkasan Rute Pengiriman</span>
+                                </div>
+                                <div class="summary-content">
+                                    <div class="route-info">
+                                        <div class="route-point origin">
+                                            <div class="point-icon">
+                                                <i class="fas fa-circle text-success"></i>
+                                            </div>
+                                            <div class="point-details">
+                                                <div class="point-label">Asal</div>
+                                                <div class="point-location" id="summaryOrigin">-</div>
+                                                <div class="point-port" id="summaryDeparturePort">-</div>
+                                            </div>
+                                        </div>
+                                        <div class="route-arrow">
+                                            <i class="fas fa-arrow-right"></i>
+                                        </div>
+                                        <div class="route-point destination">
+                                            <div class="point-icon">
+                                                <i class="fas fa-circle text-danger"></i>
+                                            </div>
+                                            <div class="point-details">
+                                                <div class="point-label">Tujuan</div>
+                                                <div class="point-location" id="summaryDestination">-</div>
+                                                <div class="point-port" id="summaryArrivalPort">-</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        }
-                    </div>
-
-                    <div class="livestock-actions">
-                        <button type="button" class="btn btn-outline-primary" id="addLivestock">
-                            <i class="fas fa-plus"></i>
-                            Tambah Jenis Ternak
-                        </button>
-
-                        <div class="livestock-summary">
-                            <div class="summary-item">
-                                <span class="label">Total Jenis:</span>
-                                <span class="value" id="totalTypes">1</span>
-                            </div>
-                            <div class="summary-item">
-                                <span class="label">Total Ekor:</span>
-                                <span class="value" id="totalQuantity">0</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Dokumen Pendukung -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h3>
-                        <i class="fas fa-file-upload"></i>
-                        Dokumen Pendukung
-                    </h3>
-                    <span class="section-number">4</span>
-                </div>
 
-                <div class="section-body">
-                    <div class="document-upload-container">
-                        <div class="upload-info">
-                            <div class="info-card">
+            <!-- Step 3: Detail Ternak -->
+            <div class="form-step" data-step="3">
+                <div class="step-content">
+                    <div class="step-header">
+                        <div class="step-icon">
+                            <i class="fas fa-paw"></i>
+                        </div>
+                        <div class="step-text">
+                            <h2>Detail Ternak</h2>
+                            <p>Tambahkan informasi lengkap mengenai jenis dan jumlah ternak yang akan dikirim</p>
+                            <small class="text-info">
                                 <i class="fas fa-info-circle"></i>
-                                <div class="info-content">
-                                    <h4>Petunjuk Upload Dokumen</h4>
-                                    <ul>
-                                        <li>Format file yang diterima: PDF, JPG, JPEG, PNG</li>
-                                        <li>Ukuran maksimal per file: 5MB</li>
-                                        <li>Pastikan dokumen terlihat jelas dan tidak blur</li>
-                                        <li>Semua dokumen wajib diupload untuk memproses permohonan</li>
-                                    </ul>
+                                Kuota akan ditampilkan secara real-time berdasarkan asal ternak yang dipilih
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="form-body">
+                        <!-- Quota Information Panel -->
+                        <div class="quota-info-panel" id="quotaInfoPanel" style="display: none;">
+                            <div class="panel-header">
+                                <i class="fas fa-chart-pie"></i>
+                                <span>Informasi Kuota Ternak 2025</span>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="refreshQuotaBtn">
+                                    <i class="fas fa-sync-alt"></i> Refresh
+                                </button>
+                            </div>
+                            <div class="panel-content" id="quotaInfoContent">
+                                <!-- Quota info will be loaded here -->
+                            </div>
+                        </div>
+
+                        <div class="livestock-container" id="livestockContainer">
+                            @for (int i = 0; i < Math.Max(Model.LivestockDetails?.Count ?? 0, 1); i++)
+                            {
+                                <div class="livestock-item" data-index="@i">
+                                    <div class="livestock-header">
+                                        <h4>Ternak #<span class="livestock-number">@(i + 1)</span></h4>
+                                        @if (i > 0)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-danger remove-livestock" title="Hapus item ini">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        }
+                                    </div>
+
+                                    <div class="livestock-form">
+                                        <div class="form-group">
+                                            <label class="form-label required">
+                                                <i class="fas fa-paw"></i>
+                                                Jenis Ternak
+                                                <span class="quota-indicator" data-index="@i" style="display: none;">
+                                                    <i class="fas fa-info-circle text-primary"></i>
+                                                    <span class="quota-text">Loading...</span>
+                                                </span>
+                                            </label>
+                                            <select name="LivestockDetails[@i].LivestockType" class="form-control livestock-type" data-index="@i" required>
+                                                <option value="">Pilih Jenis Ternak</option>
+                                                <option value="Sapi Potong">Sapi Potong</option>
+                                                <option value="Kerbau Potong">Kerbau Potong</option>
+                                                <option value="Kuda Pedaging">Kuda Pedaging</option>
+                                                <option value="Kambing">Kambing</option>
+                                                <option value="Domba">Domba</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="form-label required">
+                                                <i class="fas fa-calculator"></i>
+                                                Jumlah (ekor)
+                                                <span class="quota-limit" data-index="@i" style="display: none;">
+                                                    <small class="text-muted">Maks: <span class="max-quota">-</span> ekor</small>
+                                                </span>
+                                            </label>
+                                            <input type="number" name="LivestockDetails[@i].Quantity"
+                                                   class="form-control livestock-quantity" data-index="@i"
+                                                   min="1" max="1"
+                                                   placeholder="Masukkan jumlah ternak" required />
+                                            <div class="quantity-feedback" data-index="@i" style="display: none;">
+                                                <small class="feedback-text">-</small>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-comment"></i>
+                                                Keterangan
+                                            </label>
+                                            <textarea name="LivestockDetails[@i].Description"
+                                                  class="form-control" rows="2"
+                                                  placeholder="Keterangan tambahan (opsional)"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="livestock-actions">
+                            <button type="button" class="btn btn-outline-primary" id="addLivestock">
+                                <i class="fas fa-plus"></i>
+                                Tambah Jenis Ternak
+                            </button>
+
+                            <div class="livestock-summary">
+                                <div class="summary-item">
+                                    <span class="label">Total Jenis</span>
+                                    <span class="value" id="totalTypes">1</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="label">Total Ekor</span>
+                                    <span class="value" id="totalQuantity">0</span>
+                                </div>
+                                <div class="summary-item quota-usage" style="display: none;">
+                                    <span class="label">Status Kuota</span>
+                                    <span class="value" id="quotaStatus">
+                                        <i class="fas fa-check-circle text-success"></i>
+                                        Dalam Batas
+                                    </span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="document-upload-grid">
-                            <!-- Surat Permohonan -->
-                            <div class="upload-item" data-document-type="SuratPermohonan">
-                                <div class="upload-header">
-                                    <label class="form-label required">
-                                        <i class="fas fa-file-alt"></i>
-                                        Surat Permohonan
-                                    </label>
-                                    <span class="upload-status" id="status-surat-permohonan">
-                                        <i class="fas fa-circle text-danger"></i>
-                                        Belum Upload
-                                    </span>
-                                </div>
-                                <div class="upload-area" data-target="SuratPermohonan">
-                                    <input type="file" asp-for="SuratPermohonan"
-                                           class="file-input"
-                                           accept=".pdf,.jpg,.jpeg,.png"
-                                           data-max-size="5242880"
-                                           id="SuratPermohonan" />
-                                    <div class="upload-placeholder">
-                                        <i class="fas fa-cloud-upload-alt"></i>
-                                        <p>Klik untuk upload atau drag & drop file</p>
-                                        <small>PDF, JPG, PNG (Max: 5MB)</small>
-                                    </div>
-                                    <div class="file-preview" style="display: none;">
-                                        <div class="file-info">
-                                            <i class="fas fa-file"></i>
-                                            <div class="file-details">
-                                                <span class="file-name"></span>
-                                                <span class="file-size"></span>
-                                            </div>
-                                        </div>
-                                        <button type="button" class="btn-remove">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <span asp-validation-for="SuratPermohonan" class="text-danger"></span>
+                        <!-- Quota Validation Summary -->
+                        <div class="quota-validation-summary" id="quotaValidationSummary" style="display: none;">
+                            <div class="validation-header">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Validasi Kuota</span>
                             </div>
-
-                            <!-- Rekomendasi Dinas Provinsi -->
-                            <div class="upload-item" data-document-type="RekomendasiDinasProv">
-                                <div class="upload-header">
-                                    <label class="form-label required">
-                                        <i class="fas fa-file-alt"></i>
-                                        Rekomendasi Dinas Peternakan Provinsi NTB
-                                    </label>
-                                    <span class="upload-status" id="status-rekomendasi-dinas">
-                                        <i class="fas fa-circle text-danger"></i>
-                                        Belum Upload
-                                    </span>
-                                </div>
-                                <div class="upload-area" data-target="RekomendasiDinasProv">
-                                    <input type="file" asp-for="RekomendasiDinasProv"
-                                           class="file-input"
-                                           accept=".pdf,.jpg,.jpeg,.png"
-                                           data-max-size="5242880"
-                                           id="RekomendasiDinasProv" />
-                                    <div class="upload-placeholder">
-                                        <i class="fas fa-cloud-upload-alt"></i>
-                                        <p>Klik untuk upload atau drag & drop file</p>
-                                        <small>PDF, JPG, PNG (Max: 5MB)</small>
-                                    </div>
-                                    <div class="file-preview" style="display: none;">
-                                        <div class="file-info">
-                                            <i class="fas fa-file"></i>
-                                            <div class="file-details">
-                                                <span class="file-name"></span>
-                                                <span class="file-size"></span>
-                                            </div>
-                                        </div>
-                                        <button type="button" class="btn-remove">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <span asp-validation-for="RekomendasiDinasProv" class="text-danger"></span>
-                            </div>
-
-                            <!-- Rekomendasi Daerah Tujuan -->
-                            <div class="upload-item" data-document-type="RekomendasiDaerahTujuan">
-                                <div class="upload-header">
-                                    <label class="form-label required">
-                                        <i class="fas fa-file-alt"></i>
-                                        Rekomendasi Pemasukan Ternak dari Daerah Tujuan
-                                    </label>
-                                    <span class="upload-status" id="status-rekomendasi-tujuan">
-                                        <i class="fas fa-circle text-danger"></i>
-                                        Belum Upload
-                                    </span>
-                                </div>
-                                <div class="upload-area" data-target="RekomendasiDaerahTujuan">
-                                    <input type="file" asp-for="RekomendasiDaerahTujuan"
-                                           class="file-input"
-                                           accept=".pdf,.jpg,.jpeg,.png"
-                                           data-max-size="5242880"
-                                           id="RekomendasiDaerahTujuan" />
-                                    <div class="upload-placeholder">
-                                        <i class="fas fa-cloud-upload-alt"></i>
-                                        <p>Klik untuk upload atau drag & drop file</p>
-                                        <small>PDF, JPG, PNG (Max: 5MB)</small>
-                                    </div>
-                                    <div class="file-preview" style="display: none;">
-                                        <div class="file-info">
-                                            <i class="fas fa-file"></i>
-                                            <div class="file-details">
-                                                <span class="file-name"></span>
-                                                <span class="file-size"></span>
-                                            </div>
-                                        </div>
-                                        <button type="button" class="btn-remove">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <span asp-validation-for="RekomendasiDaerahTujuan" class="text-danger"></span>
-                            </div>
-
-                            <!-- SKKH Kabupaten Asal -->
-                            <div class="upload-item" data-document-type="SKKHKabupatenAsal">
-                                <div class="upload-header">
-                                    <label class="form-label required">
-                                        <i class="fas fa-file-medical"></i>
-                                        SKKH dari Kabupaten Asal
-                                    </label>
-                                    <span class="upload-status" id="status-skkh-kabupaten">
-                                        <i class="fas fa-circle text-danger"></i>
-                                        Belum Upload
-                                    </span>
-                                </div>
-                                <div class="upload-area" data-target="SKKHKabupatenAsal">
-                                    <input type="file" asp-for="SKKHKabupatenAsal"
-                                           class="file-input"
-                                           accept=".pdf,.jpg,.jpeg,.png"
-                                           data-max-size="5242880"
-                                           id="SKKHKabupatenAsal" />
-                                    <div class="upload-placeholder">
-                                        <i class="fas fa-cloud-upload-alt"></i>
-                                        <p>Klik untuk upload atau drag & drop file</p>
-                                        <small>PDF, JPG, PNG (Max: 5MB)</small>
-                                    </div>
-                                    <div class="file-preview" style="display: none;">
-                                        <div class="file-info">
-                                            <i class="fas fa-file"></i>
-                                            <div class="file-details">
-                                                <span class="file-name"></span>
-                                                <span class="file-size"></span>
-                                            </div>
-                                        </div>
-                                        <button type="button" class="btn-remove">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <span asp-validation-for="SKKHKabupatenAsal" class="text-danger"></span>
-                            </div>
-
-                            <!-- SKKH Dinas Provinsi -->
-                            <div class="upload-item" data-document-type="SKKHDinasProvinsi">
-                                <div class="upload-header">
-                                    <label class="form-label required">
-                                        <i class="fas fa-file-medical"></i>
-                                        SKKH dari Dinas Peternakan Provinsi NTB
-                                    </label>
-                                    <span class="upload-status" id="status-skkh-provinsi">
-                                        <i class="fas fa-circle text-danger"></i>
-                                        Belum Upload
-                                    </span>
-                                </div>
-                                <div class="upload-area" data-target="SKKHDinasProvinsi">
-                                    <input type="file" asp-for="SKKHDinasProvinsi"
-                                           class="file-input"
-                                           accept=".pdf,.jpg,.jpeg,.png"
-                                           data-max-size="5242880"
-                                           id="SKKHDinasProvinsi" />
-                                    <div class="upload-placeholder">
-                                        <i class="fas fa-cloud-upload-alt"></i>
-                                        <p>Klik untuk upload atau drag & drop file</p>
-                                        <small>PDF, JPG, PNG (Max: 5MB)</small>
-                                    </div>
-                                    <div class="file-preview" style="display: none;">
-                                        <div class="file-info">
-                                            <i class="fas fa-file"></i>
-                                            <div class="file-details">
-                                                <span class="file-name"></span>
-                                                <span class="file-size"></span>
-                                            </div>
-                                        </div>
-                                        <button type="button" class="btn-remove">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <span asp-validation-for="SKKHDinasProvinsi" class="text-danger"></span>
-                            </div>
-
-                            <!-- Surat Jalan Ternak -->
-                            <div class="upload-item" data-document-type="SuratJalanTernak">
-                                <div class="upload-header">
-                                    <label class="form-label required">
-                                        <i class="fas fa-route"></i>
-                                        Surat Keterangan Jalan Ternak/Rekomendasi Asal
-                                    </label>
-                                    <span class="upload-status" id="status-surat-jalan">
-                                        <i class="fas fa-circle text-danger"></i>
-                                        Belum Upload
-                                    </span>
-                                </div>
-                                <div class="upload-area" data-target="SuratJalanTernak">
-                                    <input type="file" asp-for="SuratJalanTernak"
-                                           class="file-input"
-                                           accept=".pdf,.jpg,.jpeg,.png"
-                                           data-max-size="5242880"
-                                           id="SuratJalanTernak" />
-                                    <div class="upload-placeholder">
-                                        <i class="fas fa-cloud-upload-alt"></i>
-                                        <p>Klik untuk upload atau drag & drop file</p>
-                                        <small>PDF, JPG, PNG (Max: 5MB)</small>
-                                    </div>
-                                    <div class="file-preview" style="display: none;">
-                                        <div class="file-info">
-                                            <i class="fas fa-file"></i>
-                                            <div class="file-details">
-                                                <span class="file-name"></span>
-                                                <span class="file-size"></span>
-                                            </div>
-                                        </div>
-                                        <button type="button" class="btn-remove">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <span asp-validation-for="SuratJalanTernak" class="text-danger"></span>
-                            </div>
-
-                            <!-- Hasil Pemeriksaan Fisik -->
-                            <div class="upload-item" data-document-type="HasilPemeriksaanFisik">
-                                <div class="upload-header">
-                                    <label class="form-label required">
-                                        <i class="fas fa-stethoscope"></i>
-                                        Hasil Pemeriksaan Fisik (Holding Ground)
-                                    </label>
-                                    <span class="upload-status" id="status-pemeriksaan-fisik">
-                                        <i class="fas fa-circle text-danger"></i>
-                                        Belum Upload
-                                    </span>
-                                </div>
-                                <div class="upload-area" data-target="HasilPemeriksaanFisik">
-                                    <input type="file" asp-for="HasilPemeriksaanFisik"
-                                           class="file-input"
-                                           accept=".pdf,.jpg,.jpeg,.png"
-                                           data-max-size="5242880"
-                                           id="HasilPemeriksaanFisik" />
-                                    <div class="upload-placeholder">
-                                        <i class="fas fa-cloud-upload-alt"></i>
-                                        <p>Klik untuk upload atau drag & drop file</p>
-                                        <small>PDF, JPG, PNG (Max: 5MB)</small>
-                                    </div>
-                                    <div class="file-preview" style="display: none;">
-                                        <div class="file-info">
-                                            <i class="fas fa-file"></i>
-                                            <div class="file-details">
-                                                <span class="file-name"></span>
-                                                <span class="file-size"></span>
-                                            </div>
-                                        </div>
-                                        <button type="button" class="btn-remove">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <span asp-validation-for="HasilPemeriksaanFisik" class="text-danger"></span>
+                            <div class="validation-content" id="validationContent">
+                                <!-- Validation results will be shown here -->
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Step 4: Dokumen Pendukung -->
+            <div class="form-step" data-step="4">
+                <div class="step-content">
+                    <div class="step-header">
+                        <div class="step-icon">
+                            <i class="fas fa-file-upload"></i>
+                        </div>
+                        <div class="step-text">
+                            <h2>Dokumen Pendukung</h2>
+                            <p>Upload semua dokumen yang diperlukan untuk melengkapi permohonan izin</p>
+                        </div>
+                    </div>
 
-                        <div class="upload-summary">
-                            <div class="summary-header">
-                                <i class="fas fa-clipboard-check"></i>
-                                <span>Status Upload Dokumen</span>
+                    <div class="form-body">
+                        <div class="document-upload-container">
+                            <!-- Upload Information -->
+                            <div class="upload-info">
+                                <div class="info-card">
+                                    <i class="fas fa-info-circle"></i>
+                                    <div class="info-content">
+                                        <h4>Petunjuk Upload Dokumen</h4>
+                                        <ul>
+                                            <li>Format file yang diterima: PDF, JPG, JPEG, PNG</li>
+                                            <li>Ukuran maksimal per file: 5MB</li>
+                                            <li>Pastikan dokumen terlihat jelas dan tidak blur</li>
+                                            <li>Semua dokumen wajib diupload untuk memproses permohonan</li>
+                                        </ul>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="summary-progress">
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="uploadProgress" style="width: 0%"></div>
+
+                            <!-- Document Upload Grid -->
+                            <div class="document-upload-grid">
+                                <!-- Surat Permohonan -->
+                                <div class="upload-item" data-document-type="SuratPermohonan">
+                                    <div class="upload-header">
+                                        <label class="form-label required">
+                                            <i class="fas fa-file-alt"></i>
+                                            Surat Permohonan
+                                        </label>
+                                        <span class="upload-status">
+                                            <i class="fas fa-circle text-danger"></i>
+                                            Belum Upload
+                                        </span>
+                                    </div>
+                                    <div class="upload-area" data-target="SuratPermohonan">
+                                        <input type="file" asp-for="SuratPermohonan"
+                                               class="file-input"
+                                               accept=".pdf,.jpg,.jpeg,.png"
+                                               data-max-size="5242880"
+                                               id="SuratPermohonan" />
+                                        <div class="upload-placeholder">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                            <p>Klik untuk upload atau drag & drop file</p>
+                                            <small>PDF, JPG, PNG (Max: 5MB)</small>
+                                        </div>
+                                        <div class="file-preview" style="display: none;">
+                                            <div class="file-info">
+                                                <i class="fas fa-file"></i>
+                                                <div class="file-details">
+                                                    <span class="file-name"></span>
+                                                    <span class="file-size"></span>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn-remove">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <span asp-validation-for="SuratPermohonan" class="text-danger"></span>
                                 </div>
-                                <span class="progress-text" id="uploadProgressText">0 dari 7 dokumen telah diupload</span>
+
+                                <!-- Rekomendasi Dinas Provinsi -->
+                                <div class="upload-item" data-document-type="RekomendasiDinasProv">
+                                    <div class="upload-header">
+                                        <label class="form-label required">
+                                            <i class="fas fa-file-alt"></i>
+                                            Rekomendasi Dinas Peternakan Provinsi NTB
+                                        </label>
+                                        <span class="upload-status">
+                                            <i class="fas fa-circle text-danger"></i>
+                                            Belum Upload
+                                        </span>
+                                    </div>
+                                    <div class="upload-area" data-target="RekomendasiDinasProv">
+                                        <input type="file" asp-for="RekomendasiDinasProv"
+                                               class="file-input"
+                                               accept=".pdf,.jpg,.jpeg,.png"
+                                               data-max-size="5242880"
+                                               id="RekomendasiDinasProv" />
+                                        <div class="upload-placeholder">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                            <p>Klik untuk upload atau drag & drop file</p>
+                                            <small>PDF, JPG, PNG (Max: 5MB)</small>
+                                        </div>
+                                        <div class="file-preview" style="display: none;">
+                                            <div class="file-info">
+                                                <i class="fas fa-file"></i>
+                                                <div class="file-details">
+                                                    <span class="file-name"></span>
+                                                    <span class="file-size"></span>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn-remove">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <span asp-validation-for="RekomendasiDinasProv" class="text-danger"></span>
+                                </div>
+
+                                <!-- Rekomendasi Daerah Tujuan -->
+                                <div class="upload-item" data-document-type="RekomendasiDaerahTujuan">
+                                    <div class="upload-header">
+                                        <label class="form-label required">
+                                            <i class="fas fa-file-alt"></i>
+                                            Rekomendasi Pemasukan Ternak dari Daerah Tujuan
+                                        </label>
+                                        <span class="upload-status">
+                                            <i class="fas fa-circle text-danger"></i>
+                                            Belum Upload
+                                        </span>
+                                    </div>
+                                    <div class="upload-area" data-target="RekomendasiDaerahTujuan">
+                                        <input type="file" asp-for="RekomendasiDaerahTujuan"
+                                               class="file-input"
+                                               accept=".pdf,.jpg,.jpeg,.png"
+                                               data-max-size="5242880"
+                                               id="RekomendasiDaerahTujuan" />
+                                        <div class="upload-placeholder">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                            <p>Klik untuk upload atau drag & drop file</p>
+                                            <small>PDF, JPG, PNG (Max: 5MB)</small>
+                                        </div>
+                                        <div class="file-preview" style="display: none;">
+                                            <div class="file-info">
+                                                <i class="fas fa-file"></i>
+                                                <div class="file-details">
+                                                    <span class="file-name"></span>
+                                                    <span class="file-size"></span>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn-remove">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <span asp-validation-for="RekomendasiDaerahTujuan" class="text-danger"></span>
+                                </div>
+
+                                <!-- SKKH Kabupaten Asal -->
+                                <div class="upload-item" data-document-type="SKKHKabupatenAsal">
+                                    <div class="upload-header">
+                                        <label class="form-label required">
+                                            <i class="fas fa-file-medical"></i>
+                                            SKKH dari Kabupaten Asal
+                                        </label>
+                                        <span class="upload-status">
+                                            <i class="fas fa-circle text-danger"></i>
+                                            Belum Upload
+                                        </span>
+                                    </div>
+                                    <div class="upload-area" data-target="SKKHKabupatenAsal">
+                                        <input type="file" asp-for="SKKHKabupatenAsal"
+                                               class="file-input"
+                                               accept=".pdf,.jpg,.jpeg,.png"
+                                               data-max-size="5242880"
+                                               id="SKKHKabupatenAsal" />
+                                        <div class="upload-placeholder">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                            <p>Klik untuk upload atau drag & drop file</p>
+                                            <small>PDF, JPG, PNG (Max: 5MB)</small>
+                                        </div>
+                                        <div class="file-preview" style="display: none;">
+                                            <div class="file-info">
+                                                <i class="fas fa-file"></i>
+                                                <div class="file-details">
+                                                    <span class="file-name"></span>
+                                                    <span class="file-size"></span>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn-remove">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <span asp-validation-for="SKKHKabupatenAsal" class="text-danger"></span>
+                                </div>
+
+                                <!-- SKKH Dinas Provinsi -->
+                                <div class="upload-item" data-document-type="SKKHDinasProvinsi">
+                                    <div class="upload-header">
+                                        <label class="form-label required">
+                                            <i class="fas fa-file-medical"></i>
+                                            SKKH dari Dinas Peternakan Provinsi NTB
+                                        </label>
+                                        <span class="upload-status">
+                                            <i class="fas fa-circle text-danger"></i>
+                                            Belum Upload
+                                        </span>
+                                    </div>
+                                    <div class="upload-area" data-target="SKKHDinasProvinsi">
+                                        <input type="file" asp-for="SKKHDinasProvinsi"
+                                               class="file-input"
+                                               accept=".pdf,.jpg,.jpeg,.png"
+                                               data-max-size="5242880"
+                                               id="SKKHDinasProvinsi" />
+                                        <div class="upload-placeholder">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                            <p>Klik untuk upload atau drag & drop file</p>
+                                            <small>PDF, JPG, PNG (Max: 5MB)</small>
+                                        </div>
+                                        <div class="file-preview" style="display: none;">
+                                            <div class="file-info">
+                                                <i class="fas fa-file"></i>
+                                                <div class="file-details">
+                                                    <span class="file-name"></span>
+                                                    <span class="file-size"></span>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn-remove">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <span asp-validation-for="SKKHDinasProvinsi" class="text-danger"></span>
+                                </div>
+
+                                <!-- Surat Jalan Ternak -->
+                                <div class="upload-item" data-document-type="SuratJalanTernak">
+                                    <div class="upload-header">
+                                        <label class="form-label required">
+                                            <i class="fas fa-route"></i>
+                                            Surat Keterangan Jalan Ternak/Rekomendasi Asal
+                                        </label>
+                                        <span class="upload-status">
+                                            <i class="fas fa-circle text-danger"></i>
+                                            Belum Upload
+                                        </span>
+                                    </div>
+                                    <div class="upload-area" data-target="SuratJalanTernak">
+                                        <input type="file" asp-for="SuratJalanTernak"
+                                               class="file-input"
+                                               accept=".pdf,.jpg,.jpeg,.png"
+                                               data-max-size="5242880"
+                                               id="SuratJalanTernak" />
+                                        <div class="upload-placeholder">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                            <p>Klik untuk upload atau drag & drop file</p>
+                                            <small>PDF, JPG, PNG (Max: 5MB)</small>
+                                        </div>
+                                        <div class="file-preview" style="display: none;">
+                                            <div class="file-info">
+                                                <i class="fas fa-file"></i>
+                                                <div class="file-details">
+                                                    <span class="file-name"></span>
+                                                    <span class="file-size"></span>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn-remove">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <span asp-validation-for="SuratJalanTernak" class="text-danger"></span>
+                                </div>
+
+                                <!-- Hasil Pemeriksaan Fisik -->
+                                <div class="upload-item" data-document-type="HasilPemeriksaanFisik">
+                                    <div class="upload-header">
+                                        <label class="form-label required">
+                                            <i class="fas fa-stethoscope"></i>
+                                            Hasil Pemeriksaan Fisik (Holding Ground)
+                                        </label>
+                                        <span class="upload-status">
+                                            <i class="fas fa-circle text-danger"></i>
+                                            Belum Upload
+                                        </span>
+                                    </div>
+                                    <div class="upload-area" data-target="HasilPemeriksaanFisik">
+                                        <input type="file" asp-for="HasilPemeriksaanFisik"
+                                               class="file-input"
+                                               accept=".pdf,.jpg,.jpeg,.png"
+                                               data-max-size="5242880"
+                                               id="HasilPemeriksaanFisik" />
+                                        <div class="upload-placeholder">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                            <p>Klik untuk upload atau drag & drop file</p>
+                                            <small>PDF, JPG, PNG (Max: 5MB)</small>
+                                        </div>
+                                        <div class="file-preview" style="display: none;">
+                                            <div class="file-info">
+                                                <i class="fas fa-file"></i>
+                                                <div class="file-details">
+                                                    <span class="file-name"></span>
+                                                    <span class="file-size"></span>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn-remove">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <span asp-validation-for="HasilPemeriksaanFisik" class="text-danger"></span>
+                                </div>
                             </div>
-                            <div class="summary-checklist" id="documentChecklist">
-                                <div class="checklist-item" data-doc="SuratPermohonan">
-                                    <i class="fas fa-times-circle text-danger"></i>
-                                    <span>Surat Permohonan</span>
+
+                            <!-- Upload Summary -->
+                            <div class="upload-summary">
+                                <div class="summary-header">
+                                    <i class="fas fa-clipboard-check"></i>
+                                    <span>Status Upload Dokumen</span>
                                 </div>
-                                <div class="checklist-item" data-doc="RekomendasiDinasProv">
-                                    <i class="fas fa-times-circle text-danger"></i>
-                                    <span>Rekomendasi Dinas Peternakan Provinsi NTB</span>
+                                <div class="summary-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" id="uploadProgress" style="width: 0%"></div>
+                                    </div>
+                                    <span class="progress-text" id="uploadProgressText">0 dari 7 dokumen telah diupload</span>
                                 </div>
-                                <div class="checklist-item" data-doc="RekomendasiDaerahTujuan">
-                                    <i class="fas fa-times-circle text-danger"></i>
-                                    <span>Rekomendasi Pemasukan Ternak dari Daerah Tujuan</span>
-                                </div>
-                                <div class="checklist-item" data-doc="SKKHKabupatenAsal">
-                                    <i class="fas fa-times-circle text-danger"></i>
-                                    <span>SKKH dari Kabupaten Asal</span>
-                                </div>
-                                <div class="checklist-item" data-doc="SKKHDinasProvinsi">
-                                    <i class="fas fa-times-circle text-danger"></i>
-                                    <span>SKKH dari Dinas Peternakan Provinsi NTB</span>
-                                </div>
-                                <div class="checklist-item" data-doc="SuratJalanTernak">
-                                    <i class="fas fa-times-circle text-danger"></i>
-                                    <span>Surat Keterangan Jalan Ternak/Rekomendasi Asal</span>
-                                </div>
-                                <div class="checklist-item" data-doc="HasilPemeriksaanFisik">
-                                    <i class="fas fa-times-circle text-danger"></i>
-                                    <span>Hasil Pemeriksaan Fisik (Holding Ground)</span>
+                                <div class="summary-checklist" id="documentChecklist">
+                                    <div class="checklist-item" data-doc="SuratPermohonan">
+                                        <i class="fas fa-times-circle text-danger"></i>
+                                        <span>Surat Permohonan</span>
+                                    </div>
+                                    <div class="checklist-item" data-doc="RekomendasiDinasProv">
+                                        <i class="fas fa-times-circle text-danger"></i>
+                                        <span>Rekomendasi Dinas Peternakan Provinsi NTB</span>
+                                    </div>
+                                    <div class="checklist-item" data-doc="RekomendasiDaerahTujuan">
+                                        <i class="fas fa-times-circle text-danger"></i>
+                                        <span>Rekomendasi Pemasukan Ternak dari Daerah Tujuan</span>
+                                    </div>
+                                    <div class="checklist-item" data-doc="SKKHKabupatenAsal">
+                                        <i class="fas fa-times-circle text-danger"></i>
+                                        <span>SKKH dari Kabupaten Asal</span>
+                                    </div>
+                                    <div class="checklist-item" data-doc="SKKHDinasProvinsi">
+                                        <i class="fas fa-times-circle text-danger"></i>
+                                        <span>SKKH dari Dinas Peternakan Provinsi NTB</span>
+                                    </div>
+                                    <div class="checklist-item" data-doc="SuratJalanTernak">
+                                        <i class="fas fa-times-circle text-danger"></i>
+                                        <span>Surat Keterangan Jalan Ternak/Rekomendasi Asal</span>
+                                    </div>
+                                    <div class="checklist-item" data-doc="HasilPemeriksaanFisik">
+                                        <i class="fas fa-times-circle text-danger"></i>
+                                        <span>Hasil Pemeriksaan Fisik (Holding Ground)</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -547,15 +744,27 @@
             </div>
         </div>
 
-        <!-- Form Actions -->
-        <div class="form-actions">
-            <div class="action-buttons">
-                <button type="button" class="btn btn-outline-secondary btn-lg" onclick="window.location.href='@Url.Action("Index", "Permit")'">
-                    <i class="fas fa-times"></i>
-                    Batal
+        <!-- Form Navigation -->
+        <div class="form-navigation">
+            <div class="nav-buttons">
+                <button type="button" class="btn btn-outline-secondary btn-prev" id="prevBtn" style="display: none;">
+                    <i class="fas fa-arrow-left"></i>
+                    Sebelumnya
                 </button>
 
-                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                <div class="nav-info">
+                    <span class="current-step">Langkah <span id="currentStepNumber">1</span> dari 4</span>
+                    <div class="step-shortcuts">
+                        <small class="text-muted">Gunakan Ctrl + ← → untuk navigasi cepat</small>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-primary btn-next" id="nextBtn">
+                    Selanjutnya
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+
+                <button type="submit" class="btn btn-success btn-submit" id="submitBtn" style="display: none;">
                     <i class="fas fa-paper-plane"></i>
                     Ajukan Permohonan
                 </button>
@@ -581,1006 +790,1111 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-                // JAVASCRIPT SEDERHANA DAN AMAN - TANPA INFINITE LOOP
+    <script src="~/js/multi-step-form.js"></script>
 
-        let livestockIndex = @(Math.Max(Model.LivestockDetails?.Count ?? 0, 1));
-        const totalRequiredFiles = 7;
-        const uploadedDocuments = new Map();
-        const documentTypes = [
-            'SuratPermohonan',
-            'RekomendasiDinasProv',
-            'RekomendasiDaerahTujuan',
-            'SKKHKabupatenAsal',
-            'SKKHDinasProvinsi',
-            'SuratJalanTernak',
-            'HasilPemeriksaanFisik'
-        ];
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-        $(document).ready(function() {
-            console.log('🚀 Initializing simple upload system...');
-
-            // SOLUSI SEDERHANA: Direct binding tanpa kompleksitas
-            initializeSimpleFileUpload();
-            updateSummary();
-            updateLivestockNumbers();
-            updateUploadProgress();
-
-            // Livestock handlers
-            $('#addLivestock').on('click', addLivestockItem);
-            $(document).on('click', '.remove-livestock', function(e) {
-                e.preventDefault();
-                $(this).closest('.livestock-item').remove();
-                updateLivestockNumbers();
-                updateSummary();
-            });
-
-            $(document).on('input', '.livestock-quantity', updateSummary);
-
-            // Form submission
-            $('#permitForm').on('submit', function(e) {
-                console.log('📤 Form submission...');
-                debugFormData();
-
-                if (!validateForm()) {
-                    e.preventDefault();
-                    return false;
-                }
-
-                $('#submitBtn').html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...').prop('disabled', true);
-            });
-        });
-
-        function initializeSimpleFileUpload() {
-            // SOLUSI: Binding langsung ke input file tanpa kompleksitas
-            $('.file-input').each(function() {
-                const $input = $(this);
-                const documentType = $input.attr('id');
-                const $uploadArea = $input.closest('.upload-area');
-
-                console.log(`🔧 Simple init for: ${documentType}`);
-
-                // HANYA binding ke input file change event
-                $input.on('change', function() {
-                    if (this.files && this.files[0]) {
-                        handleFileSelection(this, this.files[0]);
-                    }
-                });
-
-                // SOLUSI SEDERHANA: Direct click ke hidden input
-                $uploadArea.find('.upload-placeholder').on('click', function(e) {
-                    e.preventDefault();
-                    console.log(`📁 Placeholder clicked for: ${documentType}`);
-                    $input[0].click(); // Direct DOM click, tidak melalui jQuery
-                });
-
-                // Remove file handler
-                $uploadArea.find('.btn-remove').on('click', function(e) {
-                    e.preventDefault();
-                    removeFileSimple($input);
-                });
-            });
-        }
-
-        function handleFileSelection(inputElement, file) {
-            const $input = $(inputElement);
-            const documentType = $input.attr('id');
-            const maxSize = 5242880; // 5MB
-            const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-
-            console.log(`📄 File selected: ${file.name} for ${documentType}`);
-
-            // Simple validation
-            if (file.size > maxSize) {
-                showSimpleAlert('File terlalu besar (max 5MB)', 'danger');
-                $input.val('');
-                return;
-            }
-
-            if (!allowedTypes.includes(file.type)) {
-                showSimpleAlert('Format file tidak didukung. Gunakan PDF atau gambar', 'danger');
-                $input.val('');
-                return;
-            }
-
-            // Update UI
-            updateFilePreviewSimple($input, file);
-
-            // Track file
-            uploadedDocuments.set(documentType, {
-                file: file,
-                name: file.name,
-                size: file.size
-            });
-
-            updateUploadProgress();
-            updateDocumentChecklist();
-
-            console.log(`✅ File processed: ${documentType}`);
-            showSimpleAlert(`File "${file.name}" berhasil dipilih`, 'success');
-        }
-
-        function updateFilePreviewSimple($input, file) {
-            const $uploadArea = $input.closest('.upload-area');
-            const $placeholder = $uploadArea.find('.upload-placeholder');
-            const $preview = $uploadArea.find('.file-preview');
-
-            // Update preview info
-            $preview.find('.file-name').text(file.name);
-            $preview.find('.file-size').text(formatFileSize(file.size));
-
-            // Show/hide elements
-            $placeholder.hide();
-            $preview.show();
-        }
-
-        function removeFileSimple($input) {
-            const documentType = $input.attr('id');
-            const $uploadArea = $input.closest('.upload-area');
-
-            // Clear input
-            $input.val('');
-
-            // Update UI
-            $uploadArea.find('.file-preview').hide();
-            $uploadArea.find('.upload-placeholder').show();
-
-            // Remove from tracking
-            uploadedDocuments.delete(documentType);
-
-            updateUploadProgress();
-            updateDocumentChecklist();
-
-            console.log(`🗑️ File removed: ${documentType}`);
-            showSimpleAlert('File berhasil dihapus', 'info');
-        }
-
-        function debugFormData() {
-            console.log('🔍 === SIMPLE DEBUG ===');
-
-            $('.file-input').each(function() {
-                const hasFile = this.files && this.files.length > 0;
-                console.log(`${this.id}: ${hasFile ? this.files[0].name : 'NONE'}`);
-            });
-
-            console.log(`Tracked files: ${uploadedDocuments.size}/${totalRequiredFiles}`);
-            console.log('Files:', Array.from(uploadedDocuments.keys()));
-        }
-
-        function validateForm() {
-            const errors = [];
-
-            // Check livestock
-            let hasValidLivestock = false;
-            $('.livestock-item').each(function() {
-                const type = $(this).find('.livestock-type').val();
-                const quantity = parseInt($(this).find('.livestock-quantity').val()) || 0;
-                if (type && quantity > 0) hasValidLivestock = true;
-            });
-
-            if (!hasValidLivestock) {
-                errors.push('Minimal harus ada satu jenis ternak');
-            }
-
-            // Check files
-            if (uploadedDocuments.size < totalRequiredFiles) {
-                errors.push(`Dokumen belum lengkap (${uploadedDocuments.size}/${totalRequiredFiles})`);
-            }
-
-            // Check required fields
-            const required = ['CompanyName', 'CompanyAddress', 'OriginLocation',
-                             'DestinationLocation', 'DeparturePort', 'ArrivalPort'];
-
-            required.forEach(field => {
-                const $field = $(`[name="${field}"]`);
-                if (!$field.val()?.trim()) {
-                    errors.push(`${field} harus diisi`);
-                    $field.addClass('is-invalid');
-                } else {
-                    $field.removeClass('is-invalid');
-                }
-            });
-
-            if (errors.length > 0) {
-                showSimpleAlert('Validasi gagal:\n' + errors.join('\n'), 'danger');
-                return false;
-            }
-
-            return true;
-        }
-
-        function updateUploadProgress() {
-            const count = uploadedDocuments.size;
-            const percentage = (count / totalRequiredFiles) * 100;
-
-            $('#uploadProgress').css('width', percentage + '%');
-            $('#uploadProgressText').text(`${count} dari ${totalRequiredFiles} dokumen`);
-
-            console.log(`📊 Progress: ${count}/${totalRequiredFiles}`);
-        }
-
-        function updateDocumentChecklist() {
-            documentTypes.forEach(docType => {
-                const $item = $(`.checklist-item[data-doc="${docType}"]`);
-                const $icon = $item.find('i');
-
-                if (uploadedDocuments.has(docType)) {
-                    $icon.removeClass('fas fa-times-circle text-danger')
-                         .addClass('fas fa-check-circle text-success');
-                    $item.addClass('completed');
-                } else {
-                    $icon.removeClass('fas fa-check-circle text-success')
-                         .addClass('fas fa-times-circle text-danger');
-                    $item.removeClass('completed');
-                }
-            });
-        }
-
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        function showSimpleAlert(message, type) {
-            $('.upload-alert').remove();
-
-            const alertClass = {
-                'success': 'alert-success',
-                'danger': 'alert-danger',
-                'info': 'alert-info',
-                'warning': 'alert-warning'
-            }[type] || 'alert-info';
-
-            const alert = $(`
-                <div class="alert ${alertClass} alert-dismissible fade show upload-alert"
-                     style="position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px;">
-                    ${message.replace(/\n/g, '<br>')}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `);
-
-            $('body').append(alert);
-
-            setTimeout(() => alert.fadeOut(), type === 'danger' ? 5000 : 3000);
-        }
-
-        function addLivestockItem() {
-            const template = `
-                <div class="livestock-item" data-index="${livestockIndex}">
-                    <div class="livestock-header">
-                        <h4>Ternak #<span class="livestock-number">${livestockIndex + 1}</span></h4>
-                        <button type="button" class="btn btn-sm btn-outline-danger remove-livestock">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                    <div class="livestock-form">
-                        <div class="form-group">
-                            <label class="form-label required">Jenis Ternak</label>
-                            <select name="LivestockDetails[${livestockIndex}].LivestockType" class="form-control livestock-type" required>
-                                <option value="">Pilih Jenis Ternak</option>
-                                <option value="Sapi Potong">Sapi Potong</option>
-                                <option value="Kerbau Potong">Kerbau Potong</option>
-                                <option value="Kuda Pedaging">Kuda Pedaging</option>
-                                <option value="Kambing">Kambing</option>
-                                <option value="Domba">Domba</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label required">Jumlah (ekor)</label>
-                            <input type="number" name="LivestockDetails[${livestockIndex}].Quantity"
-                                   class="form-control livestock-quantity" min="1" max="10000" required />
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Keterangan</label>
-                            <textarea name="LivestockDetails[${livestockIndex}].Description"
-                                      class="form-control" rows="2"></textarea>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            $('#livestockContainer').append(template);
-            livestockIndex++;
-            updateLivestockNumbers();
-            updateSummary();
-        }
-
-        function updateLivestockNumbers() {
-            $('.livestock-item').each(function(index) {
-                $(this).find('.livestock-number').text(index + 1);
-            });
-        }
-
-        function updateSummary() {
-            const totalTypes = $('.livestock-item').length;
-            let totalQuantity = 0;
-
-            $('.livestock-quantity').each(function() {
-                totalQuantity += parseInt($(this).val()) || 0;
-            });
-
-            $('#totalTypes').text(totalTypes);
-            $('#totalQuantity').text(totalQuantity);
-        }
-    </script>
     <style>
-        .upload-area.drag-over {
-            border-color: #667eea !important;
-            background: rgba(102, 126, 234, 0.1) !important;
-            transform: scale(1.02);
-            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .file-preview {
-            display: none;
-            background: white;
-            border: 1px solid #e9ecef;
-            border-radius: 6px;
-            padding: 15px;
-        }
-
-            .file-preview.show {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-            }
-
-        .btn-remove {
-            background: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 6px 10px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.3s;
-        }
-
-            .btn-remove:hover {
-                background: #c82333;
-                transform: translateY(-1px);
-            }
-
-        .checklist-item.completed {
-            background: #d4edda !important;
-            color: #155724 !important;
-            border-left: 4px solid #28a745;
-        }
-
-        .checklist-item.missing {
-            background: #f8d7da !important;
-            color: #721c24 !important;
-            border-left: 4px solid #dc3545;
-        }
-
-        .progress-fill {
-            transition: width 0.5s ease, background-color 0.3s ease;
-        }
-
-        .upload-alert {
-            font-size: 14px;
-            line-height: 1.4;
-        }
-
-            .upload-alert .fas {
-                margin-right: 8px;
-            }
-
-        .create-container {
-            padding: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e9ecef;
-        }
-
-        .header-content {
-            flex: 1;
-        }
-
-        .page-title {
-            color: #333;
-            margin-bottom: 8px;
-            font-size: 28px;
-            font-weight: 600;
-        }
-
-            .page-title i {
-                margin-right: 12px;
-                color: #667eea;
-            }
-
-        .page-subtitle {
-            color: #666;
-            margin: 0;
-            font-size: 16px;
-        }
-
-        .header-actions {
-            margin-left: 20px;
-        }
-
-        .permit-form {
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-        }
-
-        .form-sections {
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-        }
-
-        .form-section {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .section-header {
-            background: #f8f9fa;
-            padding: 20px;
-            border-bottom: 1px solid #e9ecef;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-            .section-header h3 {
-                margin: 0;
-                color: #333;
-                font-size: 18px;
-                font-weight: 600;
-            }
-
-            .section-header i {
-                margin-right: 10px;
-                color: #667eea;
-            }
-
-        .section-number {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: #667eea;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .section-body {
-            padding: 25px;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-            .form-group.full-width {
-                grid-column: 1 / -1;
-            }
-
-        .form-label {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-            .form-label.required::after {
-                content: '*';
-                color: #dc3545;
-                margin-left: 4px;
-            }
-
-            .form-label i {
-                margin-right: 8px;
-                color: #667eea;
-                width: 16px;
-            }
-
-        .form-control {
-            padding: 12px 15px;
-            border: 2px solid #e1e5e9;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: all 0.3s;
-        }
-
-            .form-control:focus {
-                outline: none;
-                border-color: #667eea;
-                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-            }
-
-            .form-control.is-invalid {
-                border-color: #dc3545;
-            }
-
-        .livestock-container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .livestock-item {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
-            border: 2px solid #e9ecef;
-            transition: all 0.3s;
-        }
-
-            .livestock-item:hover {
-                border-color: #667eea;
-            }
-
-        .livestock-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-            .livestock-header h4 {
-                margin: 0;
-                color: #333;
-                font-size: 16px;
-                font-weight: 600;
-            }
-
-        .livestock-form {
-            display: grid;
-            grid-template-columns: 1fr 120px 1fr;
-            gap: 15px;
-            align-items: start;
-        }
-
-        .livestock-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        /* Additional CSS for enhanced port selection */
+        .shipping-summary {
             margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #e9ecef;
+            animation: fadeIn 0.3s ease-in;
         }
 
-        .livestock-summary {
-            display: flex;
-            gap: 20px;
-        }
+        @@keyframes fadeIn {
+            from
 
-        .summary-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 10px 15px;
-            background: #667eea;
-            color: white;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-
-            .summary-item .label {
-                font-size: 12px;
-                opacity: 0.9;
-            }
-
-            .summary-item .value {
-                font-size: 18px;
-                font-weight: 600;
-                margin-top: 2px;
-            }
-
-        /* Document Upload Styles */
-        .document-upload-container {
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-        }
-
-        .upload-info .info-card {
-            background: #e3f2fd;
-            border: 1px solid #90caf9;
-            border-radius: 8px;
-            padding: 20px;
-            display: flex;
-            align-items: flex-start;
-            gap: 15px;
-        }
-
-            .upload-info .info-card i {
-                font-size: 24px;
-                color: #1976d2;
-                margin-top: 2px;
-            }
-
-        .info-content h4 {
-            margin: 0 0 10px 0;
-            color: #1976d2;
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .info-content ul {
-            margin: 0;
-            padding-left: 20px;
-            color: #333;
-            font-size: 14px;
-        }
-
-            .info-content ul li {
-                margin-bottom: 5px;
-            }
-
-        .document-upload-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 20px;
-        }
-
-        .upload-item {
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 15px;
-            background: #f8f9fa;
-            transition: all 0.3s;
-        }
-
-            .upload-item:hover {
-                border-color: #667eea;
-            }
-
-        .upload-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .upload-status {
-            font-size: 12px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .upload-area {
-            position: relative;
-            border: 2px dashed #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            min-height: 120px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-            .upload-area:hover {
-                border-color: #667eea;
-                background: rgba(102, 126, 234, 0.05);
-            }
-
-            .upload-area.drag-over {
-                border-color: #667eea;
-                background: rgba(102, 126, 234, 0.1);
-                transform: scale(1.02);
-            }
-
-        .file-input {
-            position: absolute;
+        {
             opacity: 0;
-            width: 0;
-            height: 0;
+            transform: translateY(10px);
         }
 
-        .upload-placeholder {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            color: #666;
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
 
-            .upload-placeholder i {
-                font-size: 32px;
-                color: #667eea;
-            }
-
-            .upload-placeholder p {
-                margin: 0;
-                font-weight: 500;
-            }
-
-            .upload-placeholder small {
-                color: #999;
-            }
-
-        .file-preview {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-            padding: 15px;
-            background: white;
-            border-radius: 6px;
-            border: 1px solid #e9ecef;
         }
 
-        .file-info {
-            display: flex;
-            align-items: center;
-            flex: 1;
-            gap: 10px;
-        }
-
-            .file-info i {
-                font-size: 24px;
-                color: #667eea;
-            }
-
-        .file-details {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-        }
-
-        .file-name {
-            font-weight: 600;
-            color: #333;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            max-width: 200px;
-        }
-
-        .file-size {
-            color: #666;
-            font-size: 12px;
-        }
-
-        .btn-remove {
-            background: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 6px 10px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.3s;
-            margin-left: 10px;
-        }
-
-            .btn-remove:hover {
-                background: #c82333;
-            }
-
-        .upload-summary {
-            background: white;
+        .summary-card {
             border: 2px solid #e9ecef;
             border-radius: 8px;
-            padding: 20px;
+            background: #f8f9fa;
+            overflow: hidden;
         }
 
         .summary-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 12px 16px;
             font-weight: 600;
-            color: #333;
-        }
-
-            .summary-header i {
-                color: #667eea;
-            }
-
-        .summary-progress {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: #e9ecef;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            transition: width 0.3s ease;
-        }
-
-        .progress-text {
-            text-align: center;
-            color: #666;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .summary-checklist {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 8px;
-        }
-
-        .checklist-item {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            transition: all 0.3s;
-            background: #f8f9fa;
         }
 
-            .checklist-item.completed {
-                background: #d4edda;
-                color: #155724;
-            }
-
-            .checklist-item i {
-                width: 16px;
-                flex-shrink: 0;
-            }
-
-        .form-actions {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            padding: 25px;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-            .action-buttons .btn {
-                flex: 1;
-                padding: 15px 20px;
-                font-size: 16px;
-                font-weight: 600;
-                border-radius: 8px;
-                transition: all 0.3s;
-            }
-
-                .action-buttons .btn:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-                }
-
-        .form-info {
-            background: #f8f9fa;
-            border-radius: 8px;
+        .summary-content {
             padding: 20px;
         }
 
-        .info-item {
+        .route-info {
             display: flex;
-            align-items: flex-start;
-            margin-bottom: 10px;
-            font-size: 14px;
-            color: #666;
+            align-items: center;
+            gap: 20px;
         }
 
-            .info-item:last-child {
-                margin-bottom: 0;
+        .route-point {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .point-icon {
+            font-size: 20px;
+        }
+
+        .point-details {
+            flex: 1;
+        }
+
+        .point-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .point-location {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .point-port {
+            font-size: 13px;
+            color: #007bff;
+            font-weight: 500;
+        }
+
+        .route-arrow {
+            color: #007bff;
+            font-size: 24px;
+            animation: pulse 2s infinite;
+        }
+
+        @@keyframes pulse {
+            0%, 100%
+
+        {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.1);
+        }
+
+        }
+
+        .select2-port .select2-selection {
+            border-color: #007bff;
+            min-height: 40px;
+        }
+
+            .select2-port .select2-selection:focus {
+                border-color: #0056b3;
+                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
             }
 
-            .info-item i {
-                margin-right: 10px;
-                margin-top: 2px;
-                color: #667eea;
-                flex-shrink: 0;
-            }
-
-        .text-danger {
-            color: #dc3545;
+        .form-text.text-muted {
             font-size: 12px;
             margin-top: 5px;
         }
 
-        @@media (max-width: 768px) {
-            .create-container
+            .form-text.text-muted i {
+                margin-right: 4px;
+            }
 
-        {
-            padding: 15px;
+        /* Port dropdown custom styling */
+        .select2-results__option--highlighted .select2-result-port__title {
+            color: white;
         }
 
-        .page-header {
+        .select2-result-port {
+            padding: 8px 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+            .select2-result-port:last-child {
+                border-bottom: none;
+            }
+
+        .select2-result-port__title {
+            font-weight: 500;
+            color: #333;
+            line-height: 1.4;
+        }
+    </style>
+
+    <script>
+                $(document).ready(function() {
+            // Variable untuk tracking state
+            let isLoadingOriginPorts = false;
+            let isLoadingDestinationPorts = false;
+
+            function initializeSelect2() {
+                const select2Options = {
+                    placeholder: 'Pilih dari daftar',
+                    allowClear: true,
+                    width: '100%',
+                    theme: 'bootstrap-5'
+                };
+
+                // Initialize basic dropdowns
+                $('#originProvinceSelect, #destinationProvinceSelect').select2({
+                    ...select2Options,
+                    placeholder: 'Pilih Provinsi'
+                });
+
+                $('#originRegencySelect, #destinationRegencySelect').select2({
+                    ...select2Options,
+                    placeholder: 'Pilih Kabupaten/Kota'
+                });
+
+                // Initialize port dropdowns - PERBAIKAN: Gunakan static initialization dulu
+                $('#departurePortSelect').select2({
+                    ...select2Options,
+                    placeholder: 'Pilih pelabuhan keberangkatan'
+                });
+
+                $('#arrivalPortSelect').select2({
+                    ...select2Options,
+                    placeholder: 'Pilih pelabuhan tujuan'
+                });
+            }
+
+            function loadProvinces() {
+                console.log('Loading provinces...');
+                $.get('/Location/GetProvinces', function(response) {
+                    console.log('Provinces response:', response);
+                    const provinces = response.data || response;
+                    if (Array.isArray(provinces)) {
+                        const options = provinces.map(province =>
+                            `<option value="${province.code}">${province.name}</option>`
+                        );
+                        $('#originProvinceSelect, #destinationProvinceSelect').append(options.join(''));
+                        console.log('Provinces loaded successfully');
+                    }
+                }).fail(function(xhr, status, error) {
+                    console.error('Failed to load provinces:', error);
+                    showNotification('error', 'Gagal memuat data provinsi. Silakan refresh halaman.');
+                });
+            }
+
+            function loadRegencies(provinceId, targetSelect) {
+                const $target = $(targetSelect);
+                console.log('Loading regencies for province:', provinceId, 'target:', targetSelect);
+
+                // Reset state
+                $target.html('<option value="">Memuat...</option>').prop('disabled', true);
+
+                $.get('/Location/GetRegencies', { provinceId: provinceId }, function(response) {
+                    const regencies = response.data || response;
+                    let options = '<option value="">Pilih Kabupaten/Kota</option>';
+                    if (Array.isArray(regencies)) {
+                        options += regencies.map(regency =>
+                            `<option value="${regency.code}">${regency.name}</option>`
+                        ).join('');
+                    }
+                    $target.html(options).prop('disabled', false).trigger('change');
+                    console.log('Regencies loaded for:', targetSelect);
+                }).fail(function(xhr, status, error) {
+                    console.error('Failed to load regencies:', error);
+                    $target.html('<option value="">Gagal memuat</option>').prop('disabled', true);
+                });
+            }
+
+            // PERBAIKAN: Fungsi yang lebih stabil untuk load ports
+            function loadPortsByProvince(provinceCode, targetSelect, placeholderText, isOrigin = true) {
+                const $target = $(targetSelect);
+                const loadingVar = isOrigin ? 'isLoadingOriginPorts' : 'isLoadingDestinationPorts';
+
+                console.log('Loading ports for province:', provinceCode, 'target:', targetSelect);
+
+                // Prevent multiple simultaneous requests
+                if (window[loadingVar]) {
+                    console.log('Already loading ports for', targetSelect);
+                    return;
+                }
+
+                // Set loading state
+                window[loadingVar] = true;
+
+                // Reset dropdown
+                $target.empty();
+                $target.append(`<option value="">Memuat pelabuhan...</option>`);
+                $target.prop('disabled', true);
+
+                // Destroy dan reinitialize Select2 untuk memastikan state bersih
+                $target.select2('destroy');
+                $target.select2({
+                    placeholder: placeholderText,
+                    allowClear: true,
+                    width: '100%',
+                    theme: 'bootstrap-5'
+                });
+
+                if (!provinceCode) {
+                    $target.empty();
+                    $target.append(`<option value="">${placeholderText}</option>`);
+                    $target.prop('disabled', true);
+                    window[loadingVar] = false;
+                    return;
+                }
+
+                // Load ports from database
+                $.get('/Port/GetByProvince', { provinceCode: provinceCode })
+                    .done(function(response) {
+                        console.log('Ports response for', provinceCode, ':', response);
+
+                        const ports = response.results || [];
+
+                        // Clear dan rebuild options
+                        $target.empty();
+                        $target.append(`<option value="">${placeholderText}</option>`);
+
+                        if (Array.isArray(ports) && ports.length > 0) {
+                            ports.forEach(port => {
+                                $target.append(`<option value="${port.id}">${port.text}</option>`);
+                            });
+                            $target.prop('disabled', false);
+                            console.log(`${ports.length} ports loaded for ${targetSelect}`);
+                            showNotification('success', `${ports.length} pelabuhan tersedia`);
+                        } else {
+                            $target.append('<option value="">Tidak ada pelabuhan tersedia</option>');
+                            $target.prop('disabled', true);
+                            showNotification('warning', 'Tidak ada pelabuhan tersedia untuk provinsi ini');
+                        }
+
+                        // Trigger change untuk update
+                        $target.trigger('change');
+                    })
+                    .fail(function(xhr, status, error) {
+                        console.error('Failed to load ports:', error);
+                        $target.empty();
+                        $target.append('<option value="">Gagal memuat pelabuhan</option>');
+                        $target.prop('disabled', true);
+                        showNotification('error', 'Gagal memuat data pelabuhan');
+                    })
+                    .always(function() {
+                        // Reset loading state
+                        window[loadingVar] = false;
+                    });
+            }
+
+            // Update shipping summary
+            function updateShippingSummary() {
+                const originLocation = $('#originLocationHidden').val();
+                const destinationLocation = $('#destinationLocationHidden').val();
+                const departurePort = $('#departurePortHidden').val();
+                const arrivalPort = $('#arrivalPortHidden').val();
+
+                $('#summaryOrigin').text(originLocation || '-');
+                $('#summaryDestination').text(destinationLocation || '-');
+                $('#summaryDeparturePort').text(departurePort || '-');
+                $('#summaryArrivalPort').text(arrivalPort || '-');
+
+                if (originLocation && destinationLocation && departurePort && arrivalPort) {
+                    $('#shippingSummary').slideDown();
+                } else {
+                    $('#shippingSummary').slideUp();
+                }
+            }
+
+            function showNotification(type, message) {
+                console.log(`${type.toUpperCase()}: ${message}`);
+
+                // Simple notification - you can enhance this
+                const alertClass = type === 'error' ? 'danger' : type === 'success' ? 'success' : 'warning';
+                const notification = $(`
+                    <div class="alert alert-${alertClass} alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; max-width: 350px;">
+                        <i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `);
+
+                $('body').append(notification);
+
+                // Auto remove after 4 seconds
+                setTimeout(() => {
+                    notification.alert('close');
+                }, 4000);
+            }
+
+            function updateLocation(provinceSel, regencySel, hiddenInput) {
+                const provinceName = $(provinceSel + ' option:selected').text();
+                const regencyName = $(regencySel + ' option:selected').text();
+
+                if ($(provinceSel).val() && $(regencySel).val() &&
+                    provinceName !== "Pilih Provinsi" && regencyName !== "Pilih Kabupaten/Kota") {
+                    $(hiddenInput).val(`${regencyName}, ${provinceName}`);
+                } else {
+                    $(hiddenInput).val('');
+                }
+                updateShippingSummary();
+            }
+
+            // PERBAIKAN: Event listeners yang lebih robust
+            function setupEventListeners() {
+                // Origin Province Change - dengan debouncing
+                let originProvinceTimeout;
+                $('#originProvinceSelect').on('change', function() {
+                    const provinceId = $(this).val();
+                    console.log('Origin province changed to:', provinceId);
+
+                    // Clear timeout untuk debouncing
+                    clearTimeout(originProvinceTimeout);
+
+                    originProvinceTimeout = setTimeout(() => {
+                        if (provinceId) {
+                            loadRegencies(provinceId, '#originRegencySelect');
+                            loadPortsByProvince(provinceId, '#departurePortSelect', 'Pilih pelabuhan keberangkatan', true);
+                        } else {
+                            // Reset regency dan port
+                            $('#originRegencySelect').html('<option value="">Pilih Kabupaten/Kota</option>')
+                                .prop('disabled', true).trigger('change');
+
+                            $('#departurePortSelect').empty()
+                                .append('<option value="">Pilih provinsi asal terlebih dahulu</option>')
+                                .prop('disabled', true).trigger('change');
+
+                            $('#departurePortHidden').val('');
+                        }
+                    }, 300); // 300ms debounce
+                });
+
+                // Destination Province Change - dengan debouncing
+                let destinationProvinceTimeout;
+                $('#destinationProvinceSelect').on('change', function() {
+                    const provinceId = $(this).val();
+                    console.log('Destination province changed to:', provinceId);
+
+                    clearTimeout(destinationProvinceTimeout);
+
+                    destinationProvinceTimeout = setTimeout(() => {
+                        if (provinceId) {
+                            loadRegencies(provinceId, '#destinationRegencySelect');
+                            loadPortsByProvince(provinceId, '#arrivalPortSelect', 'Pilih pelabuhan tujuan', false);
+                        } else {
+                            // Reset regency dan port
+                            $('#destinationRegencySelect').html('<option value="">Pilih Kabupaten/Kota</option>')
+                                .prop('disabled', true).trigger('change');
+
+                            $('#arrivalPortSelect').empty()
+                                .append('<option value="">Pilih provinsi tujuan terlebih dahulu</option>')
+                                .prop('disabled', true).trigger('change');
+
+                            $('#arrivalPortHidden').val('');
+                        }
+                    }, 300); // 300ms debounce
+                });
+
+                // Port Selection Events
+                $('#departurePortSelect').on('change', function() {
+                    const selectedPort = $(this).val();
+                    const selectedText = $(this).find('option:selected').text();
+                    $('#departurePortHidden').val(selectedPort);
+                    console.log('Departure port selected:', selectedPort, selectedText);
+                    updateShippingSummary();
+                });
+
+                $('#arrivalPortSelect').on('change', function() {
+                    const selectedPort = $(this).val();
+                    const selectedText = $(this).find('option:selected').text();
+                    $('#arrivalPortHidden').val(selectedPort);
+                    console.log('Arrival port selected:', selectedPort, selectedText);
+                    updateShippingSummary();
+                });
+
+                // Location updates
+                $('#originProvinceSelect, #originRegencySelect').on('change', () =>
+                    updateLocation('#originProvinceSelect', '#originRegencySelect', '#originLocationHidden')
+                );
+
+                $('#destinationProvinceSelect, #destinationRegencySelect').on('change', () =>
+                    updateLocation('#destinationProvinceSelect', '#destinationRegencySelect', '#destinationLocationHidden')
+                );
+            }
+
+            // Initialize everything
+            initializeSelect2();
+            loadProvinces();
+            setupEventListeners();
+
+            // Form validation
+            function validateShippingDetails() {
+                const requiredFields = [
+                    { field: '#originLocationHidden', name: 'Asal Ternak' },
+                    { field: '#destinationLocationHidden', name: 'Tujuan Pengiriman' },
+                    { field: '#departurePortHidden', name: 'Pelabuhan Keberangkatan' },
+                    { field: '#arrivalPortHidden', name: 'Pelabuhan Tujuan' }
+                ];
+
+                const missingFields = requiredFields.filter(item => !$(item.field).val());
+
+                if (missingFields.length > 0) {
+                    const fieldNames = missingFields.map(item => item.name).join(', ');
+                    showNotification('error', `Mohon lengkapi: ${fieldNames}`);
+                    return false;
+                }
+
+                return true;
+            }
+
+            // Hook to form navigation
+            $(document).on('click', '#nextBtn', function(e) {
+                const currentStep = $('.form-step.active').data('step');
+                if (currentStep === 2) {
+                    if (!validateShippingDetails()) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+            });
+
+            // Debug function - bisa dipanggil dari console
+            window.debugPortDropdown = function() {
+                console.log('Current state:');
+                console.log('Origin Province:', $('#originProvinceSelect').val());
+                console.log('Origin Regency:', $('#originRegencySelect').val());
+                console.log('Departure Port:', $('#departurePortSelect').val());
+                console.log('Destination Province:', $('#destinationProvinceSelect').val());
+                console.log('Destination Regency:', $('#destinationRegencySelect').val());
+                console.log('Arrival Port:', $('#arrivalPortSelect').val());
+                console.log('Loading states:', {
+                    originPorts: isLoadingOriginPorts,
+                    destinationPorts: isLoadingDestinationPorts
+                });
+            };
+        });
+    </script>
+    <script>
+        $(document).ready(function() {
+            let livestockIndex = 1;
+            let quotaCache = {};
+            let originProvinceCode = '';
+
+            // Monitor origin province changes untuk load quota info
+            function monitorOriginProvince() {
+                $('#originProvinceSelect').on('change', function() {
+                    originProvinceCode = $(this).val();
+                    if (originProvinceCode) {
+                        loadQuotaInfo(originProvinceCode);
+                        refreshAllQuotaValidations();
+                    } else {
+                        hideQuotaInfo();
+                    }
+                });
+            }
+
+            // Load quota information untuk provinsi
+            function loadQuotaInfo(provinceCode) {
+                console.log('Loading quota info for province:', provinceCode);
+
+                $('#quotaInfoPanel').show();
+                $('#quotaInfoContent').html('<div class="text-center"><div class="quota-loading"></div> Memuat informasi kuota...</div>');
+
+                $.get('/Quota/GetQuotasByProvince', { provinceCode: provinceCode })
+                    .done(function(response) {
+                        if (response.success && response.data.length > 0) {
+                            displayQuotaInfo(response.data);
+                        } else {
+                            $('#quotaInfoContent').html('<div class="alert alert-warning">Tidak ada data kuota untuk provinsi ini.</div>');
+                        }
+                    })
+                    .fail(function() {
+                        $('#quotaInfoContent').html('<div class="alert alert-danger">Gagal memuat data kuota.</div>');
+                    });
+            }
+
+            // Display quota information
+            function displayQuotaInfo(quotas) {
+                let html = '<div class="row">';
+
+                quotas.forEach(quota => {
+                    const usagePercentage = quota.usagePercentage;
+                    const progressColor = usagePercentage < 50 ? '#28a745' :
+                                         usagePercentage < 80 ? '#ffc107' : '#dc3545';
+                    const iconColor = usagePercentage < 50 ? 'background: #28a745' :
+                                     usagePercentage < 80 ? 'background: #ffc107' : 'background: #dc3545';
+
+                    html += `
+                        <div class="col-md-6 col-lg-4">
+                            <div class="quota-card">
+                                <div class="quota-info">
+                                    <div class="quota-icon" style="${iconColor}">
+                                        <i class="fas fa-paw"></i>
+                                    </div>
+                                    <div class="quota-details">
+                                        <h6>${quota.livestockType}</h6>
+                                        <p>Tersedia: ${quota.remainingQuota.toLocaleString()} ekor</p>
+                                    </div>
+                                </div>
+                                <div class="quota-stats">
+                                    <p class="quota-number" style="color: ${progressColor}">${quota.remainingQuota.toLocaleString()}</p>
+                                    <p class="quota-label">dari ${quota.totalQuota.toLocaleString()}</p>
+                                    <div class="quota-progress">
+                                        <div class="quota-progress-bar" style="width: ${usagePercentage}%; background: ${progressColor}"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                $('#quotaInfoContent').html(html);
+
+                // Cache quota data
+                quotas.forEach(quota => {
+                    quotaCache[quota.livestockType] = quota;
+                });
+            }
+
+            // Hide quota info
+            function hideQuotaInfo() {
+                $('#quotaInfoPanel').hide();
+                quotaCache = {};
+            }
+
+            // Setup livestock type change handler
+            function setupLivestockTypeHandler() {
+                $(document).on('change', '.livestock-type', function() {
+                    const index = $(this).data('index');
+                    const selectedType = $(this).val();
+
+                    if (selectedType && originProvinceCode) {
+                        validateQuotaForType(selectedType, index);
+                    } else {
+                        hideQuotaIndicator(index);
+                    }
+                });
+            }
+
+            // Setup quantity change handler dengan real-time validation
+            function setupQuantityHandler() {
+                $(document).on('input change', '.livestock-quantity', function() {
+                    const index = $(this).data('index');
+                    const quantity = parseInt($(this).val()) || 0;
+                    const livestockType = $(`.livestock-type[data-index="${index}"]`).val();
+
+                    if (livestockType && originProvinceCode && quantity > 0) {
+                        validateQuantityRealtime(livestockType, originProvinceCode, quantity, index);
+                    }
+
+                    updateSummary();
+                });
+            }
+
+            // Validate quota untuk livestock type
+            function validateQuotaForType(livestockType, index) {
+                const quota = quotaCache[livestockType];
+                const $quantityInput = $(`.livestock-quantity[data-index="${index}"]`);
+                const $quotaIndicator = $(`.quota-indicator[data-index="${index}"]`);
+                const $quotaLimit = $(`.quota-limit[data-index="${index}"]`);
+
+                if (quota) {
+                    // Update UI dengan quota info
+                    $quotaIndicator.show().find('.quota-text').text(`Kuota: ${quota.remainingQuota.toLocaleString()} ekor`);
+                    $quotaLimit.show().find('.max-quota').text(quota.remainingQuota.toLocaleString());
+
+                    // Set max attribute untuk input
+                    $quantityInput.attr('max', quota.remainingQuota);
+
+                    // Validate current quantity jika ada
+                    const currentQuantity = parseInt($quantityInput.val()) || 0;
+                    if (currentQuantity > 0) {
+                        validateQuantityRealtime(livestockType, originProvinceCode, currentQuantity, index);
+                    }
+                } else {
+                    // Load quota dari server jika tidak ada di cache
+                    loadQuotaForType(livestockType, index);
+                }
+            }
+
+            // Load quota dari server untuk specific type
+            function loadQuotaForType(livestockType, index) {
+                $.get('/Quota/GetQuota', {
+                    livestockType: livestockType,
+                    provinceCode: originProvinceCode
+                })
+                .done(function(response) {
+                    const $quantityInput = $(`.livestock-quantity[data-index="${index}"]`);
+                    const $quotaIndicator = $(`.quota-indicator[data-index="${index}"]`);
+                    const $quotaLimit = $(`.quota-limit[data-index="${index}"]`);
+
+                    if (response.isValid && response.availableQuota > 0) {
+                        $quotaIndicator.show().find('.quota-text').text(`Kuota: ${response.availableQuota.toLocaleString()} ekor`);
+                        $quotaLimit.show().find('.max-quota').text(response.availableQuota.toLocaleString());
+                        $quantityInput.attr('max', response.availableQuota);
+
+                        // Cache response
+                        quotaCache[livestockType] = {
+                            livestockType: livestockType,
+                            remainingQuota: response.availableQuota,
+                            totalQuota: response.totalQuota,
+                            usedQuota: response.usedQuota
+                        };
+                    } else {
+                        $quotaIndicator.show().find('.quota-text').text('Kuota habis').parent().addClass('text-danger');
+                        $quantityInput.attr('max', 0);
+                        showQuantityFeedback(index, 'error', 'Kuota untuk jenis ternak ini sudah habis');
+                    }
+                })
+                .fail(function() {
+                    showQuantityFeedback(index, 'error', 'Gagal memuat data kuota');
+                });
+            }
+
+            // Real-time quantity validation
+            function validateQuantityRealtime(livestockType, provinceCode, quantity, index) {
+                const validationData = {
+                    livestockType: livestockType,
+                    provinceCode: provinceCode,
+                    requestedQuantity: quantity
+                };
+
+                $.ajax({
+                    url: '/Quota/ValidateQuota',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(validationData),
+                    success: function(response) {
+                        const $quantityInput = $(`.livestock-quantity[data-index="${index}"]`);
+
+                        if (response.isValid) {
+                            $quantityInput.removeClass('error').addClass('success');
+                            showQuantityFeedback(index, 'success', response.message);
+                        } else {
+                            $quantityInput.removeClass('success').addClass('error');
+                            showQuantityFeedback(index, 'error', response.message);
+                        }
+
+                        updateQuotaValidationSummary();
+                    },
+                    error: function() {
+                        showQuantityFeedback(index, 'error', 'Gagal validasi kuota');
+                    }
+                });
+            }
+
+            // Show quantity feedback
+            function showQuantityFeedback(index, type, message) {
+                const $feedback = $(`.quantity-feedback[data-index="${index}"]`);
+                $feedback.show().find('.feedback-text')
+                    .removeClass('success warning error')
+                    .addClass(type)
+                    .text(message);
+            }
+
+            // Hide quota indicator
+            function hideQuotaIndicator(index) {
+                $(`.quota-indicator[data-index="${index}"]`).hide();
+                $(`.quota-limit[data-index="${index}"]`).hide();
+                $(`.quantity-feedback[data-index="${index}"]`).hide();
+            }
+
+            // Update quota validation summary
+            function updateQuotaValidationSummary() {
+                const hasErrors = $('.livestock-quantity.error').length > 0;
+                const hasSuccess = $('.livestock-quantity.success').length > 0;
+
+                if (hasSuccess || hasErrors) {
+                    $('#quotaValidationSummary').show();
+                    $('.quota-usage').show();
+
+                    if (hasErrors) {
+                        $('#quotaStatus').html('<i class="fas fa-exclamation-triangle text-warning"></i> Ada Masalah');
+                    } else {
+                        $('#quotaStatus').html('<i class="fas fa-check-circle text-success"></i> Dalam Batas');
+                    }
+                } else {
+                    $('#quotaValidationSummary').hide();
+                    $('.quota-usage').hide();
+                }
+            }
+
+            // Refresh all quota validations
+            function refreshAllQuotaValidations() {
+                $('.livestock-type').each(function() {
+                    const index = $(this).data('index');
+                    const selectedType = $(this).val();
+                    if (selectedType) {
+                        validateQuotaForType(selectedType, index);
+                    }
+                });
+            }
+
+            // Update summary
+            function updateSummary() {
+                const totalTypes = $('.livestock-item').length;
+                let totalQuantity = 0;
+
+                $('.livestock-quantity').each(function() {
+                    totalQuantity += parseInt($(this).val()) || 0;
+                });
+
+                $('#totalTypes').text(totalTypes);
+                $('#totalQuantity').text(totalQuantity.toLocaleString());
+            }
+
+            // Add livestock item
+            $('#addLivestock').on('click', function() {
+                const template = `
+                    <div class="livestock-item" data-index="${livestockIndex}">
+                        <div class="livestock-header">
+                            <h4>Ternak #<span class="livestock-number">${livestockIndex + 1}</span></h4>
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-livestock">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        <div class="livestock-form">
+                            <div class="form-group">
+                                <label class="form-label required">
+                                    <i class="fas fa-paw"></i>
+                                    Jenis Ternak
+                                    <span class="quota-indicator" data-index="${livestockIndex}" style="display: none;">
+                                        <i class="fas fa-info-circle text-primary"></i>
+                                        <span class="quota-text">Loading...</span>
+                                    </span>
+                                </label>
+                                <select name="LivestockDetails[${livestockIndex}].LivestockType" class="form-control livestock-type" data-index="${livestockIndex}" required>
+                                    <option value="">Pilih Jenis Ternak</option>
+                                    <option value="Sapi Potong">Sapi Potong</option>
+                                    <option value="Kerbau Potong">Kerbau Potong</option>
+                                    <option value="Kuda Pedaging">Kuda Pedaging</option>
+                                    <option value="Kambing">Kambing</option>
+                                    <option value="Domba">Domba</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label required">
+                                    <i class="fas fa-calculator"></i>
+                                    Jumlah (ekor)
+                                    <span class="quota-limit" data-index="${livestockIndex}" style="display: none;">
+                                        <small class="text-muted">Maks: <span class="max-quota">-</span> ekor</small>
+                                    </span>
+                                </label>
+                                <input type="number" name="LivestockDetails[${livestockIndex}].Quantity"
+                                       class="form-control livestock-quantity" data-index="${livestockIndex}"
+                                       min="1" max="1" placeholder="Masukkan jumlah ternak" required />
+                                <div class="quantity-feedback" data-index="${livestockIndex}" style="display: none;">
+                                    <small class="feedback-text">-</small>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-comment"></i>
+                                    Keterangan
+                                </label>
+                                <textarea name="LivestockDetails[${livestockIndex}].Description"
+                                          class="form-control" rows="2"
+                                          placeholder="Keterangan tambahan (opsional)"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                $('#livestockContainer').append(template);
+                livestockIndex++;
+                updateLivestockNumbers();
+                updateSummary();
+            });
+
+            // Remove livestock item
+            $(document).on('click', '.remove-livestock', function() {
+                $(this).closest('.livestock-item').remove();
+                updateLivestockNumbers();
+                updateSummary();
+                updateQuotaValidationSummary();
+            });
+
+            // Update livestock numbers
+            function updateLivestockNumbers() {
+                $('.livestock-item').each(function(index) {
+                    $(this).find('.livestock-number').text(index + 1);
+                });
+            }
+
+            // Refresh quota button
+            $('#refreshQuotaBtn').on('click', function() {
+                if (originProvinceCode) {
+                    quotaCache = {};
+                    loadQuotaInfo(originProvinceCode);
+                    refreshAllQuotaValidations();
+                }
+            });
+
+            // Initialize
+            monitorOriginProvince();
+            setupLivestockTypeHandler();
+            setupQuantityHandler();
+            updateSummary();
+
+            // Form validation before submit
+            $(document).on('click', '#nextBtn, #submitBtn', function(e) {
+                const currentStep = $('.form-step.active').data('step');
+                if (currentStep === 3) {
+                    const hasErrors = $('.livestock-quantity.error').length > 0;
+                    if (hasErrors) {
+                        e.preventDefault();
+                        alert('Masih ada masalah dengan kuota ternak. Silakan periksa kembali jumlah yang diminta.');
+                        return false;
+                    }
+                }
+            });
+        });
+    </script>
+    <style>
+        /* Quota-specific styles */
+        .quota-info-panel {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        }
+
+        .panel-header {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+        }
+
+            .panel-header i {
+                margin-right: 10px;
+            }
+
+        .panel-content {
+            padding: 20px;
+        }
+
+        .quota-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+
+            .quota-card:hover {
+                box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+                transform: translateY(-2px);
+            }
+
+        .quota-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .quota-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+        }
+
+        .quota-details h6 {
+            margin: 0 0 5px 0;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .quota-details p {
+            margin: 0;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .quota-stats {
+            text-align: right;
+        }
+
+        .quota-number {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .quota-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin: 0;
+        }
+
+        .quota-progress {
+            width: 100px;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .quota-progress-bar {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .quota-indicator {
+            margin-left: 10px;
+            padding: 2px 8px;
+            background: #e3f2fd;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #1976d2;
+        }
+
+        .quota-limit {
+            margin-left: 10px;
+        }
+
+        .quantity-feedback {
+            margin-top: 5px;
+        }
+
+        .feedback-text.success {
+            color: #28a745;
+        }
+
+        .feedback-text.warning {
+            color: #ffc107;
+        }
+
+        .feedback-text.error {
+            color: #dc3545;
+        }
+
+        .quota-validation-summary {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .validation-header {
+            background: #6c757d;
+            color: white;
+            padding: 12px 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .validation-content {
+            padding: 16px;
+        }
+
+        .validation-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #dee2e6;
+        }
+
+            .validation-item.success {
+                border-left-color: #28a745;
+            }
+
+            .validation-item.warning {
+                border-left-color: #ffc107;
+            }
+
+            .validation-item.error {
+                border-left-color: #dc3545;
+            }
+
+        .livestock-quantity.error {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+
+        .livestock-quantity.success {
+            border-color: #28a745;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        }
+
+        .quota-usage {
+            border-left: 3px solid #007bff;
+            padding-left: 10px;
+        }
+
+        /* Loading states */
+        .quota-loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @@keyframes spin {
+            0%
+
+        {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+
+        }
+
+        /* Responsive design */
+        @@media (max-width: 768px) {
+            .quota-card
+
+        {
             flex-direction: column;
             align-items: flex-start;
             gap: 15px;
         }
 
-        .header-actions {
-            margin-left: 0;
+        .quota-stats {
+            text-align: left;
             width: 100%;
         }
 
-            .header-actions .btn {
-                width: 100%;
-            }
-
-        .form-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .livestock-form {
-            grid-template-columns: 1fr;
-        }
-
-        .action-buttons {
-            flex-direction: column;
-        }
-
-            .action-buttons .btn {
-                flex: none;
-                width: 100%;
-            }
-
-        .page-title {
-            font-size: 24px;
-        }
-
-        .livestock-summary {
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .document-upload-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .upload-area {
-            min-height: 100px;
-            padding: 15px;
-        }
-
-        .upload-placeholder i {
-            font-size: 24px;
-        }
-
-        .summary-checklist {
-            grid-template-columns: 1fr;
+        .quota-progress {
+            width: 100%;
         }
 
         }

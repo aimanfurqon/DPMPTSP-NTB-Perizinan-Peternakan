@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddHttpClient();
 
 // Database Configuration
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -25,6 +26,8 @@ builder.Services.AddSession(options =>
 
 // Register services
 builder.Services.AddScoped<IPdfGeneratorService, PdfGeneratorService>();
+builder.Services.AddTransient<IEmailSender, MailKitEmailSender>();
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 
 // Add file upload services
 builder.Services.Configure<IISServerOptions>(options =>

@@ -17,6 +17,34 @@ namespace PerizinanPeternakan.ViewModels
         public bool RememberMe { get; set; }
     }
 
+    public class ForgotPasswordViewModel
+    {
+        [Required(ErrorMessage = "Alamat email harus diisi.")]
+        [EmailAddress(ErrorMessage = "Format email tidak valid.")]
+        [Display(Name = "Alamat Email Terdaftar")]
+        public string Email { get; set; }
+    }
+
+    public class ResetPasswordViewModel
+    {
+        [Required]
+        public string Token { get; set; }
+
+        [Required]
+        public string Email { get; set; }
+
+        [Required(ErrorMessage = "Password baru harus diisi.")]
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "Password minimal 6 karakter.")]
+        [DataType(DataType.Password)]
+        [Display(Name = "Password Baru")]
+        public string Password { get; set; }
+
+        [DataType(DataType.Password)]
+        [Display(Name = "Konfirmasi Password Baru")]
+        [Compare("Password", ErrorMessage = "Password dan konfirmasi password tidak cocok.")]
+        public string ConfirmPassword { get; set; }
+    }
+
     public class RegisterViewModel
     {
         [Required(ErrorMessage = "Username harus diisi")]

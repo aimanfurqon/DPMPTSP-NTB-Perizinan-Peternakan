@@ -4,188 +4,133 @@
     Layout = "_LoginLayout";
 }
 
-<div class="login-container">
-    <div class="login-card">
-        <div class="login-header">
-            <img src="~/images/logo-ntb.png" alt="Logo NTB" class="logo" />
-            <h2>Sistem Perizinan Peternakan</h2>
-            <p class="subtitle">DPMPTSP Provinsi Nusa Tenggara Barat</p>
+@* Header dengan logo dan judul *@
+<div class="text-center mb-4">
+    <img src="~/images/logo-ntb.png" alt="Logo NTB" class="logo" />
+    <h1 class="h3 mb-1 fw-semibold">Login Sistem</h1>
+    <p class="text-muted">Sistem Perizinan Peternakan NTB</p>
+</div>
+
+<form asp-action="Login" method="post">
+
+    <div class="mb-3">
+        <label asp-for="Username" class="form-label"><i class="fas fa-user me-2 opacity-75"></i>Username</label>
+        <input asp-for="Username" class="form-control form-control-lg" placeholder="Masukkan username" required />
+        <span asp-validation-for="Username" class="text-danger small mt-1 d-block"></span>
+    </div>
+
+    @* --- PERUBAHAN DIMULAI DI SINI --- *@
+    <div class="mb-3">
+        <label asp-for="Password" class="form-label"><i class="fas fa-lock me-2 opacity-75"></i>Password</label>
+
+        @* Menggunakan Input Group dari Bootstrap untuk menggabungkan input dan ikon *@
+        <div class="input-group">
+            <input asp-for="Password" id="password-field" type="password" class="form-control form-control-lg" placeholder="Masukkan password" required />
+
+            @* Ikon mata untuk toggle password *@
+            <span class="input-group-text" id="togglePassword">
+                <i class="fas fa-eye"></i>
+            </span>
+        </div>
+        <span asp-validation-for="Password" class="text-danger small mt-1 d-block"></span>
+    </div>
+    @* --- PERUBAHAN BERAKHIR DI SINI --- *@
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="form-check">
+            <input asp-for="RememberMe" class="form-check-input" />
+            <label asp-for="RememberMe" class="form-check-label">
+                @Html.DisplayNameFor(m => m.RememberMe)
+            </label>
         </div>
 
-        <form asp-action="Login" method="post" class="login-form">
-            <div class="form-group">
-                <label asp-for="Username" class="form-label">
-                    <i class="fas fa-user"></i>
-                    @Html.DisplayNameFor(m => m.Username)
-                </label>
-                <input asp-for="Username" class="form-control" placeholder="Masukkan username atau email" />
-                <span asp-validation-for="Username" class="text-danger"></span>
-            </div>
+        <a asp-action="ForgotPassword" class="small text-decoration-none">Lupa Password?</a>
 
-            <div class="form-group">
-                <label asp-for="Password" class="form-label">
-                    <i class="fas fa-lock"></i>
-                    @Html.DisplayNameFor(m => m.Password)
-                </label>
-                <input asp-for="Password" class="form-control" placeholder="Masukkan password" />
-                <span asp-validation-for="Password" class="text-danger"></span>
-            </div>
-
-            <div class="form-group form-check">
-                <input asp-for="RememberMe" class="form-check-input" />
-                <label asp-for="RememberMe" class="form-check-label">
-                    @Html.DisplayNameFor(m => m.RememberMe)
-                </label>
-            </div>
-
-            @if (!ViewData.ModelState.IsValid && ViewData.ModelState[""]?.Errors.Count > 0)
-            {
-                <div class="alert alert-danger">
-                    @ViewData.ModelState[""].Errors[0].ErrorMessage
-                </div>
-            }
-
-            <div class="form-group">
-                <button type="submit" class="btn btn-primary btn-block">
-                    <i class="fas fa-sign-in-alt"></i>
-                    Login
-                </button>
-            </div>
-
-            <div class="text-center">
-                <p>Belum punya akun? <a asp-action="Register" class="register-link">Daftar di sini</a></p>
-            </div>
-        </form>
     </div>
-</div>
+
+    <div class="d-grid">
+        <button type="submit" class="btn btn-primary btn-lg fw-bold">
+            <i class="fas fa-sign-in-alt me-2"></i> Login
+        </button>
+    </div>
+
+    <div class="text-center mt-4">
+        <p class="text-muted mb-0">
+            Belum punya akun?
+            <a asp-action="Register" class="fw-medium text-decoration-none">Daftar di sini</a>
+        </p>
+    </div>
+</form>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    @* --- SCRIPT UNTUK FITUR LIHAT PASSWORD (DIUBAH KE VANILLA JS) --- *@
+    <script>
+        // Menunggu hingga seluruh konten halaman dimuat sebelum menjalankan script
+        document.addEventListener('DOMContentLoaded', function () {
+            // Cari elemen ikon mata berdasarkan ID
+            const togglePassword = document.getElementById('togglePassword');
+
+            // Pastikan elemennya ada sebelum menambahkan event listener
+            if (togglePassword) {
+                togglePassword.addEventListener('click', function () {
+                    // Cari ikon di dalam elemen yang diklik
+                    const icon = this.querySelector('i');
+                    // Cari input password berdasarkan ID
+                    const passwordField = document.getElementById('password-field');
+
+                    // Cek tipe input saat ini: jika 'password', ubah ke 'text', dan sebaliknya
+                    const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordField.setAttribute('type', type);
+
+                    // Ganti kelas ikon untuk mengubah tampilannya (mata -> mata coret)
+                    icon.classList.toggle('fa-eye');
+                    icon.classList.toggle('fa-eye-slash');
+                });
+            }
+        });
+    </script>
 }
 
 <style>
-    .login-container {
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 20px;
-    }
-
-    .login-card {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        padding: 40px;
-        width: 100%;
-        max-width: 450px;
-    }
-
-    .login-header {
-        text-align: center;
-        margin-bottom: 30px;
-    }
-
     .logo {
         width: 80px;
-        height: 80px;
-        margin-bottom: 15px;
-    }
-
-    .login-header h2 {
-        color: #333;
-        margin-bottom: 5px;
-        font-weight: 600;
-    }
-
-    .subtitle {
-        color: #666;
-        font-size: 14px;
-        margin-bottom: 0;
-    }
-
-    .form-group {
-        margin-bottom: 20px;
-    }
-
-    .form-label {
-        display: block;
-        margin-bottom: 8px;
-        color: #333;
-        font-weight: 500;
-    }
-
-    .form-label i {
-        margin-right: 8px;
-        color: #666;
-    }
-
-    .form-control {
-        width: 100%;
-        padding: 12px 15px;
-        border: 2px solid #e1e5e9;
-        border-radius: 8px;
-        font-size: 16px;
-        transition: border-color 0.3s;
-    }
-
-    .form-control:focus {
-        outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    .form-check {
-        display: flex;
-        align-items: center;
-    }
-
-    .form-check-input {
-        margin-right: 8px;
+        margin-bottom: 1rem;
     }
 
     .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        padding: 12px 20px;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 600;
-        width: 100%;
-        color: white;
-        cursor: pointer;
-        transition: transform 0.2s;
+        background-color: #6a5af9;
+        border-color: #6a5af9;
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
     }
 
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        .btn-primary:hover {
+            background-color: #5a4ae9;
+            border-color: #5a4ae9;
+        }
+
+    .form-control:focus {
+        border-color: #a9a2f7;
+        box-shadow: 0 0 0 0.25rem rgba(106, 90, 249, 0.25);
     }
 
-    .register-link {
-        color: #667eea;
-        text-decoration: none;
-        font-weight: 600;
+    .form-check-input:checked {
+        background-color: #6a5af9;
+        border-color: #6a5af9;
     }
 
-    .register-link:hover {
-        text-decoration: underline;
+    a {
+        color: #6a5af9;
     }
 
-    .alert-danger {
-        background-color: #f8d7da;
-        border: 1px solid #f5c6cb;
-        color: #721c24;
-        padding: 12px 15px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-    }
+        a:hover {
+            color: #5a4ae9;
+        }
 
-    .text-danger {
-        color: #dc3545;
-        font-size: 14px;
-        margin-top: 5px;
-        display: block;
+    /* --- CSS TAMBAHAN UNTUK IKON MATA --- */
+    #togglePassword {
+        cursor: pointer; /* Mengubah cursor menjadi tangan saat diarahkan ke ikon */
     }
 </style>

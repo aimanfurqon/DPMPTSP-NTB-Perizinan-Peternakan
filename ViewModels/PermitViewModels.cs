@@ -6,6 +6,32 @@ namespace PerizinanPeternakan.ViewModels
 {
     public class PermitApplicationViewModel
     {
+
+
+        // Tambahkan properties baru untuk dropdown
+        [Display(Name = "Provinsi Asal")]
+        public int? OriginProvinceId { get; set; }
+
+        [Display(Name = "Kabupaten/Kota Asal")]
+        public int? OriginRegencyId { get; set; }
+
+        [Display(Name = "Provinsi Tujuan")]
+        public int? DestinationProvinceId { get; set; }
+
+        [Display(Name = "Kabupaten/Kota Tujuan")]
+        public int? DestinationRegencyId { get; set; }
+
+        // Ubah OriginLocation dan DestinationLocation menjadi tidak required
+        [StringLength(100, ErrorMessage = "Asal ternak maksimal 100 karakter")]
+        [Display(Name = "Asal Ternak")]
+        public string OriginLocation { get; set; } = string.Empty;
+
+        [StringLength(100, ErrorMessage = "Tujuan pengiriman maksimal 100 karakter")]
+        [Display(Name = "Tujuan Pengiriman")]
+        public string DestinationLocation { get; set; } = string.Empty;
+
+        // Di atas adalah tambahan
+
         [Required(ErrorMessage = "Nama perusahaan harus diisi")]
         [StringLength(200, ErrorMessage = "Nama perusahaan maksimal 200 karakter")]
         [Display(Name = "Nama Perusahaan")]
@@ -16,15 +42,15 @@ namespace PerizinanPeternakan.ViewModels
         [Display(Name = "Alamat Perusahaan")]
         public string CompanyAddress { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Asal ternak harus diisi")]
-        [StringLength(100, ErrorMessage = "Asal ternak maksimal 100 karakter")]
-        [Display(Name = "Asal Ternak")]
-        public string OriginLocation { get; set; } = string.Empty;
+        //[Required(ErrorMessage = "Asal ternak harus diisi")]
+        //[StringLength(100, ErrorMessage = "Asal ternak maksimal 100 karakter")]
+        //[Display(Name = "Asal Ternak")]
+        //public string OriginLocation { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Tujuan pengiriman harus diisi")]
-        [StringLength(100, ErrorMessage = "Tujuan pengiriman maksimal 100 karakter")]
-        [Display(Name = "Tujuan Pengiriman")]
-        public string DestinationLocation { get; set; } = string.Empty;
+        //[Required(ErrorMessage = "Tujuan pengiriman harus diisi")]
+        //[StringLength(100, ErrorMessage = "Tujuan pengiriman maksimal 100 karakter")]
+        //[Display(Name = "Tujuan Pengiriman")]
+        //public string DestinationLocation { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Pelabuhan asal harus diisi")]
         [StringLength(100, ErrorMessage = "Pelabuhan asal maksimal 100 karakter")]

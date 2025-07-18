@@ -6,11 +6,13 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
-	</PropertyGroup>
+	  <UserSecretsId>3aeb6bd9-9bda-48e1-afc6-8a9fd0ce6be2</UserSecretsId>
+  </PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
 		<PackageReference Include="DinkToPdf" Version="1.0.8" />
+		<PackageReference Include="MailKit" Version="4.13.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
 			<PrivateAssets>all</PrivateAssets>
@@ -24,6 +26,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Folder Include="Helpers\" />
 		<Folder Include="Migrations\" />
 		<Folder Include="wwwroot\documents\permits\" />
 		<Folder Include="wwwroot\images\" />
@@ -31,6 +34,13 @@
 
 	<ItemGroup>
 		<None Include="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Remove="wwwroot\css\multi-step-form.css" />
+	  <Content Remove="wwwroot\css\permit-index.css" />
+	  <Content Remove="wwwroot\js\multi-step-form.js" />
+	  <Content Remove="wwwroot\js\permit-index-simple.js" />
 	</ItemGroup>
 
 	<!-- Optional: Add DinkToPdf for better PDF generation -->
