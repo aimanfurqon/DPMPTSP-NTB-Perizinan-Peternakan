@@ -1,47 +1,12 @@
 ﻿@{
-    string GetProgressPercentage(PerizinanPeternakan.Models.PermitStatus status)
-    {
-        return status switch
-        {
-            PerizinanPeternakan.Models.PermitStatus.Draft => "0",
-            PerizinanPeternakan.Models.PermitStatus.Submitted => "25",
-            PerizinanPeternakan.Models.PermitStatus.UnderAdminReview => "30",
-            PerizinanPeternakan.Models.PermitStatus.AdminApproved => "50",
-            PerizinanPeternakan.Models.PermitStatus.AdminRejected => "0",
-            PerizinanPeternakan.Models.PermitStatus.UnderVerifikatorReview => "60",
-            PerizinanPeternakan.Models.PermitStatus.VerifikatorApproved => "75",
-            PerizinanPeternakan.Models.PermitStatus.VerifikatorRejected => "0",
-            PerizinanPeternakan.Models.PermitStatus.PendingKepalaDinas => "85",
-            PerizinanPeternakan.Models.PermitStatus.KepalaDinasRejected => "0",
-            PerizinanPeternakan.Models.PermitStatus.FinalApproved => "100",
-            _ => "0"
-        };
-    }
-
-    string GetProgressText(PerizinanPeternakan.Models.PermitStatus status)
-    {
-        return status switch
-        {
-            PerizinanPeternakan.Models.PermitStatus.Draft => "Belum Diajukan",
-            PerizinanPeternakan.Models.PermitStatus.Submitted => "Diajukan",
-            PerizinanPeternakan.Models.PermitStatus.UnderAdminReview => "Review Admin",
-            PerizinanPeternakan.Models.PermitStatus.AdminApproved => "Disetujui Admin",
-            PerizinanPeternakan.Models.PermitStatus.AdminRejected => "Ditolak Admin",
-            PerizinanPeternakan.Models.PermitStatus.UnderVerifikatorReview => "Review Verifikator",
-            PerizinanPeternakan.Models.PermitStatus.VerifikatorApproved => "Disetujui Verifikator",
-            PerizinanPeternakan.Models.PermitStatus.VerifikatorRejected => "Ditolak Verifikator",
-            PerizinanPeternakan.Models.PermitStatus.PendingKepalaDinas => "Menunggu Kepala Dinas",
-            PerizinanPeternakan.Models.PermitStatus.KepalaDinasRejected => "Ditolak Kepala Dinas",
-            PerizinanPeternakan.Models.PermitStatus.FinalApproved => "Selesai",
-            _ => "Pending"
-        };
-    }
+    ViewData["Title"] = "Daftar Permohonan Izin";
+    var userRole = Context.Session.GetString("Role");
 }
 
 <link rel="stylesheet" href="~/css/permit-index.css" />
 
 <style>
-    /* Tambahan CSS untuk DataTable dan Progress Bar */
+   
     @@import url('https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css');
     @@import url('https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css');
 
@@ -73,42 +38,78 @@
         align-items: center;
     }
 
-    .page-title i {
-        margin-right: 12px;
-        color: #667eea;
-        font-size: 32px;
+        .page-title i {
+            margin-right: 12px;
+            color: #667eea;
+            font-size: 32px;
+        }
+
+    /* Status Badge Styling */
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        display: inline-block;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
-    .filter-section {
-        background: white;
-        padding: 25px;
-        border-radius: 12px;
-        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
-        margin-bottom: 20px;
+    .badge-secondary {
+        background: #6c757d;
+        color: white;
     }
 
-    .filter-section .form-control,
-    .filter-section .form-select {
-        border: 2px solid #e9ecef;
-        border-radius: 8px;
-        padding: 10px 15px;
-        transition: all 0.3s ease;
+    .badge-info {
+        background: #17a2b8;
+        color: white;
     }
 
-    .filter-section .form-control:focus,
-    .filter-section .form-select:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    .badge-warning {
+        background: #ffc107;
+        color: #212529;
     }
 
-    .table-container {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
-        overflow: hidden;
-        margin-bottom: 20px;
+    .badge-primary {
+        background: #007bff;
+        color: white;
     }
 
+    .badge-danger {
+        background: #dc3545;
+        color: white;
+    }
+
+    .badge-success {
+        background: #28a745;
+        color: white;
+    }
+
+    /* Progress Bar Styling */
+    .progress-container {
+        width: 100%;
+        margin-top: 8px;
+    }
+
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+        background-color: #e9ecef;
+    }
+
+    .progress-bar {
+        border-radius: 4px;
+        transition: width 0.6s ease;
+    }
+
+    .progress-text {
+        font-size: 12px;
+        color: #666;
+        margin-top: 4px;
+    }
+
+    /* DataTable Custom Styling */
     .table th {
         background: #343a40;
         color: white;
@@ -126,246 +127,10 @@
         text-align: center;
     }
 
-    .table tbody tr {
-        transition: all 0.3s ease;
-    }
-
     .table tbody tr:hover {
         background-color: #f8f9fa;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     }
 
-    /* Progress Bar Styling */
-    .status-progress {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        min-width: 220px;
-        padding: 10px;
-    }
-
-    .progress-bar-wrapper {
-        width: 100%;
-        height: 22px;
-        background: #e9ecef;
-        border-radius: 11px;
-        overflow: hidden;
-        position: relative;
-        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .progress-bar {
-        height: 100%;
-        background: linear-gradient(90deg, #667eea, #764ba2);
-        border-radius: 11px;
-        transition: width 0.8s ease-in-out;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .progress-bar::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-        animation: shimmer 2s infinite;
-    }
-
-    @@keyframes shimmer {
-        0% { left: -100%; }
-        100% { left: 100%; }
-    }
-
-    .progress-text {
-        color: white;
-        font-size: 11px;
-        font-weight: 600;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-        position: relative;
-        z-index: 1;
-    }
-
-    .progress-steps {
-        display: flex;
-        justify-content: space-between;
-        padding: 0 5px;
-        margin-top: 5px;
-    }
-
-    .progress-step {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 2px;
-        font-size: 10px;
-        color: #999;
-        transition: all 0.3s ease;
-    }
-
-    .progress-step.completed {
-        color: #667eea;
-        font-weight: 600;
-    }
-
-    .progress-step.completed i {
-        color: #28a745;
-        transform: scale(1.1);
-    }
-
-    .progress-step i {
-        font-size: 12px;
-        margin-bottom: 2px;
-        transition: all 0.3s ease;
-    }
-
-    /* Status Badge Styling */
-    .status-badge {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        display: inline-block;
-        letter-spacing: 0.5px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .badge-pending {
-        background: linear-gradient(135deg, #fff3cd, #ffeaa7);
-        color: #856404;
-        border: 1px solid #ffeaa7;
-        animation: pulse 2s infinite;
-    }
-
-    .badge-approved, .badge-success {
-        background: linear-gradient(135deg, #d4edda, #00b894);
-        color: #155724;
-        border: 1px solid #c3e6cb;
-    }
-
-    .badge-rejected, .badge-danger {
-        background: linear-gradient(135deg, #f8d7da, #e17055);
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-    }
-
-    .badge-verification, .badge-info {
-        background: linear-gradient(135deg, #cce5ff, #74b9ff);
-        color: #004085;
-        border: 1px solid #b8daff;
-    }
-
-    .badge-warning {
-        background: linear-gradient(135deg, #ffc107, #fdcb6e);
-        color: #212529;
-        border: 1px solid #ffc107;
-    }
-
-    .badge-primary {
-        background: linear-gradient(135deg, #007bff, #667eea);
-        color: white;
-        border: 1px solid #007bff;
-    }
-
-    @@keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7); }
-        70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
-    }
-
-    /* Company and Applicant Info */
-    .company-info {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-        text-align: left;
-    }
-
-    .company-name {
-        font-weight: 600;
-        color: #333;
-        font-size: 15px;
-        line-height: 1.3;
-    }
-
-    .document-count {
-        font-size: 12px;
-        color: #666;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-
-    .applicant-info {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 8px;
-        color: #333;
-        font-size: 14px;
-    }
-
-    .applicant-info i {
-        color: #667eea;
-    }
-
-    /* Location Info */
-    .location-info {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        min-width: 150px;
-        text-align: left;
-    }
-
-    .location-item {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 13px;
-    }
-
-    .location-text {
-        color: #333;
-        font-weight: 500;
-    }
-
-    .location-arrow {
-        text-align: center;
-        color: #667eea;
-        font-size: 12px;
-        padding: 2px 0;
-    }
-
-    /* Date Info */
-    .date-info {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-        font-size: 14px;
-    }
-
-    .date-info i {
-        color: #667eea;
-        margin-right: 5px;
-    }
-
-    .time-info {
-        font-size: 12px;
-        color: #666;
-        font-weight: 500;
-    }
-
-    /* Action Buttons */
     .action-buttons {
         display: flex;
         gap: 5px;
@@ -374,217 +139,36 @@
     }
 
     .btn-sm {
-        padding: 8px 12px;
+        padding: 6px 10px;
         font-size: 12px;
-        border-radius: 6px;
-        font-weight: 600;
-        min-width: 40px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-        border: 2px solid transparent;
+        border-radius: 4px;
+        font-weight: 500;
     }
 
-    .btn-sm:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    /* Loading states */
+    .loading-spinner {
+        text-align: center;
+        padding: 40px;
     }
 
-    /* Table Stats */
-    .table-stats {
-        display: flex;
-        justify-content: center;
-        gap: 40px;
+    .filter-section {
         background: white;
         padding: 20px;
         border-radius: 12px;
         box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
-    }
-
-    .stats-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 14px;
-        color: #666;
-        padding: 10px 15px;
-        border-radius: 8px;
-        background: #f8f9fa;
-        transition: all 0.3s ease;
-    }
-
-    .stats-item:hover {
-        background: #e9ecef;
-        transform: translateY(-2px);
-    }
-
-    .stats-item i {
-        color: #667eea;
-        font-size: 18px;
-    }
-
-    .stats-item strong {
-        color: #333;
-        font-size: 16px;
-    }
-
-    /* Empty State */
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        color: #666;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
-    }
-
-    .empty-icon {
-        font-size: 64px;
-        color: #e9ecef;
         margin-bottom: 20px;
     }
 
-    .empty-state h3 {
-        color: #333;
-        margin-bottom: 10px;
-        font-size: 24px;
-    }
-
-    /* DataTables Styling */
-    .dataTables_wrapper {
-        padding: 20px;
-    }
-
-    .dataTables_filter {
-        display: none;
-    }
-
-    .dataTables_length label {
-        font-weight: 600;
-        color: #333;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .dataTables_length select {
-        padding: 8px 12px;
-        border: 2px solid #e9ecef;
-        border-radius: 6px;
-        margin: 0 5px;
-        font-size: 14px;
-        transition: all 0.3s ease;
-    }
-
-    .dataTables_info {
-        padding-top: 15px;
-        color: #666;
-        font-weight: 500;
-    }
-
-    .dataTables_paginate .paginate_button {
-        padding: 8px 15px;
-        margin: 0 3px;
-        border: 2px solid #e9ecef;
-        border-radius: 6px;
-        color: #333;
-        text-decoration: none;
-        font-weight: 500;
-        transition: all 0.3s ease;
-    }
-
-    .dataTables_paginate .paginate_button:hover {
-        background: #f8f9fa;
-        border-color: #667eea;
-        color: #667eea;
-        transform: translateY(-1px);
-    }
-
-    .dataTables_paginate .paginate_button.current {
-        background: #667eea;
-        color: white;
-        border-color: #667eea;
-    }
-
-    /* Responsive Design */
-    @@media (max-width: 768px) {
-        .permits-container {
-            padding: 15px;
-        }
-
-        .page-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 15px;
-            padding: 20px;
-        }
-
-        .header-actions {
-            margin-left: 0;
-            width: 100%;
-        }
-
-        .header-actions .btn {
-            width: 100%;
-        }
-
-        .table-container {
-            overflow-x: auto;
-        }
-
-        .table {
-            min-width: 800px;
-        }
-
-        .status-progress {
-            min-width: 180px;
-        }
-
-        .action-buttons {
-            flex-direction: column;
-            gap: 3px;
-        }
-
-        .action-buttons .btn {
-            width: 100%;
-            justify-content: center;
-        }
-
-        .table-stats {
-            flex-direction: column;
-            gap: 15px;
-            text-align: center;
-        }
-    }
-
-    /* Custom scrollbar */
-    .table-container::-webkit-scrollbar {
-        height: 8px;
-    }
-
-    .table-container::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
-    }
-
-    .table-container::-webkit-scrollbar-thumb {
-        background: #667eea;
-        border-radius: 4px;
-    }
-
-    .table-container::-webkit-scrollbar-thumb:hover {
-        background: #5a6fd8;
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
     }
 </style>
 
-@model List<PerizinanPeternakan.ViewModels.PermitListViewModel>
-@{
-    ViewData["Title"] = "Daftar Permohonan Izin";
-    var userRole = Context.Session.GetString("Role");
-}
-
 <div class="permits-container">
+    <!-- Page Header -->
     <div class="page-header">
         <div class="header-content">
             <h1 class="page-title">
@@ -620,222 +204,139 @@
         }
     </div>
 
-    @if (Model.Any())
-    {
-        <!-- Filter Section -->
-        <div class="filter-section">
-            <div class="row">
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label for="statusFilter">Filter Status</label>
-                       <select id="statusFilter" class="form-control">
-    <option value="">Semua Status</option>
-    <option value="Diajukan">Diajukan</option>
-    <option value="Review Admin">Review Admin</option>
-    <option value="Disetujui Admin">Disetujui Admin</option>
-    <option value="Review Verifikator">Review Verifikator</option>
-    <option value="Disetujui Verifikator">Disetujui Verifikator</option>
-    <option value="Menunggu Kepala Dinas">Menunggu Kepala Dinas</option>
-    <option value="Selesai">Selesai</option>
-    <option value="Ditolak">Ditolak</option>
-</select>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label for="dateFilter">Filter Tanggal</label>
-                        <input type="date" id="dateFilter" class="form-control">
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label for="searchFilter">Cari Permohonan</label>
-                        <input type="text" id="searchFilter" class="form-control" placeholder="Nomor aplikasi, perusahaan, atau pemohon...">
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="form-group">
-                        <label>&nbsp;</label>
-                        <button type="button" class="btn btn-outline-secondary form-control" onclick="resetFilters()">
-                            <i class="fas fa-undo"></i>
-                            Reset
-                        </button>
+    <!-- Statistics Cards -->
+    <div class="row mb-4" id="statistics-cards">
+        <div class="col-md-3">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Permohonan</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-permits">-</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-file-alt fa-2x text-gray-300"></i>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+        <div class="col-md-3">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="pending-permits">-</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Disetujui</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="approved-permits">-</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Rata-rata Proses</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="avg-processing">-</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-stopwatch fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        <!-- Data Table -->
-        <div class="table-container">
-            <table id="permitsTable" class="table table-striped table-hover">
-                <thead class="table-dark">
-                    <tr>
-                        <th>No. Aplikasi</th>
-                        <th>Perusahaan</th>
-                        <th>Pemohon</th>
-                        <th>Status & Progress</th>
-                        <th>Tanggal Pengajuan</th>
-                        <th>Asal - Tujuan</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var permit in Model)
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="statusFilter">Filter Status</label>
+                    <select id="statusFilter" class="form-control">
+                        <option value="">Semua Status</option>
+                        <option value="Draft">Draft</option>
+                        <option value="Diajukan">Diajukan</option>
+                        <option value="Review Admin">Review Admin</option>
+                        <option value="Disetujui Admin">Disetujui Admin</option>
+                        <option value="Ditolak Admin">Ditolak Admin</option>
+                        <option value="Review Verifikator">Review Verifikator</option>
+                        <option value="Disetujui Verifikator">Disetujui Verifikator</option>
+                        <option value="Ditolak Verifikator">Ditolak Verifikator</option>
+                        <option value="Menunggu Kepala Dinas">Menunggu Kepala Dinas</option>
+                        <option value="Disetujui Final">Disetujui Final</option>
+                        <option value="Ditolak Kepala Dinas">Ditolak Kepala Dinas</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="dateFilter">Filter Tanggal</label>
+                    <input type="date" id="dateFilter" class="form-control">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="searchFilter">Cari Permohonan</label>
+                    <input type="text" id="searchFilter" class="form-control" placeholder="Nomor aplikasi, perusahaan, atau pemohon...">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button type="button" class="btn btn-outline-secondary form-control" onclick="resetFilters()">
+                        <i class="fas fa-undo"></i>
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-container">
+        <table id="permitsTable" class="table table-striped table-hover" style="width:100%">
+            <thead class="table-dark">
+                <tr>
+                    <th>No. Aplikasi</th>
+                    <th>Perusahaan</th>
+                    @if (userRole != "User")
                     {
-                        <tr>
-                            <td>
-                                <div class="permit-number">
-                                    <i class="fas fa-hashtag text-primary"></i>
-                                    <strong>@permit.ApplicationNumber</strong>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="company-info">
-                                    <div class="company-name">@permit.CompanyName</div>
-                                    <div class="document-count">
-                                        <i class="fas fa-file-alt"></i>
-                                        @permit.DocumentCount dokumen
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="applicant-info">
-                                    <i class="fas fa-user"></i>
-                                    @permit.ApplicantName
-                                </div>
-                            </td>
-                            <td>
-                                <div class="status-progress">
-                                    <div class="status-badge-container">
-                                        <span class="status-badge badge-@PermitStatusHelper.GetStatusClass(permit.Status)">
-                                            @PermitStatusHelper.GetStatusText(permit.Status)
-                                        </span>
-                                    </div>
-                                    <div class="progress-bar-container">
-                                        <div class="progress-bar-wrapper">
-                                            <div class="progress-bar" role="progressbar" style="width: @GetProgressPercentage(permit.Status)%;">
-                                                <span class="progress-text">@GetProgressText(permit.Status)</span>
-                                            </div>
-                                        </div>
-                                        <div class="progress-steps">
-                                            <div class="progress-step @(permit.Status >= PerizinanPeternakan.Models.PermitStatus.Submitted ? "completed" : "")">
-                                                <i class="fas fa-paper-plane"></i>
-                                                <span>Diajukan</span>
-                                            </div>
-                                            <div class="progress-step @(permit.Status >= PerizinanPeternakan.Models.PermitStatus.AdminApproved ? "completed" : "")">
-                                                <i class="fas fa-user-check"></i>
-                                                <span>Admin</span>
-                                            </div>
-                                            <div class="progress-step @(permit.Status >= PerizinanPeternakan.Models.PermitStatus.VerifikatorApproved ? "completed" : "")">
-                                                <i class="fas fa-clipboard-check"></i>
-                                                <span>Verifikator</span>
-                                            </div>
-                                            <div class="progress-step @(permit.Status == PerizinanPeternakan.Models.PermitStatus.FinalApproved ? "completed" : "")">
-                                                <i class="fas fa-award"></i>
-                                                <span>Final</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="date-info">
-                                    <i class="fas fa-calendar"></i>
-                                    @permit.SubmissionDate.ToString("dd/MM/yyyy")
-                                    <div class="time-info">@permit.SubmissionDate.ToString("HH:mm")</div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="location-info">
-                                    <div class="location-item">
-                                        <i class="fas fa-map-marker-alt text-success"></i>
-                                        <span class="location-text">@permit.OriginLocation</span>
-                                    </div>
-                                    <div class="location-arrow">
-                                        <i class="fas fa-arrow-down"></i>
-                                    </div>
-                                    <div class="location-item">
-                                        <i class="fas fa-map-marker-alt text-danger"></i>
-                                        <span class="location-text">@permit.DestinationLocation</span>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="action-buttons">
-                                    <a asp-action="Detail" asp-route-id="@permit.Id" class="btn btn-outline-primary btn-sm" title="Lihat Detail">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-
-                                    @if (permit.CanApprove)
-                                    {
-                                        <a asp-action="Approve" asp-route-id="@permit.Id" class="btn btn-warning btn-sm" title="Proses Permohonan">
-                                            <i class="fas fa-check-circle"></i>
-                                        </a>
-                                    }
-
-                                    @if (permit.CanDownload && userRole == "User")
-                                    {
-                                        <a asp-action="Download" asp-route-id="@permit.Id" class="btn btn-success btn-sm" title="Download Dokumen">
-                                            <i class="fas fa-download"></i>
-                                        </a>
-                                    }
-
-                                    @if (!string.IsNullOrEmpty(permit.GeneratedDocumentPath) && (userRole == "Verifikator" || userRole == "KepalaDinas" || userRole == "Admin"))
-                                    {
-                                        <button type="button" class="btn btn-info btn-sm" title="Lihat Dokumen" onclick="viewDocumentModal('@permit.Id', '@permit.ApplicationNumber')">
-                                            <i class="fas fa-file-pdf"></i>
-                                        </button>
-                                    }
-                                </div>
-                            </td>
-                        </tr>
+                        <th>Pemohon</th>
                     }
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Table Stats -->
-        <div class="table-stats">
-            <div class="stats-item">
-                <i class="fas fa-file-alt"></i>
-                <span>Total: <strong id="totalCount">@Model.Count</strong></span>
-            </div>
-            <div class="stats-item">
-                <i class="fas fa-clock"></i>
-                <span>Pending: <strong id="pendingCount">@Model.Count(m => m.Status == PerizinanPeternakan.Models.PermitStatus.Submitted)</strong></span>
-            </div>
-            <div class="stats-item">
-                <i class="fas fa-check-circle"></i>
-                <span>Approved: <strong id="approvedCount">@Model.Count(m => m.Status == PerizinanPeternakan.Models.PermitStatus.FinalApproved)</strong></span>
-            </div>
-        </div>
-    }
-    else
-    {
-        <div class="empty-state">
-            <div class="empty-icon">
-                <i class="fas fa-inbox"></i>
-            </div>
-            <h3>Tidak Ada Permohonan</h3>
-            <p class="empty-description">
-                @if (userRole == "User")
-                {
-                    <text>Anda belum memiliki permohonan izin. Buat permohonan baru untuk memulai.</text>
-                }
-                else
-                {
-                    <text>Tidak ada permohonan yang perlu diproses saat ini.</text>
-                }
-            </p>
-            @if (userRole == "User")
-            {
-                <a asp-action="Create" class="btn btn-primary">
-                    <i class="fas fa-plus"></i>
-                    Buat Permohonan Baru
-                </a>
-            }
-        </div>
-    }
+                    <th>Status</th>
+                    <th>Progress</th>
+                    <th>Tanggal Pengajuan</th>
+                    <th>Asal - Tujuan</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data will be loaded via AJAX -->
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <!-- Modal untuk menampilkan dokumen -->
@@ -849,44 +350,21 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-0">
-                <div class="document-viewer">
-                    <div class="viewer-header">
-                        <div class="document-info">
-                            <h6 id="documentTitle">Memuat dokumen...</h6>
-                            <div class="viewer-controls">
-                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="downloadFromModal()">
-                                    <i class="fas fa-download"></i>
-                                    Download
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="printFromModal()">
-                                    <i class="fas fa-print"></i>
-                                    Print
-                                </button>
-                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="openInNewTab()">
-                                    <i class="fas fa-external-link-alt"></i>
-                                    Buka di Tab Baru
-                                </button>
-                            </div>
-                        </div>
+            <div class="modal-body p-0" style="height: 600px;">
+                <div class="loading-spinner" id="documentLoader">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
                     </div>
-                    <div class="viewer-container">
-                        <div class="loading-spinner" id="documentLoader">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <p>Memuat dokumen...</p>
-                        </div>
-                        <iframe id="documentFrame" src="" style="display: none; width: 100%; height: 600px; border: none; border-radius: 0 0 8px 8px;"></iframe>
-                        <div class="error-message" id="documentError" style="display: none;">
-                            <i class="fas fa-exclamation-triangle text-warning"></i>
-                            <p>Gagal memuat dokumen. Silakan coba lagi atau buka di tab baru.</p>
-                            <button type="button" class="btn btn-outline-primary" onclick="retryLoadDocument()">
-                                <i class="fas fa-redo"></i>
-                                Coba Lagi
-                            </button>
-                        </div>
-                    </div>
+                    <p>Memuat dokumen...</p>
+                </div>
+                <iframe id="documentFrame" src="" style="display: none; width: 100%; height: 100%; border: none;"></iframe>
+                <div class="text-center p-4" id="documentError" style="display: none;">
+                    <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+                    <p>Gagal memuat dokumen. Silakan coba lagi atau buka di tab baru.</p>
+                    <button type="button" class="btn btn-outline-primary" onclick="retryLoadDocument()">
+                        <i class="fas fa-redo"></i>
+                        Coba Lagi
+                    </button>
                 </div>
             </div>
             <div class="modal-footer">
@@ -903,30 +381,193 @@
 @section Scripts {
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+
     <script>
         let currentPermitId = null;
         let currentApplicationNumber = null;
         let table;
+        const userRole = '@userRole';
 
         $(document).ready(function() {
-            // Initialize DataTable
+            // Load statistics first
+            loadStatistics();
+
+            // Initialize DataTable with AJAX
+            initializeDataTable();
+
+            // Set up filters
+            setupFilters();
+
+            // Auto refresh every 30 seconds
+            setInterval(function() {
+                table.ajax.reload(null, false); // false = keep current page
+                loadStatistics();
+            }, 30000);
+        });
+
+        function loadStatistics() {
+            $.get('@Url.Action("GetPermitStatistics", "Permit")')
+                .done(function(response) {
+                    if (response.error) {
+                        console.error('Error loading statistics:', response.error);
+                        return;
+                    }
+
+                    $('#total-permits').text(response.total || 0);
+                    $('#pending-permits').text(response.pending || 0);
+                    $('#approved-permits').text(response.approved || 0);
+                    $('#avg-processing').text((response.avgProcessingDays || 0) + ' hari');
+                })
+                .fail(function(xhr, status, error) {
+                    console.error('Failed to load statistics:', error);
+                });
+        }
+
+        function initializeDataTable() {
+            const columns = [
+                {
+                    data: 'ApplicationNumber',
+                    render: function(data, type, row) {
+                        return `<div class="permit-number">
+                                    <i class="fas fa-hashtag text-primary"></i>
+                                    <strong>${data}</strong>
+                                </div>`;
+                    }
+                },
+                {
+                    data: 'CompanyName',
+                    render: function(data, type, row) {
+                        return `<div class="company-info">
+                                    <div class="company-name">${data}</div>
+                                    <div class="document-count">
+                                        <i class="fas fa-file-alt"></i>
+                                        ${row.DocumentCount} dokumen
+                                    </div>
+                                </div>`;
+                    }
+                }
+            ];
+
+            // Add Applicant column for non-User roles
+            if (userRole !== 'User') {
+                columns.push({
+                    data: 'ApplicantName',
+                    render: function(data, type, row) {
+                        return `<div class="applicant-info">
+                                    <i class="fas fa-user"></i>
+                                    ${data}
+                                </div>`;
+                    }
+                });
+            }
+
+            columns.push(
+                {
+                    data: 'StatusText',
+                    render: function(data, type, row) {
+                        return `<span class="status-badge badge-${row.StatusClass}">${data}</span>`;
+                    }
+                },
+                {
+                    data: 'ProgressPercentage',
+                    render: function(data, type, row) {
+                        return `<div class="progress-container">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-primary" role="progressbar"
+                                             style="width: ${data}%;"
+                                             aria-valuenow="${data}"
+                                             aria-valuemin="0"
+                                             aria-valuemax="100"></div>
+                                    </div>
+                                    <div class="progress-text">${row.ProgressText}</div>
+                                </div>`;
+                    }
+                },
+                {
+                    data: 'SubmissionDate',
+                    render: function(data, type, row) {
+                        return `<div class="date-info">
+                                    <i class="fas fa-calendar"></i>
+                                    ${data}
+                                    <div class="time-info">${row.SubmissionTime}</div>
+                                </div>`;
+                    }
+                },
+                {
+                    data: 'OriginLocation',
+                    render: function(data, type, row) {
+                        return `<div class="location-info">
+                                    <div class="location-item">
+                                        <i class="fas fa-map-marker-alt text-success"></i>
+                                        <span class="location-text">${data}</span>
+                                    </div>
+                                    <div class="location-arrow">
+                                        <i class="fas fa-arrow-down"></i>
+                                    </div>
+                                    <div class="location-item">
+                                        <i class="fas fa-map-marker-alt text-danger"></i>
+                                        <span class="location-text">${row.DestinationLocation}</span>
+                                    </div>
+                                </div>`;
+                    }
+                },
+                {
+                    data: 'Id',
+                    orderable: false,
+                    render: function(data, type, row) {
+                        let actions = `<div class="action-buttons">
+                                         <a href="@Url.Action("Detail", "Permit")/${data}" class="btn btn-outline-primary btn-sm" title="Lihat Detail">
+                                             <i class="fas fa-eye"></i>
+                                         </a>`;
+
+                        if (row.CanApprove) {
+                            actions += `<a href="@Url.Action("Approve", "Permit")/${data}" class="btn btn-warning btn-sm" title="Proses Permohonan">
+                                            <i class="fas fa-check-circle"></i>
+                                        </a>`;
+                        }
+
+                        if (row.CanDownload && userRole === 'User') {
+                            actions += `<a href="@Url.Action("Download", "Permit")/${data}" class="btn btn-success btn-sm" title="Download Dokumen">
+                                            <i class="fas fa-download"></i>
+                                        </a>`;
+                        }
+
+                        if (row.HasDocument && userRole !== 'User') {
+                            actions += `<button type="button" class="btn btn-info btn-sm" title="Lihat Dokumen" onclick="viewDocumentModal('${data}', '${row.ApplicationNumber}')">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </button>`;
+                        }
+
+                        actions += '</div>';
+                        return actions;
+                    }
+                }
+            );
+
             table = $('#permitsTable').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "@Url.Action("GetPermitsData", "Permit")",
+                    "type": "GET",
+                    "data": function(d) {
+                        d.search = $('#searchFilter').val();
+                        d.statusFilter = $('#statusFilter').val();
+                        d.dateFilter = $('#dateFilter').val();
+                    }
+                },
+                "columns": columns,
                 "pageLength": 10,
                 "responsive": true,
-                "ordering": true,
-                "searching": true,
-                "columnDefs": [
-                    { "orderable": false, "targets": [6] } // Disable ordering for action column
-                ],
-                "order": [[4, "desc"]], // Sort by submission date (descending)
+                "order": [[userRole !== 'User' ? 5 : 4, "desc"]], // Sort by submission date
                 "language": {
                     "decimal": "",
                     "emptyTable": "Tidak ada data yang tersedia",
                     "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ entri",
                     "infoEmpty": "Menampilkan 0 sampai 0 dari 0 entri",
                     "infoFiltered": "(difilter dari _MAX_ total entri)",
-                    "infoPostFix": "",
-                    "thousands": ",",
                     "lengthMenu": "Tampilkan _MENU_ entri",
                     "loadingRecords": "Memuat...",
                     "processing": "Memproses...",
@@ -937,93 +578,67 @@
                         "last": "Terakhir",
                         "next": "Berikutnya",
                         "previous": "Sebelumnya"
-                    },
-                    "aria": {
-                        "sortAscending": ": aktifkan untuk mengurutkan kolom secara ascending",
-                        "sortDescending": ": aktifkan untuk mengurutkan kolom secara descending"
                     }
                 }
             });
+        }
 
-            // Custom filtering
-            $('#statusFilter').on('change', function() {
-                table.column(3).search(this.value).draw();
-                updateStats();
+        function setupFilters() {
+            $('#statusFilter, #dateFilter').on('change', function() {
+                table.ajax.reload();
             });
 
-            $('#dateFilter').on('change', function() {
-                table.column(4).search(this.value).draw();
-                updateStats();
-            });
-
-            $('#searchFilter').on('keyup', function() {
-                table.search(this.value).draw();
-                updateStats();
-            });
-
-            // Update stats after filtering
-            table.on('draw', function() {
-                updateStats();
-            });
-        });
+            $('#searchFilter').on('keyup', debounce(function() {
+                table.ajax.reload();
+            }, 500));
+        }
 
         function resetFilters() {
             $('#statusFilter').val('');
             $('#dateFilter').val('');
             $('#searchFilter').val('');
-            table.search('').columns().search('').draw();
-            updateStats();
+            table.ajax.reload();
         }
 
-        function updateStats() {
-            var info = table.page.info();
-            $('#totalCount').text(info.recordsDisplay);
-            
-            // Count pending and approved from filtered results
-            var pendingCount = 0;
-            var approvedCount = 0;
-            
-            table.rows({ search: 'applied' }).every(function() {
-                var data = this.data();
-                var statusCell = $(data[3]);
-                
-                if (statusCell.find('.badge-pending').length > 0) {
-                    pendingCount++;
-                } else if (statusCell.find('.badge-success').length > 0) {
-                    approvedCount++;
-                }
-            });
-            
-            $('#pendingCount').text(pendingCount);
-            $('#approvedCount').text(approvedCount);
+        // Utility function for debouncing
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
         }
 
+        // Document modal functions
         function viewDocumentModal(permitId, applicationNumber) {
             currentPermitId = permitId;
             currentApplicationNumber = applicationNumber;
 
-            // Show modal
             const modal = new bootstrap.Modal(document.getElementById('documentModal'));
             modal.show();
 
-            // Reset modal state
-            document.getElementById('documentTitle').innerText = `Dokumen ${applicationNumber}`;
+            document.getElementById('documentModalLabel').innerHTML =
+                `<i class="fas fa-file-pdf text-danger"></i> Dokumen ${applicationNumber}`;
+
+            resetModalState();
+            loadDocumentInModal(permitId);
+
+            // Update approve button
+            const approveBtn = document.getElementById('approveFromModal');
+            if (userRole !== 'User') {
+                approveBtn.href = `@Url.Action("Approve", "Permit")/${permitId}`;
+                approveBtn.style.display = 'inline-block';
+            }
+        }
+
+        function resetModalState() {
             document.getElementById('documentLoader').style.display = 'block';
             document.getElementById('documentFrame').style.display = 'none';
             document.getElementById('documentError').style.display = 'none';
-
-            // Update approve button if user can approve
-            const approveBtn = document.getElementById('approveFromModal');
-            @if (userRole == "Verifikator" || userRole == "KepalaDinas" || userRole == "Admin")
-            {
-                    <text>
-                    approveBtn.href = '@Url.Action("Approve", "Permit")/' + permitId;
-                    approveBtn.style.display = 'inline-block';
-                    </text>
-            }
-
-            // Load document
-            loadDocumentInModal(permitId);
         }
 
         function loadDocumentInModal(permitId) {
@@ -1031,29 +646,14 @@
             const loader = document.getElementById('documentLoader');
             const errorDiv = document.getElementById('documentError');
 
-            // Set iframe source
             iframe.src = `@Url.Action("GetDocumentFile", "Permit")/${permitId}`;
 
-            // Handle iframe load
             iframe.onload = function() {
-                try {
-                    // Check if iframe loaded successfully
-                    if (iframe.contentDocument || iframe.contentWindow.document) {
-                        loader.style.display = 'none';
-                        iframe.style.display = 'block';
-                        errorDiv.style.display = 'none';
-                    }
-                } catch (e) {
-                    // Cross-origin or other error
-                    setTimeout(() => {
-                        loader.style.display = 'none';
-                        iframe.style.display = 'block';
-                        errorDiv.style.display = 'none';
-                    }, 1000);
-                }
+                loader.style.display = 'none';
+                iframe.style.display = 'block';
+                errorDiv.style.display = 'none';
             };
 
-            // Handle iframe error
             iframe.onerror = function() {
                 loader.style.display = 'none';
                 iframe.style.display = 'none';
@@ -1066,56 +666,24 @@
                     loader.style.display = 'none';
                     iframe.style.display = 'block';
                 }
-            }, 3000);
-        }
-
-        function downloadFromModal() {
-            if (currentPermitId) {
-                window.open(`@Url.Action("Download", "Permit")/${currentPermitId}`, '_blank');
-            }
-        }
-
-        function printFromModal() {
-            const iframe = document.getElementById('documentFrame');
-            try {
-                if (iframe.contentWindow) {
-                    iframe.contentWindow.print();
-                } else {
-                    // Fallback: open in new window and print
-                    const printWindow = window.open(`@Url.Action("GetDocumentFile", "Permit")/${currentPermitId}`, '_blank');
-                    printWindow.onload = function() {
-                        printWindow.print();
-                    };
-                }
-            } catch (e) {
-                console.log('Print error:', e);
-                alert('Tidak dapat mencetak dari modal. Silakan buka dokumen di tab baru untuk mencetak.');
-            }
-        }
-
-        function openInNewTab() {
-            if (currentPermitId) {
-                window.open(`@Url.Action("ViewDocument", "Permit")/${currentPermitId}`, '_blank');
-            }
+            }, 5000);
         }
 
         function retryLoadDocument() {
             if (currentPermitId) {
+                resetModalState();
                 loadDocumentInModal(currentPermitId);
             }
         }
 
-        // Clean up when modal is closed
+        // Clean up when modal closes
         document.getElementById('documentModal').addEventListener('hidden.bs.modal', function() {
-            const iframe = document.getElementById('documentFrame');
-            iframe.src = 'about:blank';
+            document.getElementById('documentFrame').src = 'about:blank';
             currentPermitId = null;
             currentApplicationNumber = null;
         });
     </script>
 }
-
-
 <style>
     /* DataTables CSS */
     @@import url('https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css');
