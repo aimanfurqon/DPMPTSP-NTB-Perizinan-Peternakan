@@ -18,6 +18,11 @@ namespace PerizinanPeternakan.Controllers
             return View();
         }
 
+        public IActionResult Help()
+        {
+            return View();
+        }
+
         public IActionResult Privacy()
         {
             return View();

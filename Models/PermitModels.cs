@@ -69,6 +69,18 @@ namespace PerizinanPeternakan.Models
         public virtual ICollection<LivestockDetail> LivestockDetails { get; set; } = new List<LivestockDetail>();
         public virtual ICollection<PermitApprovalHistory> ApprovalHistory { get; set; } = new List<PermitApprovalHistory>();
         public virtual ICollection<PermitDocument> Documents { get; set; } = new List<PermitDocument>();
+
+        [Display(Name = "Provinsi Asal")]
+        public int? OriginProvinceId { get; set; }
+
+        [Display(Name = "Kabupaten/Kota Asal")]
+        public int? OriginRegencyId { get; set; }
+
+        [Display(Name = "Provinsi Tujuan")]
+        public int? DestinationProvinceId { get; set; }
+
+        [Display(Name = "Kabupaten/Kota Tujuan")]
+        public int? DestinationRegencyId { get; set; }
     }
 
     public class LivestockDetail
@@ -142,6 +154,38 @@ namespace PerizinanPeternakan.Models
 
         public int UploadedByUserId { get; set; }
         public virtual User UploadedByUser { get; set; }
+
+        [Display(Name = "Tanggal Pengajuan Dokumen")]
+        [DataType(DataType.Date)]
+        public DateTime? DocumentDate { get; set; }
+
+        [Display(Name = "Nomor Dokumen")]
+        [StringLength(50, ErrorMessage = "Nomor dokumen maksimal 50 karakter")]
+        public string? DocumentNumber { get; set; }
+
+        [Display(Name = "Keterangan Dokumen")]
+        [StringLength(500, ErrorMessage = "Keterangan dokumen maksimal 500 karakter")]
+        public string? DocumentDescription { get; set; }
+
+        // Helper properties to check if this document has additional details
+        public bool HasDocumentDetails => DocumentDate.HasValue || !string.IsNullOrEmpty(DocumentNumber);
+
+        // Helper property to format document details
+        public string FormattedDocumentDetails
+        {
+            get
+            {
+                var details = new List<string>();
+
+                if (DocumentDate.HasValue)
+                    details.Add($"Tanggal: {DocumentDate.Value:dd/MM/yyyy}");
+
+                if (!string.IsNullOrEmpty(DocumentNumber))
+                    details.Add($"No: {DocumentNumber}");
+
+                return string.Join(" | ", details);
+            }
+        }
     }
 
     // Updated Status Enum with new flow

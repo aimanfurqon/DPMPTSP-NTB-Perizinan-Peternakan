@@ -41,7 +41,6 @@ namespace PerizinanPeternakan.Data
                 entity.HasIndex(e => e.Email).IsUnique();
             });
 
-            // Konfigurasi tabel LivestockPermitApplication
             modelBuilder.Entity<LivestockPermitApplication>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -55,40 +54,43 @@ namespace PerizinanPeternakan.Data
                 entity.Property(e => e.RejectionReason).HasMaxLength(1000);
                 entity.Property(e => e.GeneratedDocumentPath).HasMaxLength(500);
 
-                // Relasi ke Pemohon (User) - JANGAN DIHAPUS JIKA ADA PERMOHONAN
+                entity.Property(e => e.OriginProvinceId).IsRequired(false);
+                entity.Property(e => e.OriginRegencyId).IsRequired(false);
+                entity.Property(e => e.DestinationProvinceId).IsRequired(false);
+                entity.Property(e => e.DestinationRegencyId).IsRequired(false);
+
                 entity.HasOne(d => d.User)
                       .WithMany()
                       .HasForeignKey(d => d.UserId)
                       .OnDelete(DeleteBehavior.NoAction);
 
-                // --- PERBAIKAN UTAMA ADA DI SINI ---
-                // Jika Admin, Verifikator, atau KepalaDinas dihapus,
-                // set kolom foreign key di tabel ini menjadi NULL, JANGAN hapus permohonannya.
-
                 entity.HasOne(d => d.Admin)
                       .WithMany()
                       .HasForeignKey(d => d.AdminId)
                       .IsRequired(false)
-                      .OnDelete(DeleteBehavior.SetNull); // <-- DIUBAH
+                      .OnDelete(DeleteBehavior.SetNull); 
 
                 entity.HasOne(d => d.Verifikator)
                       .WithMany()
                       .HasForeignKey(d => d.VerifikatorId)
                       .IsRequired(false)
-                      .OnDelete(DeleteBehavior.SetNull); // <-- DIUBAH
+                      .OnDelete(DeleteBehavior.SetNull); 
 
                 entity.HasOne(d => d.KepalaDinas)
                       .WithMany()
                       .HasForeignKey(d => d.KepalaDinasId)
                       .IsRequired(false)
-                      .OnDelete(DeleteBehavior.SetNull); // <-- DIUBAH
+                      .OnDelete(DeleteBehavior.SetNull); 
 
                 entity.HasIndex(e => e.ApplicationNumber).IsUnique();
                 entity.HasIndex(e => e.Status);
                 entity.HasIndex(e => e.SubmissionDate);
+                entity.HasIndex(e => e.OriginProvinceId);
+                entity.HasIndex(e => e.OriginRegencyId);
+                entity.HasIndex(e => e.DestinationProvinceId);
+                entity.HasIndex(e => e.DestinationRegencyId);
             });
-
-            // Konfigurasi tabel LivestockDetail
+            
             modelBuilder.Entity<LivestockDetail>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -121,7 +123,7 @@ namespace PerizinanPeternakan.Data
                 entity.HasIndex(e => e.ActionDate);
             });
 
-            // Konfigurasi tabel PermitDocument
+      
             modelBuilder.Entity<PermitDocument>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -129,6 +131,19 @@ namespace PerizinanPeternakan.Data
                 entity.Property(e => e.FilePath).IsRequired().HasMaxLength(500);
                 entity.Property(e => e.DocumentType).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.FileExtension).HasMaxLength(10);
+
+                // NEW: Document details configuration
+                entity.Property(e => e.DocumentDate)
+                      .HasColumnType("datetime2")
+                      .IsRequired(false);
+
+                entity.Property(e => e.DocumentNumber)
+                      .HasMaxLength(50)
+                      .IsRequired(false);
+
+                entity.Property(e => e.DocumentDescription)
+                      .HasMaxLength(500)
+                      .IsRequired(false);
 
                 entity.HasOne(d => d.PermitApplication)
                       .WithMany(p => p.Documents)
@@ -139,8 +154,12 @@ namespace PerizinanPeternakan.Data
                       .WithMany()
                       .HasForeignKey(d => d.UploadedByUserId)
                       .OnDelete(DeleteBehavior.NoAction);
-            });
 
+               
+                entity.HasIndex(e => e.DocumentDate);
+                entity.HasIndex(e => e.DocumentNumber);
+                entity.HasIndex(e => e.DocumentType);
+            });
             modelBuilder.Entity<LivestockQuota>(entity =>
             {
                 entity.HasKey(e => e.Id);

@@ -1,0 +1,931 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - Sistem Izin Transportasi Ternak</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .faq-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Section */
+        .header-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+            .header-section::before {
+                content: '';
+                position: absolute;
+                top: -50%;
+                right: -30%;
+                width: 100%;
+                height: 200%;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 50%;
+                transform: rotate(15deg);
+            }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+        }
+
+            .header-content h1 {
+                font-size: 2.5rem;
+                font-weight: 700;
+                margin-bottom: 1rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 1rem;
+            }
+
+            .header-content p {
+                font-size: 1.2rem;
+                opacity: 0.9;
+                max-width: 600px;
+                margin: 0 auto;
+            }
+
+        /* Search Box */
+        .search-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 20px 15px 60px;
+            border: 2px solid #e9ecef;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+            .search-input:focus {
+                outline: none;
+                border-color: #667eea;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            }
+
+        .search-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #667eea;
+            font-size: 1.2rem;
+        }
+
+        /* Category Tabs */
+        .category-tabs {
+            background: white;
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-pills .nav-link {
+            border-radius: 50px;
+            padding: 12px 24px;
+            margin: 5px;
+            border: none;
+            background: transparent;
+            color: #6c757d;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+            .nav-pills .nav-link:hover {
+                background: #f8f9fa;
+                color: #667eea;
+                transform: translateY(-2px);
+            }
+
+            .nav-pills .nav-link.active {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            }
+
+        /* FAQ Content */
+        .faq-content {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .accordion-item {
+            border: none;
+            margin-bottom: 1rem;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+            .accordion-item:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+            }
+
+        .accordion-header {
+            border-radius: 12px;
+        }
+
+        .accordion-button {
+            padding: 1.5rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #333;
+            background: #f8f9fa;
+            border: none;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+            .accordion-button:not(.collapsed) {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                box-shadow: none;
+            }
+
+            .accordion-button:focus {
+                box-shadow: none;
+                border: none;
+            }
+
+            .accordion-button::after {
+                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23667eea'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+                width: 1.5rem;
+                height: 1.5rem;
+                transition: transform 0.3s ease;
+            }
+
+            .accordion-button:not(.collapsed)::after {
+                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+                transform: rotate(180deg);
+            }
+
+        .accordion-body {
+            padding: 1.5rem;
+            background: white;
+            border-top: 1px solid #e9ecef;
+        }
+
+            .accordion-body p {
+                margin-bottom: 1rem;
+                color: #555;
+                line-height: 1.7;
+            }
+
+            .accordion-body ul {
+                padding-left: 1.5rem;
+                margin-bottom: 1rem;
+            }
+
+            .accordion-body li {
+                margin-bottom: 0.5rem;
+                color: #555;
+            }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            margin: 1rem 0;
+        }
+
+        .contact-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-top: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+            .contact-section h3 {
+                color: #333;
+                margin-bottom: 1rem;
+                font-weight: 700;
+            }
+
+        .contact-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+
+        .contact-btn {
+            padding: 12px 24px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+            .contact-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+                text-decoration: none;
+            }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success-custom {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+
+        .btn-info-custom {
+            background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
+            color: white;
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .header-content h1
+
+        {
+            font-size: 2rem;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .faq-container {
+            padding: 10px;
+        }
+
+        .header-section {
+            padding: 2rem 1rem;
+        }
+
+        .search-section,
+        .faq-content,
+        .contact-section {
+            padding: 1.5rem;
+        }
+
+        .contact-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .contact-btn {
+            width: 100%;
+            max-width: 300px;
+            justify-content: center;
+        }
+
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @@keyframes fadeIn {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        }
+    </style>
+</head>
+<body>
+    <div class="faq-container">
+        <!-- Header Section -->
+        <div class="header-section">
+            <div class="header-content">
+                <h1>
+                    <i class="fas fa-question-circle"></i>
+                    Frequently Asked Questions
+                </h1>
+                <p>Panduan lengkap untuk menggunakan Sistem Izin Transportasi Ternak. Temukan jawaban atas pertanyaan yang sering diajukan.</p>
+            </div>
+        </div>
+
+        <!-- Search Section -->
+        <div class="search-section">
+            <div class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-input" id="searchInput" placeholder="Cari pertanyaan atau kata kunci...">
+            </div>
+        </div>
+
+        <!-- Category Tabs -->
+        <div class="category-tabs">
+            <ul class="nav nav-pills nav-fill" id="faqTabs">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="pill" href="#general">
+                        <i class="fas fa-info-circle"></i> Umum
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="pill" href="#application">
+                        <i class="fas fa-file-alt"></i> Permohonan
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="pill" href="#documents">
+                        <i class="fas fa-folder-open"></i> Dokumen
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="pill" href="#quota">
+                        <i class="fas fa-chart-pie"></i> Kuota
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="pill" href="#technical">
+                        <i class="fas fa-cogs"></i> Teknis
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- FAQ Content -->
+        <div class="faq-content">
+            <div class="tab-content" id="faqTabContent">
+                <!-- General FAQ -->
+                <div class="tab-pane fade show active" id="general">
+                    <div class="accordion" id="generalAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#general1">
+                                    Apa itu Sistem Izin Transportasi Ternak?
+                                </button>
+                            </h2>
+                            <div id="general1" class="accordion-collapse collapse show" data-bs-parent="#generalAccordion">
+                                <div class="accordion-body">
+                                    <p>Sistem Izin Transportasi Ternak adalah platform digital yang memfasilitasi proses permohonan izin untuk transportasi hewan ternak antar daerah. Sistem ini dirancang untuk:</p>
+                                    <ul>
+                                        <li>Mempermudah proses pengajuan izin transportasi ternak</li>
+                                        <li>Memantau kuota transportasi ternak per daerah</li>
+                                        <li>Memastikan kepatuhan terhadap regulasi transportasi hewan</li>
+                                        <li>Mempercepat proses verifikasi dan persetujuan</li>
+                                    </ul>
+                                    <div class="highlight-box">
+                                        <strong>Catatan:</strong> Semua transportasi ternak antar daerah wajib memiliki izin dari sistem ini sesuai dengan peraturan yang berlaku.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#general2">
+                                    Siapa saja yang dapat menggunakan sistem ini?
+                                </button>
+                            </h2>
+                            <div id="general2" class="accordion-collapse collapse" data-bs-parent="#generalAccordion">
+                                <div class="accordion-body">
+                                    <p>Sistem ini dapat digunakan oleh:</p>
+                                    <ul>
+                                        <li><strong>Peternak:</strong> Individu atau badan usaha yang memiliki ternak</li>
+                                        <li><strong>Pengangkut:</strong> Perusahaan atau individu yang melakukan transportasi ternak</li>
+                                        <li><strong>Pedagang Ternak:</strong> Pelaku usaha perdagangan hewan ternak</li>
+                                        <li><strong>Koperasi:</strong> Koperasi yang bergerak di bidang peternakan</li>
+                                    </ul>
+                                    <p>Setiap pengguna harus melakukan registrasi dan verifikasi identitas sebelum dapat mengajukan permohonan izin.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#general3">
+                                    Bagaimana cara registrasi akun baru?
+                                </button>
+                            </h2>
+                            <div id="general3" class="accordion-collapse collapse" data-bs-parent="#generalAccordion">
+                                <div class="accordion-body">
+                                    <p>Untuk mendaftar akun baru, ikuti langkah berikut:</p>
+                                    <ul>
+                                        <li>Klik tombol "Daftar" di halaman utama</li>
+                                        <li>Isi formulir registrasi dengan data yang valid</li>
+                                        <li>Upload dokumen identitas (KTP/NIK)</li>
+                                        <li>Verifikasi email yang telah didaftarkan</li>
+                                        <li>Tunggu proses verifikasi admin (1-2 hari kerja)</li>
+                                        <li>Akun siap digunakan setelah disetujui</li>
+                                    </ul>
+                                    <div class="highlight-box">
+                                        <strong>Tips:</strong> Pastikan semua data yang dimasukkan sesuai dengan dokumen resmi untuk mempercepat proses verifikasi.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Application FAQ -->
+                <div class="tab-pane fade" id="application">
+                    <div class="accordion" id="applicationAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#app1">
+                                    Bagaimana cara mengajukan permohonan izin transportasi?
+                                </button>
+                            </h2>
+                            <div id="app1" class="accordion-collapse collapse show" data-bs-parent="#applicationAccordion">
+                                <div class="accordion-body">
+                                    <p>Proses pengajuan permohonan terdiri dari beberapa langkah:</p>
+                                    <ul>
+                                        <li><strong>Langkah 1:</strong> Isi informasi dasar (asal, tujuan, tanggal)</li>
+                                        <li><strong>Langkah 2:</strong> Input detail ternak (jenis, jumlah, berat)</li>
+                                        <li><strong>Langkah 3:</strong> Upload dokumen pendukung</li>
+                                        <li><strong>Langkah 4:</strong> Review dan submit permohonan</li>
+                                    </ul>
+                                    <p>Pastikan semua data terisi dengan benar dan dokumen telah diupload sebelum submit.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#app2">
+                                    Berapa lama proses persetujuan izin?
+                                </button>
+                            </h2>
+                            <div id="app2" class="accordion-collapse collapse" data-bs-parent="#applicationAccordion">
+                                <div class="accordion-body">
+                                    <p>Waktu proses persetujuan bervariasi tergantung kelengkapan dokumen:</p>
+                                    <ul>
+                                        <li><strong>Dokumen lengkap:</strong> 1-3 hari kerja</li>
+                                        <li><strong>Dokumen kurang lengkap:</strong> 3-7 hari kerja</li>
+                                        <li><strong>Kasus khusus:</strong> Hingga 14 hari kerja</li>
+                                    </ul>
+                                    <div class="highlight-box">
+                                        <strong>Catatan:</strong> Anda akan menerima notifikasi email pada setiap perubahan status permohonan.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#app3">
+                                    Bagaimana cara mengecek status permohonan?
+                                </button>
+                            </h2>
+                            <div id="app3" class="accordion-collapse collapse" data-bs-parent="#applicationAccordion">
+                                <div class="accordion-body">
+                                    <p>Untuk mengecek status permohonan:</p>
+                                    <ul>
+                                        <li>Login ke akun Anda</li>
+                                        <li>Masuk ke menu "Riwayat Permohonan"</li>
+                                        <li>Lihat status terkini dan progress permohonan</li>
+                                        <li>Klik "Detail" untuk informasi lengkap</li>
+                                    </ul>
+                                    <p>Status yang tersedia: Pending, Diproses, Disetujui, Ditolak, Memerlukan Revisi.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documents FAQ -->
+                <div class="tab-pane fade" id="documents">
+                    <div class="accordion" id="documentsAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#doc1">
+                                    Dokumen apa saja yang harus diupload?
+                                </button>
+                            </h2>
+                            <div id="doc1" class="accordion-collapse collapse show" data-bs-parent="#documentsAccordion">
+                                <div class="accordion-body">
+                                    <p>Dokumen wajib yang harus diupload:</p>
+                                    <ul>
+                                        <li><strong>Surat Keterangan Asal (SKA)</strong> - dari dinas setempat</li>
+                                        <li><strong>Sertifikat Kesehatan Hewan</strong> - dari dokter hewan berwenang</li>
+                                        <li><strong>Identitas Pemilik</strong> - KTP/NIK yang masih berlaku</li>
+                                        <li><strong>Surat Izin Transportasi</strong> - dari instansi terkait</li>
+                                        <li><strong>Dokumen Kendaraan</strong> - STNK dan surat layak angkut</li>
+                                    </ul>
+                                    <div class="highlight-box">
+                                        <strong>Format:</strong> Semua dokumen harus dalam format PDF, JPG, atau PNG dengan ukuran maksimal 5MB per file.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#doc2">
+                                    Bagaimana jika dokumen saya ditolak?
+                                </button>
+                            </h2>
+                            <div id="doc2" class="accordion-collapse collapse" data-bs-parent="#documentsAccordion">
+                                <div class="accordion-body">
+                                    <p>Jika dokumen ditolak, Anda dapat:</p>
+                                    <ul>
+                                        <li>Cek alasan penolakan di detail permohonan</li>
+                                        <li>Perbaiki dokumen sesuai catatan reviewer</li>
+                                        <li>Upload ulang dokumen yang telah diperbaiki</li>
+                                        <li>Submit ulang permohonan untuk review</li>
+                                    </ul>
+                                    <p>Anda memiliki maksimal 3 kali kesempatan untuk memperbaiki dokumen dalam satu permohonan.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#doc3">
+                                    Bagaimana cara download surat izin yang sudah disetujui?
+                                </button>
+                            </h2>
+                            <div id="doc3" class="accordion-collapse collapse" data-bs-parent="#documentsAccordion">
+                                <div class="accordion-body">
+                                    <p>Untuk mendownload surat izin:</p>
+                                    <ul>
+                                        <li>Login ke akun Anda</li>
+                                        <li>Masuk ke "Riwayat Permohonan"</li>
+                                        <li>Cari permohonan dengan status "Disetujui"</li>
+                                        <li>Klik tombol "Download PDF"</li>
+                                        <li>Simpan file PDF surat izin</li>
+                                    </ul>
+                                    <div class="highlight-box">
+                                        <strong>Penting:</strong> Surat izin harus dibawa selama proses transportasi sebagai bukti legal.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quota FAQ -->
+                <div class="tab-pane fade" id="quota">
+                    <div class="accordion" id="quotaAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#quota1">
+                                    Apa itu sistem kuota transportasi ternak?
+                                </button>
+                            </h2>
+                            <div id="quota1" class="accordion-collapse collapse show" data-bs-parent="#quotaAccordion">
+                                <div class="accordion-body">
+                                    <p>Sistem kuota adalah mekanisme pembatasan jumlah ternak yang dapat ditransportasikan dari suatu daerah dalam periode tertentu. Tujuannya untuk:</p>
+                                    <ul>
+                                        <li>Menjaga keseimbangan populasi ternak di daerah asal</li>
+                                        <li>Mencegah over-eksploitasi sumber daya ternak</li>
+                                        <li>Memastikan ketersediaan pangan lokal</li>
+                                        <li>Mengatur arus distribusi ternak secara nasional</li>
+                                    </ul>
+                                    <p>Kuota ditetapkan berdasarkan data populasi, kebutuhan lokal, dan kebijakan pemerintah daerah.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#quota2">
+                                    Bagaimana cara mengecek kuota yang tersedia?
+                                </button>
+                            </h2>
+                            <div id="quota2" class="accordion-collapse collapse" data-bs-parent="#quotaAccordion">
+                                <div class="accordion-body">
+                                    <p>Untuk mengecek kuota tersedia:</p>
+                                    <ul>
+                                        <li>Masuk ke halaman "Buat Permohonan Baru"</li>
+                                        <li>Pilih provinsi asal dan jenis ternak</li>
+                                        <li>Sistem akan otomatis menampilkan kuota tersisa</li>
+                                        <li>Informasi kuota akan update secara real-time</li>
+                                    </ul>
+                                    <div class="highlight-box">
+                                        <strong>Info:</strong> Kuota direset setiap bulan berdasarkan kebijakan yang berlaku.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#quota3">
+                                    Apa yang terjadi jika kuota sudah habis?
+                                </button>
+                            </h2>
+                            <div id="quota3" class="accordion-collapse collapse" data-bs-parent="#quotaAccordion">
+                                <div class="accordion-body">
+                                    <p>Jika kuota sudah habis:</p>
+                                    <ul>
+                                        <li>Permohonan baru tidak dapat disubmit</li>
+                                        <li>Anda akan menerima notifikasi "Kuota Habis"</li>
+                                        <li>Tunggu periode berikutnya (bulan depan)</li>
+                                        <li>Daftar waiting list untuk mendapat prioritas</li>
+                                        <li>Pertimbangkan mengubah rute atau jenis ternak</li>
+                                    </ul>
+                                    <p>Sistem akan mengirim notifikasi email ketika kuota kembali tersedia.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Technical FAQ -->
+                <div class="tab-pane fade" id="technical">
+                    <div class="accordion" id="technicalAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#tech1">
+                                    Sistem tidak dapat diakses atau error?
+                                </button>
+                            </h2>
+                            <div id="tech1" class="accordion-collapse collapse show" data-bs-parent="#technicalAccordion">
+                                <div class="accordion-body">
+                                    <p>Jika mengalami masalah teknis, coba langkah berikut:</p>
+                                    <ul>
+                                        <li><strong>Clear cache browser:</strong> Hapus cache dan cookies</li>
+                                        <li><strong>Update browser:</strong> Gunakan versi browser terbaru</li>
+                                        <li><strong>Cek koneksi internet:</strong> Pastikan koneksi stabil</li>
+                                        <li><strong>Disable extensions:</strong> Nonaktifkan ad-blocker atau extension</li>
+                                        <li><strong>Coba browser lain:</strong> Gunakan Chrome, Firefox, atau Edge</li>
+                                    </ul>
+                                    <div class="highlight-box">
+                                        <strong>Browser yang disarankan:</strong> Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tech2">
+                                    File tidak bisa diupload?
+                                </button>
+                            </h2>
+                            <div id="tech2" class="accordion-collapse collapse" data-bs-parent="#technicalAccordion">
+                                <div class="accordion-body">
+                                    <p>Masalah upload file dapat disebabkan oleh:</p>
+                                    <ul>
+                                        <li><strong>Ukuran file terlalu besar:</strong> Maksimal 5MB per file</li>
+                                        <li><strong>Format tidak didukung:</strong> Hanya PDF, JPG, PNG</li>
+                                        <li><strong>Koneksi lambat:</strong> Coba upload saat jam tidak sibuk</li>
+                                        <li><strong>Nama file bermasalah:</strong> Hindari karakter khusus</li>
+                                    </ul>
+                                    <p>Kompres file jika ukuran terlalu besar menggunakan tools online atau software.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tech3">
+                                    Lupa password atau tidak bisa login?
+                                </button>
+                            </h2>
+                            <div id="tech3" class="accordion-collapse collapse" data-bs-parent="#technicalAccordion">
+                                <div class="accordion-body">
+                                    <p>Untuk masalah login:</p>
+                                    <ul>
+                                        <li><strong>Lupa password:</strong> Klik "Lupa Password" di halaman login</li>
+                                        <li><strong>Email tidak terdaftar:</strong> Pastikan menggunakan email yang benar</li>
+                                        <li><strong>Akun terkunci:</strong> Tunggu 30 menit atau hubungi admin</li>
+                                        <li><strong>Belum verifikasi email:</strong> Cek inbox dan spam folder</li>
+                                    </ul>
+                                    <div class="highlight-box">
+                                        <strong>Keamanan:</strong> Akun akan terkunci setelah 5 kali percobaan login gagal dalam 30 menit.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tech4">
+                                    Jam operasional sistem dan maintenance?
+                                </button>
+                            </h2>
+                            <div id="tech4" class="accordion-collapse collapse" data-bs-parent="#technicalAccordion">
+                                <div class="accordion-body">
+                                    <p><strong>Jam Operasional Sistem:</strong></p>
+                                    <ul>
+                                        <li><strong>Senin - Jumat:</strong> 24 jam (online)</li>
+                                        <li><strong>Sabtu - Minggu:</strong> 24 jam (online)</li>
+                                        <li><strong>Hari libur nasional:</strong> 24 jam (online)</li>
+                                    </ul>
+                                    <p><strong>Jadwal Maintenance:</strong></p>
+                                    <ul>
+                                        <li><strong>Maintenance rutin:</strong> Setiap Minggu 02:00-04:00 WIB</li>
+                                        <li><strong>Update sistem:</strong> Akan diinformasikan sebelumnya</li>
+                                        <li><strong>Emergency maintenance:</strong> Sewaktu-waktu jika diperlukan</li>
+                                    </ul>
+                                    <div class="highlight-box">
+                                        <strong>Catatan:</strong> Selama maintenance, sistem tidak dapat diakses. Semua notifikasi maintenance akan dikirim via email.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Section -->
+        <div class="contact-section">
+            <h3>
+                <i class="fas fa-headset"></i>
+                Butuh Bantuan Lebih Lanjut?
+            </h3>
+            <p>Tim support kami siap membantu Anda dengan segala pertanyaan dan kendala yang dihadapi.</p>
+
+            <div class="contact-buttons">
+                <a href="mailto:support@sistem-ternak.go.id" class="contact-btn btn-primary-custom">
+                    <i class="fas fa-envelope"></i>
+                    Email Support
+                </a>
+                <a href="https://wa.me/6281234567890" class="contact-btn btn-success-custom" target="_blank">
+                    <i class="fab fa-whatsapp"></i>
+                    WhatsApp
+                </a>
+                <a href="tel:021-1234567" class="contact-btn btn-info-custom">
+                    <i class="fas fa-phone"></i>
+                    Hotline: 021-1234567
+                </a>
+            </div>
+
+            <div class="mt-4">
+                <p><strong>Jam Layanan Customer Service:</strong></p>
+                <p>
+                    Senin - Jumat: 08:00 - 17:00 WIB<br>
+                    Sabtu: 08:00 - 12:00 WIB<br>
+                    <small class="text-muted">*Minggu dan hari libur: Email support tetap dapat digunakan</small>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const accordionItems = document.querySelectorAll('.accordion-item');
+
+            accordionItems.forEach(item => {
+                const question = item.querySelector('.accordion-button').textContent.toLowerCase();
+                const answer = item.querySelector('.accordion-body').textContent.toLowerCase();
+
+                if (question.includes(searchTerm) || answer.includes(searchTerm)) {
+                    item.style.display = 'block';
+                    // Highlight search term
+                    if (searchTerm.length > 2) {
+                        highlightText(item, searchTerm);
+                    }
+                } else {
+                    item.style.display = searchTerm === '' ? 'block' : 'none';
+                }
+            });
+
+            // Show "no results" message if needed
+            const visibleItems = document.querySelectorAll('.accordion-item[style*="block"], .accordion-item:not([style])');
+            if (visibleItems.length === 0 && searchTerm !== '') {
+                showNoResults();
+            } else {
+                hideNoResults();
+            }
+        });
+
+        function highlightText(element, searchTerm) {
+            // Simple highlight implementation
+            const button = element.querySelector('.accordion-button');
+            const body = element.querySelector('.accordion-body');
+
+            [button, body].forEach(el => {
+                if (el) {
+                    const text = el.innerHTML;
+                    const regex = new RegExp(`(${searchTerm})`, 'gi');
+                    el.innerHTML = text.replace(regex, '<mark>$1</mark>');
+                }
+            });
+        }
+
+        function showNoResults() {
+            let noResultsDiv = document.getElementById('noResults');
+            if (!noResultsDiv) {
+                noResultsDiv = document.createElement('div');
+                noResultsDiv.id = 'noResults';
+                noResultsDiv.className = 'text-center p-5';
+                noResultsDiv.innerHTML = `
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5>Tidak ada hasil ditemukan</h5>
+                    <p class="text-muted">Coba gunakan kata kunci yang berbeda atau hubungi customer service.</p>
+                `;
+                document.querySelector('.tab-content').appendChild(noResultsDiv);
+            }
+            noResultsDiv.style.display = 'block';
+        }
+
+        function hideNoResults() {
+            const noResultsDiv = document.getElementById('noResults');
+            if (noResultsDiv) {
+                noResultsDiv.style.display = 'none';
+            }
+        }
+
+        // Tab switching animation
+        document.querySelectorAll('[data-bs-toggle="pill"]').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function (e) {
+                const targetTab = document.querySelector(e.target.getAttribute('href'));
+                targetTab.classList.add('fade-in');
+
+                // Clear search when switching tabs
+                document.getElementById('searchInput').value = '';
+                document.querySelectorAll('.accordion-item').forEach(item => {
+                    item.style.display = 'block';
+                    // Remove highlights
+                    item.querySelectorAll('mark').forEach(mark => {
+                        mark.outerHTML = mark.innerHTML;
+                    });
+                });
+                hideNoResults();
+            });
+        });
+
+        // Smooth scroll for accordion
+        document.querySelectorAll('.accordion-button').forEach(button => {
+            button.addEventListener('click', function() {
+                setTimeout(() => {
+                    this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 350);
+            });
+        });
+
+        // Analytics - track FAQ usage (example)
+        document.querySelectorAll('.accordion-button').forEach((button, index) => {
+            button.addEventListener('click', function() {
+                // Track which FAQ items are most accessed
+                console.log(`FAQ item clicked: ${this.textContent.trim()}`);
+                // Here you could send analytics data to your backend
+            });
+        });
+
+        // Auto-expand first item in each tab
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+                const firstItem = pane.querySelector('.accordion-collapse');
+                if (firstItem && pane.classList.contains('active')) {
+                    firstItem.classList.add('show');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

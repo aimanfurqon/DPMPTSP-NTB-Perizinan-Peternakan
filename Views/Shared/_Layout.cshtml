@@ -4,11 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Sistem Perizinan Peternakan</title>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
@@ -25,11 +25,11 @@
                         <small>DPMPTSP NTB</small>
                     </span>
                 </a>
-                
+
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                
+
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
@@ -37,7 +37,7 @@
                                 <i class="fas fa-home"></i> Dashboard
                             </a>
                         </li>
-                        
+
                         @if (Context.Session.GetString("Role") == "User")
                         {
                             <li class="nav-item dropdown">
@@ -50,7 +50,7 @@
                                 </ul>
                             </li>
                         }
-                        
+
                         @if (Context.Session.GetString("Role") == "Admin")
                         {
                             <li class="nav-item dropdown">
@@ -63,7 +63,7 @@
                                 </ul>
                             </li>
                         }
-                        
+
                         @if (Context.Session.GetString("Role") == "Verifikator")
                         {
                             <li class="nav-item dropdown">
@@ -76,7 +76,7 @@
                                 </ul>
                             </li>
                         }
-                        
+
                         @if (Context.Session.GetString("Role") == "KepalaDinas")
                         {
                             <li class="nav-item dropdown">
@@ -88,7 +88,7 @@
                                     <li><a class="dropdown-item" href="@Url.Action("KepalaDinasHistory", "Permit")"><i class="fas fa-history"></i> Riwayat Persetujuan</a></li>
                                 </ul>
                             </li>
-                            
+
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                     <i class="fas fa-cogs"></i> Manajemen
@@ -96,18 +96,20 @@
                                 <ul class="dropdown-menu">
                                     <li><a class="dropdown-item" href="#"><i class="fas fa-chart-bar"></i> Laporan</a></li>
                                     <li><a class="dropdown-item" href="#"><i class="fas fa-users"></i> Kelola Pengguna</a></li>
-                                    <li><a class="dropdown-item" href="#"><i class="fas fa-settings"></i> Pengaturan</a></li>
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Pengaturan</a></li>
                                 </ul>
                             </li>
                         }
                     </ul>
-                    
+
                     <ul class="navbar-nav">
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle user-menu" href="#" role="button" data-bs-toggle="dropdown">
                                 <i class="fas fa-user-circle"></i>
-                                <span>@Context.Session.GetString("NamaLengkap")</span>
-                                <small class="user-role">@Context.Session.GetString("Role")</small>
+                                <div>
+                                    <span>@Context.Session.GetString("NamaLengkap")</span>
+                                    <small class="user-role">@Context.Session.GetString("Role")</small>
+                                </div>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item" href="@Url.Action("Profile", "Auth")"><i class="fas fa-user"></i> Profile</a></li>
@@ -127,37 +129,41 @@
         </nav>
     </header>
 
-    <main class="main-content">
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle"></i>
-                @TempData["SuccessMessage"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        }
+    <div class="main-content-wrapper">
+        <div class="container">
+            <main role="main" class="py-3">
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        @TempData["SuccessMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
 
-        @if (TempData["ErrorMessage"] != null)
-        {
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle"></i>
-                @TempData["ErrorMessage"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        }
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        @TempData["ErrorMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
 
-        @RenderBody()
-    </main>
+                @RenderBody()
+            </main>
+        </div>
+    </div>
 
     <footer class="custom-footer">
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <p>&copy; 2025 - Sistem Perizinan Peternakan</p>
+                    <p>&copy; @DateTime.Now.Year - Sistem Perizinan Peternakan</p>
                     <p class="small">Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu</p>
                     <p class="small">Provinsi Nusa Tenggara Barat</p>
                 </div>
-                <div class="col-md-6 text-end">
+                <div class="col-md-6 text-md-end">
                     <p class="small">Versi 1.0.0</p>
                     <p class="small">Dukungan Teknis: IT DPMPTSP NTB</p>
                 </div>
@@ -171,250 +177,3 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
-
-<style>
-    /*
-      ============================================
-      STYLE MODERN & BERSIH - DPMPTSP NTB
-      Konsep: Biru Putih Modern (Corporate Clean)
-      Font: Poppins
-      Warna Primer: #0d6efd (Biru Cerah)
-      Warna Latar: #ffffff (Putih), #f8f9fa (Abu-abu Sangat Terang)
-      Warna Teks: #212529 (Hitam Lembut)
-      ============================================
-    */
-
-    :root {
-        --primary-color: #0d6efd;      /* Biru primer Bootstrap 5 */
-        --secondary-color: #6c757d;    /* Abu-abu netral */
-        --light-bg: #f8f9fa;           /* Latar belakang untuk body */
-        --white-bg: #ffffff;           /* Latar utama untuk komponen */
-        --text-dark: #212529;          /* Warna teks utama */
-        --text-light: #f8f9fa;         /* Warna teks di atas latar gelap */
-        --border-color: #dee2e6;       /* Warna border halus */
-    }
-
-    body {
-        font-family: 'Poppins', sans-serif;
-        background-color: var(--light-bg);
-        color: var(--text-dark);
-    }
-
-    /* === HEADER & NAVBAR === */
-    .custom-navbar {
-        background-color: var(--white-bg);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
-        padding: 0.75rem 0;
-        border-bottom: 1px solid var(--border-color);
-        transition: all 0.3s ease;
-    }
-
-    .navbar-brand {
-        display: flex;
-        align-items: center;
-        color: var(--text-dark) !important;
-    }
-
-    .navbar-logo {
-        height: 40px;
-        width: auto;
-        margin-right: 15px;
-    }
-
-    .brand-text strong {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: var(--text-dark);
-    }
-
-    .brand-text small {
-        font-size: 0.75rem;
-        color: var(--secondary-color);
-    }
-
-    .navbar-nav .nav-link {
-        color: #555 !important;
-        font-weight: 500;
-        margin: 0 5px;
-        padding: 8px 15px !important;
-        border-radius: 6px;
-        position: relative;
-        transition: color 0.3s ease;
-    }
-    
-    .navbar-nav .nav-link:after {
-        content: '';
-        position: absolute;
-        bottom: -2px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 0;
-        height: 3px;
-        background-color: var(--primary-color);
-        border-radius: 2px;
-        transition: width 0.3s ease;
-    }
-
-    .navbar-nav .nav-link:hover,
-    .navbar-nav .nav-link.active,
-    .navbar-nav .show > .nav-link {
-        color: var(--primary-color) !important;
-    }
-    
-    .navbar-nav .nav-link:hover:after,
-    .navbar-nav .nav-link.active:after {
-        width: 60%;
-    }
-
-    .navbar-nav .nav-link i {
-        margin-right: 8px;
-    }
-
-    /* User Menu di pojok kanan atas */
-    .user-menu {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        line-height: 1.2;
-        padding: 5px 10px;
-        border-radius: 8px;
-        transition: background-color 0.3s;
-    }
-    
-    .user-menu:hover {
-        background-color: var(--light-bg);
-    }
-    
-    .user-menu i.fa-user-circle {
-        font-size: 2rem;
-        color: var(--primary-color);
-    }
-    
-    .user-menu div {
-        display: flex;
-        flex-direction: column;
-        text-align: left;
-    }
-    
-    .user-menu span {
-        font-weight: 600;
-        color: var(--text-dark);
-    }
-
-    .user-role {
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        color: var(--secondary-color);
-    }
-
-    /* Dropdown Menu */
-    .dropdown-menu {
-        border: 1px solid var(--border-color);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
-        margin-top: 10px !important;
-    }
-
-    .dropdown-item {
-        color: var(--text-dark);
-        padding: 10px 20px;
-        font-weight: 500;
-        transition: all 0.2s ease;
-    }
-
-    .dropdown-item:hover, .dropdown-item:focus {
-        background-color: var(--primary-color);
-        color: white !important;
-    }
-
-    .dropdown-item i {
-        margin-right: 10px;
-    }
-
-    /* === KONTEN UTAMA === */
-    .main-content {
-        min-height: calc(100vh - 165px); /* Disesuaikan dengan tinggi header & footer */
-        padding: 30px 0;
-    }
-
-    /* === FOOTER === */
-    .custom-footer {
-        background-color: #2c3e50; /* Footer gelap untuk kontras */
-        color: var(--text-light);
-        padding: 30px 0;
-        font-size: 0.9rem;
-    }
-
-    .custom-footer p {
-        margin-bottom: 5px;
-        opacity: 0.8;
-    }
-    
-    .custom-footer .small {
-        opacity: 0.6;
-    }
-
-    /* === KOMPONEN LAIN === */
-    /* Alert/Notifikasi */
-    .alert {
-        margin: 20px;
-        border-radius: 8px;
-        box-shadow: none;
-        padding: 15px 20px;
-        display: flex;
-        align-items: center;
-        border: 1px solid transparent;
-    }
-
-    .alert-success {
-        background-color: #e9f7ef;
-        color: #1d7b4e;
-        border-color: #a3d9b8;
-    }
-    
-    .alert-danger {
-        background-color: #fdeeee;
-        color: #c9302c;
-        border-color: #f8c2c0;
-    }
-    
-    .alert i {
-        margin-right: 12px;
-        font-size: 1.2rem;
-    }
-
-    /* Hamburger Menu Icon */
-    .navbar-toggler {
-        border-color: #ccc;
-    }
-    .navbar-toggler:focus {
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-    }
-    
-    .navbar-toggler-icon {
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(33, 37, 41, 0.75)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='m4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
-    }
-
-    /* === RESPONSIVE VIEW === */
-    @@media (max-width: 991px) {
-        .navbar-collapse {
-            background-color: var(--white-bg);
-            margin-top: 15px;
-            border-radius: 8px;
-            padding: 15px;
-            border: 1px solid var(--border-color);
-        }
-
-        .navbar-nav .nav-link {
-            padding: 10px !important;
-        }
-
-        .navbar-nav .nav-link:after {
-            display: none; /* Hilangkan underline di mode mobile */
-        }
-        
-        .navbar-nav .nav-link:hover {
-            background-color: var(--light-bg);
-        }
-    }
-</style>
