@@ -96,6 +96,43 @@ namespace PerizinanPeternakan.ViewModels
         [Display(Name = "Nomor Dokumen Rekomendasi Daerah Tujuan")]
         [StringLength(50, ErrorMessage = "Nomor dokumen maksimal 50 karakter")]
         public string? RekomendasiDaerahTujuanNomor { get; set; }
+
+        //Specific Address
+        [Display(Name = "Nama Jalan / Dusun")]
+        [StringLength(200)]
+        public string? AddressStreet { get; set; }
+
+        [Display(Name = "RT")]
+        [StringLength(5)]
+        public string? AddressRT { get; set; }
+
+        [Display(Name = "RW")]
+        [StringLength(5)]
+        public string? AddressRW { get; set; }
+
+        [Display(Name = "Desa / Kelurahan")]
+        [StringLength(100)]
+        public string? AddressVillage { get; set; }
+
+        [Display(Name = "Kecamatan")]
+        [StringLength(100)]
+        public string? AddressSubDistrict { get; set; }
+
+        [Display(Name = "Provinsi Perusahaan")]
+        public string? CompanyProvince { get; set; }
+
+        [Display(Name = "Kabupaten/Kota Perusahaan")]
+        public string? CompanyRegency { get; set; }
+
+        [Display(Name = "Kode Pos")]
+        [StringLength(10)]
+        public string? AddressPostalCode { get; set; }
+
+        [Display(Name = "Kecamatan")]
+        [StringLength(100)]
+        public string? AddressDistrict { get; set; }
+
+
     }
 
     public class AdminHistoryViewModel

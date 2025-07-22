@@ -1860,3 +1860,37 @@
         opacity: 1;
     }
 }
+
+/*Addition for Specific Address field*/
+
+.address-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 15px;
+    border: 1px solid #e1e5e9;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.address-group {
+    grid-column: span 2;
+}
+
+    .address-group.span-2 {
+        grid-column: span 4;
+    }
+
+    .address-group label {
+        font-size: 0.85rem;
+        margin-bottom: 5px;
+    }
+
+@media (max-width: 768px) {
+    .address-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .address-group, .address-group.span-2 {
+        grid-column: span 2;
+    }
+}

@@ -1,11 +1,16 @@
-﻿// Multi-Step Form JavaScript
+﻿// Multi-Step Form JavaScript - Synchronized Version
+// This file handles ONLY the multi-step navigation and basic form validation
+// Location dropdowns, quota management, and other features are handled in Create.cshtml
 
-// Global Variables
+// ===============================================
+// GLOBAL VARIABLES
+// ===============================================
 let currentStep = 1;
-const totalSteps = 4;               
+const totalSteps = 4;
 let livestockIndex = Math.max($('.livestock-item').length, 1);
 const totalRequiredFiles = 7;
 const uploadedDocuments = new Map();
+
 const documentTypes = [
     'SuratPermohonan',
     'RekomendasiDinasProv',
@@ -17,55 +22,77 @@ const documentTypes = [
 ];
 
 const stepValidationRules = {
-    1: ['CompanyName', 'CompanyAddress'],
+    1: validateCompanyStep,  // Custom validation for step 1
     2: ['OriginLocation', 'DestinationLocation', 'DeparturePort', 'ArrivalPort'],
     3: validateLivestockStep,
     4: validateDocumentStep
 };
 
+// ===============================================
+// INITIALIZATION
+// ===============================================
 $(document).ready(function () {
+    console.log('🚀 Initializing Multi-Step Form Navigation...');
+
     initializeForm();
-    initializeFileUpload();
+    initializeFileUpload(); // Add this back
     initializeEventHandlers();
-    updateFormState();
+    initializeDocumentDetailsValidation();
+
+    console.log('✅ Multi-Step Form Navigation initialized');
 });
 
 function initializeForm() {
     showStep(1);
-    updateLivestockNumbers();
-    updateLivestockSummary();
-    updateUploadProgress();
-    updateDocumentChecklist();
     updateNavigationButtons();
     updateStepProgress();
+    updateUploadProgress();
+    updateDocumentChecklist();
 }
 
+// ===============================================
+// FILE UPLOAD INITIALIZATION 
+// ===============================================
 function initializeFileUpload() {
+    console.log('🔧 Initializing file upload system...');
+
     $('.file-input').each(function () {
         const $input = $(this);
         const documentType = $input.attr('id');
         const $uploadArea = $input.closest('.upload-area');
+        const $uploadItem = $input.closest('.upload-item');
 
-        $input.on('change', function () {
-            if (this.files && this.files[0]) {
-                handleFileSelection(this, this.files[0]);
+        console.log(`📄 Setting up upload for: ${documentType}`);
+
+        // File input change event
+        $input.on('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                console.log(`📄 File selected for ${documentType}:`, file.name);
+                handleFileSelection(this, file);
             }
         });
 
+        // Click to upload
         $uploadArea.find('.upload-placeholder').on('click', function (e) {
             e.preventDefault();
+            console.log(`🖱️ Click to upload for ${documentType}`);
             $input[0].click();
         });
 
+        // Remove file button
         $uploadArea.find('.btn-remove').on('click', function (e) {
             e.preventDefault();
+            console.log(`🗑️ Remove file for ${documentType}`);
             removeFile($input);
         });
 
+        // Drag & Drop events
         $uploadArea.on('dragover', function (e) {
             e.preventDefault();
             e.stopPropagation();
             $(this).addClass('drag-over');
+            console.log(`📁 Drag over ${documentType}`);
         });
 
         $uploadArea.on('dragleave', function (e) {
@@ -79,52 +106,39 @@ function initializeFileUpload() {
             e.stopPropagation();
             $(this).removeClass('drag-over');
 
+            console.log(`📁 File dropped on ${documentType}`);
+
             const files = e.originalEvent.dataTransfer.files;
             if (files.length > 0) {
-                $input[0].files = files;
-                handleFileSelection($input[0], files[0]);
+                const file = files[0];
+                console.log(`📄 Dropped file: ${file.name}`);
+
+                // Set the file to the input
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                $input[0].files = dt.files;
+
+                // Handle the file
+                handleFileSelection($input[0], file);
             }
         });
+
+        // Prevent default drag behaviors on document
+        $uploadArea.on('dragenter', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
     });
+
+    console.log('✅ File upload system initialized');
 }
 
-function initializeEventHandlers() {
-    $('#nextBtn').on('click', nextStep);
-    $('#prevBtn').on('click', prevStep);
-
-    $('#addLivestock').on('click', addLivestockItem);
-    $(document).on('click', '.remove-livestock', function (e) {
-        e.preventDefault();
-        $(this).closest('.livestock-item').remove();
-        updateLivestockNumbers();
-        updateLivestockSummary();
-    });
-
-    $(document).on('input', '.livestock-quantity, .livestock-type', updateLivestockSummary);
-
-    $('#permitForm').on('submit', function (e) {
-        if (!validateCurrentStep()) {
-            e.preventDefault();
-            showAlert('Mohon lengkapi semua field yang diperlukan', 'danger');
-            return false;
-        }
-
-        if (!validateAllSteps()) {
-            e.preventDefault();
-            showAlert('Mohon lengkapi semua langkah sebelum submit', 'danger');
-            return false;
-        }
-
-        $('#submitBtn').html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...').prop('disabled', true);
-        showAlert('Sedang memproses permohonan...', 'info');
-    });
-
-    $('input, textarea, select').on('blur', function () {
-        validateField($(this));
-    });
-}
-
+// ===============================================
+// STEP NAVIGATION
+// ===============================================
 function nextStep() {
+    console.log(`📍 Attempting to move from step ${currentStep} to ${currentStep + 1}`);
+
     if (validateCurrentStep()) {
         if (currentStep < totalSteps) {
             showStep(currentStep + 1);
@@ -135,6 +149,8 @@ function nextStep() {
 }
 
 function prevStep() {
+    console.log(`📍 Moving back from step ${currentStep} to ${currentStep - 1}`);
+
     if (currentStep > 1) {
         showStep(currentStep - 1);
     }
@@ -143,19 +159,44 @@ function prevStep() {
 function showStep(step) {
     if (step < 1 || step > totalSteps) return;
 
+    console.log(`🔄 Switching to step ${step}`);
+
     const direction = step > currentStep ? 'next' : 'prev';
     currentStep = step;
     $('#currentStepNumber').text(step);
 
+    // Update step visibility with animation
     $('.form-step').removeClass('active prev');
-
     const $targetStep = $(`.form-step[data-step="${step}"]`);
     $targetStep.addClass(`active ${direction === 'prev' ? 'prev' : ''}`);
 
     updateStepProgress();
     updateNavigationButtons();
-    
+
+    // Smooth scroll to top
     $('.create-container').animate({ scrollTop: 0 }, 300);
+
+    // Trigger step-specific actions
+    onStepChange(step);
+}
+
+function onStepChange(step) {
+    // Step-specific logic can be added here
+    switch (step) {
+        case 2:
+            // Shipping details step - integration point with main script
+            console.log('💼 Entered shipping details step');
+            break;
+        case 3:
+            // Livestock step - integration point with quota system
+            console.log('🐄 Entered livestock details step');
+            break;
+        case 4:
+            // Documents step
+            console.log('📄 Entered documents step');
+            updateUploadProgress();
+            break;
+    }
 }
 
 function updateStepProgress() {
@@ -193,7 +234,12 @@ function updateNavigationButtons() {
     }
 }
 
+// ===============================================
+// VALIDATION FUNCTIONS
+// ===============================================
 function validateCurrentStep() {
+    console.log(`🔍 Validating step ${currentStep}`);
+
     const rules = stepValidationRules[currentStep];
 
     if (typeof rules === 'function') {
@@ -210,11 +256,15 @@ function validateRequiredFields(fieldNames) {
 
     fieldNames.forEach(fieldName => {
         const $field = $(`[name="${fieldName}"]`);
-        if (!$field.val()?.trim()) {
+        const value = $field.val()?.trim();
+
+        if (!value) {
             $field.addClass('is-invalid');
             isValid = false;
+            console.log(`❌ Field ${fieldName} is empty`);
         } else {
             $field.removeClass('is-invalid');
+            console.log(`✅ Field ${fieldName} is valid`);
         }
     });
 
@@ -222,6 +272,8 @@ function validateRequiredFields(fieldNames) {
 }
 
 function validateLivestockStep() {
+    console.log('🐄 Validating livestock step...');
+
     let hasValidLivestock = false;
 
     $('.livestock-item').each(function () {
@@ -233,19 +285,105 @@ function validateLivestockStep() {
         }
     });
 
+    // Also check for quota validation errors (integration with main script)
+    const hasQuotaErrors = $('.livestock-quantity.error').length > 0;
+
     if (!hasValidLivestock) {
         showAlert('Minimal harus ada satu jenis ternak dengan jumlah yang valid', 'warning');
+        return false;
+    }
+
+    if (hasQuotaErrors) {
+        showAlert('Masih ada masalah dengan kuota ternak. Silakan periksa kembali jumlah yang diminta.', 'warning');
         return false;
     }
 
     return true;
 }
 
-function validateDocumentStep() {
-    const uploadedCount = uploadedDocuments.size;
+function validateCompanyStep() {
+    console.log('🏢 Validating company step...');
 
+    let isValid = true;
+    const errors = [];
+
+    // Validate company name
+    const companyName = $('[name="CompanyName"]').val()?.trim();
+    if (!companyName) {
+        $('[name="CompanyName"]').addClass('is-invalid');
+        errors.push('Nama perusahaan harus diisi');
+        isValid = false;
+    } else {
+        $('[name="CompanyName"]').removeClass('is-invalid');
+    }
+
+    // Validate address components (since we use dropdowns)
+    const province = $('[name="CompanyProvince"]').val()?.trim();
+    const regency = $('[name="CompanyRegency"]').val()?.trim();
+    const district = $('[name="AddressDistrict"]').val()?.trim();
+    const village = $('[name="AddressVillage"]').val()?.trim();
+
+    if (!province) {
+        $('#companyProvinceSelect').addClass('is-invalid');
+        errors.push('Provinsi perusahaan harus dipilih');
+        isValid = false;
+    } else {
+        $('#companyProvinceSelect').removeClass('is-invalid');
+    }
+
+    if (!regency) {
+        $('#companyRegencySelect').addClass('is-invalid');
+        errors.push('Kabupaten/Kota perusahaan harus dipilih');
+        isValid = false;
+    } else {
+        $('#companyRegencySelect').removeClass('is-invalid');
+    }
+
+    if (!district) {
+        $('#companyDistrictSelect').addClass('is-invalid');
+        errors.push('Kecamatan harus dipilih');
+        isValid = false;
+    } else {
+        $('#companyDistrictSelect').removeClass('is-invalid');
+    }
+
+    if (!village) {
+        $('#companyVillageSelect').addClass('is-invalid');
+        errors.push('Desa/Kelurahan harus dipilih');
+        isValid = false;
+    } else {
+        $('#companyVillageSelect').removeClass('is-invalid');
+    }
+
+    if (errors.length > 0) {
+        showAlert('Mohon lengkapi: ' + errors.join(', '), 'warning');
+    }
+
+    return isValid;
+}
+
+function validateDocumentStep() {
+    console.log('📄 Validating document step...');
+
+    const uploadedCount = uploadedDocuments.size;
+    const documentsWithDetails = ['SuratPermohonan', 'RekomendasiDinasProv', 'RekomendasiDaerahTujuan'];
+
+    // Check if all documents are uploaded
     if (uploadedCount < totalRequiredFiles) {
         showAlert(`Dokumen belum lengkap. ${uploadedCount}/${totalRequiredFiles} dokumen telah diupload`, 'warning');
+        return false;
+    }
+
+    // Check document details for specific documents
+    let detailsValid = true;
+    documentsWithDetails.forEach(docType => {
+        if (!validateDocumentDetails(docType)) {
+            detailsValid = false;
+        }
+    });
+
+    if (!detailsValid) {
+        showAlert('Mohon lengkapi tanggal dan nomor dokumen yang diperlukan', 'warning');
         return false;
     }
 
@@ -253,83 +391,80 @@ function validateDocumentStep() {
 }
 
 function validateAllSteps() {
+    console.log('🔍 Validating all steps before submission...');
+
     for (let step = 1; step <= totalSteps; step++) {
         const rules = stepValidationRules[step];
 
         if (typeof rules === 'function') {
-            if (!rules()) return false;
+            if (!rules()) {
+                console.log(`❌ Step ${step} validation failed`);
+                return false;
+            }
         } else if (Array.isArray(rules)) {
-            if (!validateRequiredFields(rules)) return false;
+            if (!validateRequiredFields(rules)) {
+                console.log(`❌ Step ${step} required fields validation failed`);
+                return false;
+            }
         }
     }
 
+    console.log('✅ All steps validation passed');
     return true;
 }
 
-function validateField($field) {
-    const value = $field.val()?.trim();
-    const isRequired = $field.attr('required') !== undefined;
-
-    if (isRequired && !value) {
-        $field.addClass('is-invalid');
-        return false;
-    } else {
-        $field.removeClass('is-invalid');
-        return true;
-    }
-}
-
+// ===============================================
+// DOCUMENT UPLOAD MANAGEMENT
+// ===============================================
 function handleFileSelection(inputElement, file) {
     const $input = $(inputElement);
     const documentType = $input.attr('id');
-    const maxSize = 5242880;
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    const maxSize = parseInt($input.data('max-size')) || 5242880; // 5MB
 
-    if (file.size > maxSize) {
-        showAlert('File terlalu besar. Maksimal ukuran file adalah 5MB', 'danger');
+    console.log(`📄 Processing file for ${documentType}: ${file.name} (${formatFileSize(file.size)})`);
+
+    // Validate file
+    if (!validateFile(file, maxSize)) {
+        console.log(`❌ File validation failed for ${documentType}`);
         $input.val('');
         return;
     }
 
-    if (!allowedTypes.includes(file.type)) {
-        showAlert('Format file tidak didukung. Gunakan PDF, JPG, JPEG, atau PNG', 'danger');
-        $input.val('');
-        return;
-    }
-
+    // Update file preview
     updateFilePreview($input, file);
 
+    // Store in uploaded documents map
     uploadedDocuments.set(documentType, {
         file: file,
         name: file.name,
         size: file.size
     });
 
+    // Update UI
     updateUploadProgress();
     updateDocumentChecklist();
 
+    // Update upload status
+    const $uploadItem = $input.closest('.upload-item');
+    updateUploadStatus($uploadItem, true);
+
+    // Validate document details for specific documents
+    const documentsWithDetails = ['SuratPermohonan', 'RekomendasiDinasProv', 'RekomendasiDaerahTujuan'];
+    if (documentsWithDetails.includes(documentType)) {
+        setTimeout(() => {
+            validateDocumentDetails(documentType);
+        }, 100);
+    }
+
     showAlert(`File "${file.name}" berhasil dipilih`, 'success');
-}
-
-function updateFilePreview($input, file) {
-    const $uploadArea = $input.closest('.upload-area');
-    const $placeholder = $uploadArea.find('.upload-placeholder');
-    const $preview = $uploadArea.find('.file-preview');
-
-    $preview.find('.file-name').text(file.name);
-    $preview.find('.file-size').text(formatFileSize(file.size));
-
-    const documentType = $input.attr('id');
-    const $status = $uploadArea.closest('.upload-item').find('.upload-status');
-    $status.html('<i class="fas fa-circle text-success"></i> Sudah Upload');
-
-    $placeholder.hide();
-    $preview.show();
+    console.log(`✅ File ${file.name} processed successfully for ${documentType}`);
 }
 
 function removeFile($input) {
     const documentType = $input.attr('id');
     const $uploadArea = $input.closest('.upload-area');
+
+    console.log(`🗑️ Removing file for ${documentType}`);
 
     $input.val('');
 
@@ -344,7 +479,84 @@ function removeFile($input) {
     updateUploadProgress();
     updateDocumentChecklist();
 
+    // Clear document details validation
+    clearDocumentDetailsValidation(documentType);
+
     showAlert('File berhasil dihapus', 'info');
+}
+
+function validateFile(file, maxSize) {
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png'];
+
+    // Check file size
+    if (file.size > maxSize) {
+        const maxSizeMB = (maxSize / 1024 / 1024).toFixed(1);
+        showAlert(`Ukuran file terlalu besar. Maksimal ${maxSizeMB}MB`, 'danger');
+        return false;
+    }
+
+    // Check file type
+    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+        showAlert('Format file tidak didukung. Gunakan PDF, JPG, JPEG, atau PNG', 'danger');
+        return false;
+    }
+
+    return true;
+}
+
+function updateFilePreview($input, file) {
+    const $uploadArea = $input.closest('.upload-area');
+    const $placeholder = $uploadArea.find('.upload-placeholder');
+    const $preview = $uploadArea.find('.file-preview');
+
+    console.log(`🖼️ Updating preview for: ${file.name}`);
+
+    // Update file info
+    $preview.find('.file-name').text(file.name);
+    $preview.find('.file-size').text(formatFileSize(file.size));
+
+    // Update file icon
+    const fileIcon = getFileIcon(file.type, file.name);
+    $preview.find('.file-info i').removeClass().addClass(fileIcon);
+
+    // Update upload status
+    const $status = $uploadArea.closest('.upload-item').find('.upload-status');
+    $status.html('<i class="fas fa-check-circle text-success"></i> Sudah Upload');
+
+    // Show preview, hide placeholder
+    $placeholder.hide();
+    $preview.show();
+
+    console.log(`✅ Preview updated for: ${file.name}`);
+}
+
+function getFileIcon(fileType, fileName) {
+    const extension = fileName.split('.').pop().toLowerCase();
+
+    switch (extension) {
+        case 'pdf':
+            return 'fas fa-file-pdf text-danger';
+        case 'jpg':
+        case 'jpeg':
+        case 'png':
+            return 'fas fa-file-image text-primary';
+        default:
+            return 'fas fa-file text-secondary';
+    }
+}
+
+function updateUploadStatus($uploadItem, isUploaded) {
+    const $status = $uploadItem.find('.upload-status');
+
+    if (isUploaded) {
+        $status.html('<i class="fas fa-check-circle text-success"></i> Berhasil Upload');
+        $uploadItem.addClass('completed');
+    } else {
+        $status.html('<i class="fas fa-circle text-danger"></i> Belum Upload');
+        $uploadItem.removeClass('completed');
+    }
 }
 
 function updateUploadProgress() {
@@ -372,79 +584,209 @@ function updateDocumentChecklist() {
     });
 }
 
-function addLivestockItem() {
-    const template = `
-        <div class="livestock-item" data-index="${livestockIndex}">
-            <div class="livestock-header">
-                <h4>Ternak #<span class="livestock-number">${livestockIndex + 1}</span></h4>
-                <button type="button" class="btn btn-sm btn-outline-danger remove-livestock">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-            <div class="livestock-form">
-                <div class="form-group">
-                    <label class="form-label required">
-                        <i class="fas fa-paw"></i>
-                        Jenis Ternak
-                    </label>
-                    <select name="LivestockDetails[${livestockIndex}].LivestockType" class="form-control livestock-type" required>
-                        <option value="">Pilih Jenis Ternak</option>
-                        <option value="Sapi Potong">Sapi Potong</option>
-                        <option value="Kerbau Potong">Kerbau Potong</option>
-                        <option value="Kuda Pedaging">Kuda Pedaging</option>
-                        <option value="Kambing">Kambing</option>
-                        <option value="Domba">Domba</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label required">
-                        <i class="fas fa-calculator"></i>
-                        Jumlah (ekor)
-                    </label>
-                    <input type="number" name="LivestockDetails[${livestockIndex}].Quantity"
-                           class="form-control livestock-quantity" min="1" max="10000"
-                           placeholder="Masukkan jumlah ternak" required />
-                </div>
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-comment"></i>
-                        Keterangan
-                    </label>
-                    <textarea name="LivestockDetails[${livestockIndex}].Description"
-                              class="form-control" rows="2"
-                              placeholder="Keterangan tambahan (opsional)"></textarea>
-                </div>
-            </div>
-        </div>
-    `;
+// ===============================================
+// DOCUMENT DETAILS VALIDATION
+// ===============================================
+function initializeDocumentDetailsValidation() {
+    console.log('🔧 Initializing document details validation...');
 
-    $('#livestockContainer').append(template);
-    livestockIndex++;
-    updateLivestockNumbers();
-    updateLivestockSummary();
+    const documentsWithDetails = ['SuratPermohonan', 'RekomendasiDinasProv', 'RekomendasiDaerahTujuan'];
 
-    $('.livestock-item').last().addClass('fade-in');
-}
+    documentsWithDetails.forEach(docType => {
+        const fileInput = document.getElementById(docType);
+        const dateInput = document.getElementById(docType + 'Tanggal');
+        const numberInput = document.getElementById(docType + 'Nomor');
 
-function updateLivestockNumbers() {
-    $('.livestock-item').each(function (index) {
-        $(this).find('.livestock-number').text(index + 1);
+        if (fileInput && dateInput && numberInput) {
+            // File change handler
+            fileInput.addEventListener('change', function () {
+                if (this.files && this.files.length > 0) {
+                    validateDocumentDetails(docType);
+                } else {
+                    clearDocumentDetailsValidation(docType);
+                }
+            });
+
+            // Date and number validation
+            dateInput.addEventListener('change', function () {
+                validateDocumentDate(docType, this.value);
+            });
+
+            numberInput.addEventListener('input', function () {
+                validateDocumentNumber(docType, this.value);
+            });
+        }
     });
 }
 
-function updateLivestockSummary() {
-    const totalTypes = $('.livestock-item').length;
-    let totalQuantity = 0;
+function validateDocumentDetails(documentType) {
+    const dateInput = document.getElementById(documentType + 'Tanggal');
+    const numberInput = document.getElementById(documentType + 'Nomor');
+    const fileInput = document.getElementById(documentType);
 
-    $('.livestock-quantity').each(function () {
-        const quantity = parseInt($(this).val()) || 0;
-        totalQuantity += quantity;
-    });
+    let isValid = true;
 
-    $('#totalTypes').text(totalTypes);
-    $('#totalQuantity').text(totalQuantity.toLocaleString());
+    // Only validate if file is uploaded
+    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+        if (!dateInput.value) {
+            showDocumentFieldError(dateInput, 'Tanggal pengajuan harus diisi');
+            isValid = false;
+        } else {
+            clearDocumentFieldError(dateInput);
+
+            const inputDate = new Date(dateInput.value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (inputDate > today) {
+                showDocumentFieldError(dateInput, 'Tanggal tidak boleh di masa depan');
+                isValid = false;
+            }
+        }
+
+        if (!numberInput.value || numberInput.value.trim() === '') {
+            showDocumentFieldError(numberInput, 'Nomor dokumen harus diisi');
+            isValid = false;
+        } else {
+            clearDocumentFieldError(numberInput);
+        }
+    }
+
+    return isValid;
 }
 
+function validateDocumentDate(documentType, dateValue) {
+    const dateInput = document.getElementById(documentType + 'Tanggal');
+    const fileInput = document.getElementById(documentType);
+
+    if (!dateValue && fileInput && fileInput.files && fileInput.files.length > 0) {
+        showDocumentFieldError(dateInput, 'Tanggal pengajuan harus diisi');
+        return false;
+    } else if (dateValue) {
+        const inputDate = new Date(dateValue);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (inputDate > today) {
+            showDocumentFieldError(dateInput, 'Tanggal tidak boleh di masa depan');
+            return false;
+        } else {
+            clearDocumentFieldError(dateInput);
+        }
+    }
+
+    return true;
+}
+
+function validateDocumentNumber(documentType, numberValue) {
+    const numberInput = document.getElementById(documentType + 'Nomor');
+    const fileInput = document.getElementById(documentType);
+
+    if (!numberValue || numberValue.trim() === '') {
+        if (fileInput && fileInput.files && fileInput.files.length > 0) {
+            showDocumentFieldError(numberInput, 'Nomor dokumen harus diisi');
+            return false;
+        }
+    } else {
+        clearDocumentFieldError(numberInput);
+    }
+
+    return true;
+}
+
+function showDocumentFieldError(field, message) {
+    clearDocumentFieldError(field);
+
+    const errorElement = document.createElement('span');
+    errorElement.className = 'text-danger document-field-error';
+    errorElement.style.fontSize = '0.75rem';
+    errorElement.style.marginTop = '0.25rem';
+    errorElement.style.display = 'block';
+    errorElement.textContent = message;
+
+    field.parentNode.appendChild(errorElement);
+    field.classList.add('is-invalid');
+}
+
+function clearDocumentFieldError(field) {
+    const existingError = field.parentNode.querySelector('.document-field-error');
+    if (existingError) {
+        existingError.remove();
+    }
+    field.classList.remove('is-invalid');
+}
+
+function clearDocumentDetailsValidation(documentType) {
+    const dateInput = document.getElementById(documentType + 'Tanggal');
+    const numberInput = document.getElementById(documentType + 'Nomor');
+
+    if (dateInput) clearDocumentFieldError(dateInput);
+    if (numberInput) clearDocumentFieldError(numberInput);
+}
+
+// ===============================================
+// EVENT HANDLERS
+// ===============================================
+function initializeEventHandlers() {
+    console.log('🔧 Initializing event handlers...');
+
+    // Navigation buttons
+    $('#nextBtn').on('click', nextStep);
+    $('#prevBtn').on('click', prevStep);
+
+    // Form submission
+    $('#permitForm').on('submit', function (e) {
+        console.log('📤 Form submission attempt...');
+
+        if (!validateAllSteps()) {
+            e.preventDefault();
+            showAlert('Mohon lengkapi semua langkah sebelum submit', 'danger');
+            return false;
+        }
+
+        // Show loading state
+        $('#submitBtn').html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...').prop('disabled', true);
+        showAlert('Sedang memproses permohonan...', 'info');
+    });
+
+    // Field validation on blur
+    $('input, textarea, select').on('blur', function () {
+        validateField($(this));
+    });
+
+    // Keyboard shortcuts
+    $(document).on('keydown', function (e) {
+        if (e.ctrlKey) {
+            switch (e.key) {
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    if (currentStep > 1) prevStep();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    if (currentStep < totalSteps && validateCurrentStep()) nextStep();
+                    break;
+            }
+        }
+    });
+}
+
+function validateField($field) {
+    const value = $field.val()?.trim();
+    const isRequired = $field.attr('required') !== undefined;
+
+    if (isRequired && !value) {
+        $field.addClass('is-invalid');
+        return false;
+    } else {
+        $field.removeClass('is-invalid');
+        return true;
+    }
+}
+
+// ===============================================
+// UTILITY FUNCTIONS
+// ===============================================
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -454,6 +796,8 @@ function formatFileSize(bytes) {
 }
 
 function showAlert(message, type) {
+    console.log(`🔔 Alert (${type}): ${message}`);
+
     $('.custom-alert').remove();
 
     const alertClass = {
@@ -492,666 +836,35 @@ function showAlert(message, type) {
     }, delay);
 }
 
-function updateFormState() {
-}
-
-function debugFormState() {
-}
-
-$(document).on('keydown', function (e) {
-    if (e.ctrlKey) {
-        switch (e.key) {
-            case 'ArrowLeft':
-                e.preventDefault();
-                if (currentStep > 1) prevStep();
-                break;
-            case 'ArrowRight':
-                e.preventDefault();
-                if (currentStep < totalSteps && validateCurrentStep()) nextStep();
-                break;
-        }
-    }
-
-    if (e.key === 'Escape' && e.shiftKey) {
-        debugFormState();
-    }
-});
-
-function autoSave() {
-    const formData = {
-        step: currentStep,
-        timestamp: new Date().toISOString(),
-        data: $('#permitForm').serializeArray()
-    };
-
-    localStorage.setItem('permitFormDraft', JSON.stringify(formData));
-}
-
-function loadDraft() {
-    const saved = localStorage.getItem('permitFormDraft');
-    if (saved) {
-        try {
-            const data = JSON.parse(saved);
-        } catch (e) {
-        }
-    }
-}
-
-setInterval(autoSave, 30000);
-
+// ===============================================
+// PUBLIC API
+// ===============================================
 window.MultiStepForm = {
     nextStep,
     prevStep,
     showStep,
     validateCurrentStep,
     validateAllSteps,
-    debugFormState,
     currentStep: () => currentStep,
-    totalSteps: () => totalSteps
+    totalSteps: () => totalSteps,
+    uploadedDocuments: () => uploadedDocuments
 };
 
-// Added New
-
-// ADD to existing multi-step-form.js file
-
-// Enhanced Document Details Validation
-function initializeDocumentDetailsValidation() {
-    console.log('🔧 Initializing document details validation...');
-
-    const documentsWithDetails = ['SuratPermohonan', 'RekomendasiDinasProv', 'RekomendasiDaerahTujuan'];
-
-    documentsWithDetails.forEach(docType => {
-        const fileInput = document.getElementById(docType);
-        const dateInput = document.getElementById(docType + 'Tanggal');
-        const numberInput = document.getElementById(docType + 'Nomor');
-
-        if (fileInput && dateInput && numberInput) {
-            // Validate when file is selected
-            fileInput.addEventListener('change', function () {
-                if (this.files && this.files.length > 0) {
-                    validateDocumentDetails(docType);
-                } else {
-                    clearDocumentDetailsValidation(docType);
-                }
-            });
-
-            // Validate when date changes
-            dateInput.addEventListener('change', function () {
-                validateDocumentDate(docType, this.value);
-            });
-
-            // Validate when number changes
-            numberInput.addEventListener('input', function () {
-                validateDocumentNumber(docType, this.value);
-            });
-
-            // Real-time validation
-            dateInput.addEventListener('blur', function () {
-                validateDocumentDate(docType, this.value);
-            });
-
-            numberInput.addEventListener('blur', function () {
-                validateDocumentNumber(docType, this.value);
-            });
-        }
-    });
-}
-
-function validateDocumentDetails(documentType) {
-    console.log(`📋 Validating document details for: ${documentType}`);
-
-    const fileInput = document.getElementById(documentType);
-    const dateInput = document.getElementById(documentType + 'Tanggal');
-    const numberInput = document.getElementById(documentType + 'Nomor');
-
-    let isValid = true;
-
-    // Check if file is uploaded
-    if (fileInput && fileInput.files && fileInput.files.length > 0) {
-        // Validate date
-        if (!dateInput.value) {
-            showDocumentFieldError(dateInput, 'Tanggal pengajuan harus diisi');
-            isValid = false;
-        } else {
-            clearDocumentFieldError(dateInput);
-            // Validate date is not in future
-            const inputDate = new Date(dateInput.value);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            if (inputDate > today) {
-                showDocumentFieldError(dateInput, 'Tanggal tidak boleh di masa depan');
-                isValid = false;
-            }
-        }
-
-        // Validate number
-        if (!numberInput.value || numberInput.value.trim() === '') {
-            showDocumentFieldError(numberInput, 'Nomor dokumen harus diisi');
-            isValid = false;
-        } else {
-            clearDocumentFieldError(numberInput);
-            // Validate format (basic validation)
-            const numberPattern = /^[a-zA-Z0-9\/\-\.\_\s]+$/;
-            if (!numberPattern.test(numberInput.value)) {
-                showDocumentFieldError(numberInput, 'Format nomor dokumen tidak valid');
-                isValid = false;
-            }
-        }
-    }
-
-    return isValid;
-}
-
-function validateDocumentDate(documentType, dateValue) {
-    const dateInput = document.getElementById(documentType + 'Tanggal');
-
-    if (!dateValue) {
-        // Only show error if file is uploaded
-        const fileInput = document.getElementById(documentType);
-        if (fileInput && fileInput.files && fileInput.files.length > 0) {
-            showDocumentFieldError(dateInput, 'Tanggal pengajuan harus diisi');
-            return false;
-        }
-    } else {
-        const inputDate = new Date(dateValue);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        if (inputDate > today) {
-            showDocumentFieldError(dateInput, 'Tanggal tidak boleh di masa depan');
-            return false;
-        } else {
-            clearDocumentFieldError(dateInput);
-        }
-    }
-
-    return true;
-}
-
-function validateDocumentNumber(documentType, numberValue) {
-    const numberInput = document.getElementById(documentType + 'Nomor');
-
-    if (!numberValue || numberValue.trim() === '') {
-        // Only show error if file is uploaded
-        const fileInput = document.getElementById(documentType);
-        if (fileInput && fileInput.files && fileInput.files.length > 0) {
-            showDocumentFieldError(numberInput, 'Nomor dokumen harus diisi');
-            return false;
-        }
-    } else {
-        // Basic format validation
-        const numberPattern = /^[a-zA-Z0-9\/\-\.\_\s]+$/;
-        if (!numberPattern.test(numberValue)) {
-            showDocumentFieldError(numberInput, 'Format nomor dokumen tidak valid');
-            return false;
-        } else {
-            clearDocumentFieldError(numberInput);
-        }
-    }
-
-    return true;
-}
-
-function showDocumentFieldError(field, message) {
-    clearDocumentFieldError(field);
-
-    const errorElement = document.createElement('span');
-    errorElement.className = 'text-danger document-field-error';
-    errorElement.style.fontSize = '0.75rem';
-    errorElement.style.marginTop = '0.25rem';
-    errorElement.style.display = 'block';
-    errorElement.textContent = message;
-
-    field.parentNode.appendChild(errorElement);
-    field.classList.add('is-invalid');
-}
-
-function clearDocumentFieldError(field) {
-    const existingError = field.parentNode.querySelector('.document-field-error');
-    if (existingError) {
-        existingError.remove();
-    }
-    field.classList.remove('is-invalid');
-}
-
-function clearDocumentDetailsValidation(documentType) {
-    const dateInput = document.getElementById(documentType + 'Tanggal');
-    const numberInput = document.getElementById(documentType + 'Nomor');
-
-    if (dateInput) clearDocumentFieldError(dateInput);
-    if (numberInput) clearDocumentFieldError(numberInput);
-}
-
-// Enhanced step validation for step 4 (documents)
-function validateDocumentStep() {
-    console.log('📋 Validating document step...');
-
-    let isValid = true;
-    const requiredDocuments = [
-        'SuratPermohonan',
-        'RekomendasiDinasProv',
-        'RekomendasiDaerahTujuan',
-        'SKKHKabupatenAsal',
-        'SKKHDinasProvinsi',
-        'SuratJalanTernak',
-        'HasilPemeriksaanFisik'
-    ];
-
-    // Check if all required documents are uploaded
-    for (const docType of requiredDocuments) {
-        const fileInput = document.getElementById(docType);
-        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-            console.log(`❌ Missing document: ${docType}`);
-            isValid = false;
-        } else {
-            // For documents with details, validate the details
-            const documentsWithDetails = ['SuratPermohonan', 'RekomendasiDinasProv', 'RekomendasiDaerahTujuan'];
-            if (documentsWithDetails.includes(docType)) {
-                if (!validateDocumentDetails(docType)) {
-                    isValid = false;
-                }
-            }
-        }
-    }
-
-    if (!isValid) {
-        showValidationMessage('Semua dokumen wajib harus diupload dengan informasi yang lengkap');
-    }
-
-    return isValid;
-}
-
-// Enhanced form submission validation
-function validateFormBeforeSubmit() {
-    console.log('🔍 Final form validation before submit...');
-
-    let isValid = true;
-    const errors = [];
-
-    // Validate basic company info
-    const companyName = document.querySelector('[name="CompanyName"]');
-    if (!companyName || !companyName.value.trim()) {
-        errors.push('Nama perusahaan harus diisi');
-        isValid = false;
-    }
-
-    const companyAddress = document.querySelector('[name="CompanyAddress"]');
-    if (!companyAddress || !companyAddress.value.trim()) {
-        errors.push('Alamat perusahaan harus diisi');
-        isValid = false;
-    }
-
-    // Validate livestock details
-    const livestockTypes = document.querySelectorAll('.livestock-type');
-    const livestockQuantities = document.querySelectorAll('.livestock-quantity');
-
-    if (livestockTypes.length === 0) {
-        errors.push('Minimal harus ada 1 detail ternak');
-        isValid = false;
-    } else {
-        for (let i = 0; i < livestockTypes.length; i++) {
-            if (!livestockTypes[i].value.trim()) {
-                errors.push(`Jenis ternak #${i + 1} harus diisi`);
-                isValid = false;
-            }
-            if (!livestockQuantities[i] || parseInt(livestockQuantities[i].value) <= 0) {
-                errors.push(`Jumlah ternak #${i + 1} harus lebih dari 0`);
-                isValid = false;
-            }
-        }
-    }
-
-    // Validate documents
-    if (!validateDocumentStep()) {
-        isValid = false;
-    }
-
-    // Show errors if any
-    if (errors.length > 0) {
-        const errorMessage = errors.join('\\n');
-        alert('Terdapat kesalahan pada form:\\n\\n' + errorMessage);
-    }
-
-    return isValid;
-}
-
-// UPDATE existing initialization function
-$(document).ready(function () {
-    console.log('🚀 Initializing Enhanced Multi-Step Form...');
-
-    initializeForm();
-    initializeFileUpload();
-    initializeEventHandlers();
-    initializeDocumentDetailsValidation(); // NEW
-    updateFormState();
-
-    console.log('✅ Enhanced Multi-Step Form initialized successfully');
-});
-
-// UPDATE form submission handler
-$('#multiStepForm').on('submit', function (e) {
-    console.log('📤 Form submission attempt...');
-
-    if (!validateFormBeforeSubmit()) {
-        e.preventDefault();
-        console.log('❌ Form validation failed, preventing submission');
-        return false;
-    }
-
-    console.log('✅ Form validation passed, proceeding with submission');
-
-    // Show loading state
-    const submitBtn = $('#submitBtn');
-    const originalText = submitBtn.html();
-    submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Mengirim...');
-    submitBtn.prop('disabled', true);
-
-    // Optional: Reset button after timeout (in case of server error)
-    setTimeout(() => {
-        submitBtn.html(originalText);
-        submitBtn.prop('disabled', false);
-    }, 30000); // 30 seconds timeout
-});
-
-// Enhanced file upload handler with document details validation
-function initializeFileUpload() {
-    console.log('🔧 Initializing enhanced file upload system...');
-
-    $('.file-input').each(function () {
-        const $input = $(this);
-        const documentType = $input.attr('id');
-        const $uploadArea = $input.closest('.upload-area');
-        const $uploadItem = $input.closest('.upload-item');
-
-        // File selection handler
-        $input.on('change', function (e) {
-            const file = e.target.files[0];
-            const maxSize = parseInt($input.data('max-size')) || 5242880; // 5MB default
-
-            if (file) {
-                console.log(`📄 File selected for ${documentType}:`, file.name);
-
-                // Validate file
-                if (!validateFile(file, maxSize)) {
-                    $input.val('');
-                    return;
-                }
-
-                // Show file preview
-                displayFilePreview($uploadArea, file);
-
-                // Update upload status
-                updateUploadStatus($uploadItem, true);
-
-                // Update progress
-                updateUploadProgress();
-                updateDocumentChecklist();
-
-                // Validate document details for specific documents
-                const documentsWithDetails = ['SuratPermohonan', 'RekomendasiDinasProv', 'RekomendasiDaerahTujuan'];
-                if (documentsWithDetails.includes(documentType)) {
-                    setTimeout(() => {
-                        validateDocumentDetails(documentType);
-                    }, 100);
-                }
-
-                console.log(`✅ File ${file.name} uploaded successfully for ${documentType}`);
-            }
-        });
-
-        // Remove file handler
-        $uploadArea.on('click', '.btn-remove', function () {
-            console.log(`🗑️ Removing file for ${documentType}`);
-
-            $input.val('');
-            hideFilePreview($uploadArea);
-            updateUploadStatus($uploadItem, false);
-            updateUploadProgress();
-            updateDocumentChecklist();
-
-            // Clear document details validation
-            clearDocumentDetailsValidation(documentType);
-
-            console.log(`✅ File removed for ${documentType}`);
-        });
-
-        // Drag and drop handlers
-        $uploadArea.on('dragover', function (e) {
-            e.preventDefault();
-            $(this).addClass('drag-over');
-        });
-
-        $uploadArea.on('dragleave', function (e) {
-            e.preventDefault();
-            $(this).removeClass('drag-over');
-        });
-
-        $uploadArea.on('drop', function (e) {
-            e.preventDefault();
-            $(this).removeClass('drag-over');
-
-            const files = e.originalEvent.dataTransfer.files;
-            if (files.length > 0) {
-                $input[0].files = files;
-                $input.trigger('change');
-            }
-        });
-
-        // Click to upload
-        $uploadArea.on('click', '.upload-placeholder', function () {
-            $input.click();
-        });
-    });
-}
-
-// Enhanced file validation
-function validateFile(file, maxSize) {
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-    const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png'];
-
-    // Check file size
-    if (file.size > maxSize) {
-        const maxSizeMB = (maxSize / 1024 / 1024).toFixed(1);
-        alert(`Ukuran file terlalu besar. Maksimal ${maxSizeMB}MB`);
-        return false;
-    }
-
-    // Check file type
-    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
-        alert('Format file tidak didukung. Gunakan PDF, JPG, JPEG, atau PNG');
-        return false;
-    }
-
-    return true;
-}
-
-// Enhanced file preview display
-function displayFilePreview($uploadArea, file) {
-    const $placeholder = $uploadArea.find('.upload-placeholder');
-    const $preview = $uploadArea.find('.file-preview');
-
-    // Hide placeholder and show preview
-    $placeholder.hide();
-    $preview.show();
-
-    // Update file info
-    $preview.find('.file-name').text(file.name);
-    $preview.find('.file-size').text(formatFileSize(file.size));
-
-    // Add file type icon
-    const fileIcon = getFileIcon(file.type, file.name);
-    $preview.find('.file-info i').attr('class', fileIcon);
-}
-
-function hideFilePreview($uploadArea) {
-    const $placeholder = $uploadArea.find('.upload-placeholder');
-    const $preview = $uploadArea.find('.file-preview');
-
-    $preview.hide();
-    $placeholder.show();
-}
-
-function getFileIcon(fileType, fileName) {
-    const extension = fileName.split('.').pop().toLowerCase();
-
-    switch (extension) {
-        case 'pdf':
-            return 'fas fa-file-pdf text-danger';
-        case 'jpg':
-        case 'jpeg':
-        case 'png':
-            return 'fas fa-file-image text-primary';
-        default:
-            return 'fas fa-file text-secondary';
-    }
-}
-
-function formatFileSize(bytes) {
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    if (bytes === 0) return '0 B';
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
-}
-
-// Enhanced upload progress tracking
-function updateUploadProgress() {
-    const totalFiles = 7;
-    const uploadedFiles = $('.upload-item').filter(function () {
-        const $input = $(this).find('.file-input');
-        return $input[0] && $input[0].files && $input[0].files.length > 0;
-    }).length;
-
-    const progressPercentage = Math.round((uploadedFiles / totalFiles) * 100);
-
-    $('#uploadProgress').css('width', progressPercentage + '%');
-    $('#uploadProgressText').text(`${uploadedFiles} dari ${totalFiles} dokumen telah diupload`);
-
-    console.log(`📊 Upload progress: ${uploadedFiles}/${totalFiles} (${progressPercentage}%)`);
-}
-
-function updateDocumentChecklist() {
-    $('.checklist-item').each(function () {
-        const docType = $(this).data('doc');
-        const $input = $(`#${docType}`);
-        const hasFile = $input[0] && $input[0].files && $input[0].files.length > 0;
-
-        if (hasFile) {
-            $(this).addClass('completed');
-            $(this).find('i').attr('class', 'fas fa-check-circle text-success');
-        } else {
-            $(this).removeClass('completed');
-            $(this).find('i').attr('class', 'fas fa-times-circle text-danger');
-        }
-    });
-}
-
-function updateUploadStatus($uploadItem, isUploaded) {
-    const $status = $uploadItem.find('.upload-status');
-
-    if (isUploaded) {
-        $status.html('<i class="fas fa-check-circle text-success"></i> Berhasil Upload');
-        $uploadItem.addClass('completed');
-    } else {
-        $status.html('<i class="fas fa-circle text-danger"></i> Belum Upload');
-        $uploadItem.removeClass('completed');
-    }
-}
-
-// Enhanced validation message display
-function showValidationMessage(message, type = 'error') {
-    // Remove existing messages
-    $('.validation-message').remove();
-
-    const alertClass = type === 'error' ? 'alert-danger' : 'alert-info';
-    const iconClass = type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle';
-
-    const messageHtml = `
-        <div class="alert ${alertClass} validation-message" role="alert">
-            <i class="fas ${iconClass}"></i>
-            <span>${message}</span>
-        </div>
-    `;
-
-    $('.form-step.active .step-content').prepend(messageHtml);
-
-    // Auto-remove after 10 seconds
-    setTimeout(() => {
-        $('.validation-message').fadeOut(500, function () {
-            $(this).remove();
-        });
-    }, 10000);
-}
-
-// Add CSS for enhanced styling
-const additionalCSS = `
-<style>
-.drag-over {
-    border-color: #007bff !important;
-    background-color: #f8f9ff !important;
-}
-
-.upload-item.completed {
-    border-color: #28a745;
-    background-color: #f8fff9;
-}
-
-.file-input.is-invalid {
-    border-color: #dc3545;
-}
-
-.document-field-error {
-    color: #dc3545;
-    font-size: 0.75rem;
-    margin-top: 0.25rem;
-    display: block;
-}
-
-.validation-message {
-    margin-bottom: 1rem;
-    border-radius: 8px;
-    border: none;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.validation-message i {
-    margin-right: 0.5rem;
-}
-
-.upload-status .fas.fa-check-circle {
-    color: #28a745;
-}
-
-.upload-status .fas.fa-circle {
-    color: #dc3545;
-}
-
-.checklist-item.completed {
-    background-color: #d4edda;
-    color: #155724;
-}
-
-.checklist-item.completed i {
-    color: #28a745;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-
-.upload-item:hover {
-    animation: pulse 0.3s ease-in-out;
-}
-</style>
-`;
-
-// Inject additional CSS
-if (!document.getElementById('enhanced-upload-styles')) {
-    const styleSheet = document.createElement('style');
-    styleSheet.id = 'enhanced-upload-styles';
-    styleSheet.innerHTML = additionalCSS.replace(/<\/?style>/g, '');
-    document.head.appendChild(styleSheet);
-}
+// ===============================================
+// INTEGRATION HELPERS
+// ===============================================
+// These functions help integrate with the main script in Create.cshtml
+
+// Called from main script when quota validation changes
+window.onQuotaValidationChange = function (hasErrors) {
+    console.log(`🔄 Quota validation status changed: ${hasErrors ? 'Has Errors' : 'No Errors'}`);
+    // This allows the main script to communicate validation status to the multi-step form
+};
+
+// Called from main script when shipping details are validated
+window.onShippingValidationChange = function (isValid) {
+    console.log(`🔄 Shipping validation status changed: ${isValid ? 'Valid' : 'Invalid'}`);
+    // This allows the main script to communicate validation status to the multi-step form
+};
+
+console.log('✅ Multi-Step Form module loaded successfully');

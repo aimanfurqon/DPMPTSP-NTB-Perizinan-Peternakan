@@ -64,11 +64,11 @@ namespace PerizinanPeternakan.Controllers
             }
             // --- AKHIR PERUBAHAN ---
 
-            if (!user.IsEmailVerified)
-            {
-                TempData["ErrorMessage"] = "Akun Anda belum diverifikasi. Silakan cek email Anda.";
-                return View(model);
-            }
+            //if (!user.IsEmailVerified)
+            //{
+            //    TempData["ErrorMessage"] = "Akun Anda belum diverifikasi. Silakan cek email Anda.";
+            //    return View(model);
+            //}
 
             SetUserSession(user);
             TempData["SuccessMessage"] = $"Selamat datang kembali, {user.NamaLengkap}!";

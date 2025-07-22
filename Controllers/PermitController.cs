@@ -502,26 +502,13 @@ namespace PerizinanPeternakan.Controllers
 
             try
             {
-                Console.WriteLine("=== STARTING PERMIT CREATION PROCESS ===");
-                Console.WriteLine($"User ID: {userId}");
-
-                // Log document details from form
-                Console.WriteLine("=== DOCUMENT DETAILS DEBUG ===");
-                Console.WriteLine($"SuratPermohonanTanggal: {model.SuratPermohonanTanggal?.ToString("yyyy-MM-dd") ?? "NULL"}");
-                Console.WriteLine($"SuratPermohonanNomor: '{model.SuratPermohonanNomor ?? "NULL"}'");
-                Console.WriteLine($"RekomendasiDinasProvTanggal: {model.RekomendasiDinasProvTanggal?.ToString("yyyy-MM-dd") ?? "NULL"}");
-                Console.WriteLine($"RekomendasiDinasProvNomor: '{model.RekomendasiDinasProvNomor ?? "NULL"}'");
-                Console.WriteLine($"RekomendasiDaerahTujuanTanggal: {model.RekomendasiDaerahTujuanTanggal?.ToString("yyyy-MM-dd") ?? "NULL"}");
-                Console.WriteLine($"RekomendasiDaerahTujuanNomor: '{model.RekomendasiDaerahTujuanNomor ?? "NULL"}'");
-
-                // Remove specific field validations for multi-step form
+                
                 var keysToRemove = new[] { "CompanyName", "CompanyAddress", "OriginLocation", "DestinationLocation", "DeparturePort", "ArrivalPort" };
                 foreach (var key in keysToRemove)
                 {
                     ModelState.Remove(key);
                  }
 
-                // Validate required basic fields
                 var basicValidationErrors = new List<string>();
 
                 if (string.IsNullOrWhiteSpace(model.CompanyName))
@@ -530,42 +517,50 @@ namespace PerizinanPeternakan.Controllers
                     ModelState.AddModelError(nameof(model.CompanyName), "Nama perusahaan harus diisi");
                 }
 
+                var addressParts = new List<string>();
+                if (!string.IsNullOrWhiteSpace(model.AddressStreet)) addressParts.Add(model.AddressStreet);
+                if (!string.IsNullOrWhiteSpace(model.AddressRT) || !string.IsNullOrWhiteSpace(model.AddressRW))
+                {
+                    addressParts.Add($"RT {model.AddressRT ?? "-"} / RW {model.AddressRW ?? "-"}");
+                }
+                if (!string.IsNullOrWhiteSpace(model.AddressVillage)) addressParts.Add($"Desa/Kel. {model.AddressVillage}");
+                if (!string.IsNullOrWhiteSpace(model.AddressDistrict)) addressParts.Add($"Kec. {model.AddressDistrict}");
+                if (!string.IsNullOrWhiteSpace(model.CompanyRegency)) addressParts.Add(model.CompanyRegency);
+                if (!string.IsNullOrWhiteSpace(model.CompanyProvince)) addressParts.Add(model.CompanyProvince);
+                if (!string.IsNullOrWhiteSpace(model.AddressPostalCode)) addressParts.Add(model.AddressPostalCode);
+
+                model.CompanyAddress = string.Join(", ", addressParts);
+
+                // Sekarang validasi CompanyAddress setelah digabungkan
                 if (string.IsNullOrWhiteSpace(model.CompanyAddress))
                 {
                     basicValidationErrors.Add("Alamat perusahaan harus diisi");
                     ModelState.AddModelError(nameof(model.CompanyAddress), "Alamat perusahaan harus diisi");
                 }
 
-                // Validate livestock details
                 if (model.LivestockDetails == null || !model.LivestockDetails.Any(d => !string.IsNullOrEmpty(d.LivestockType) && d.Quantity > 0))
                 {
                     basicValidationErrors.Add("Minimal harus ada satu detail ternak yang valid");
                     ModelState.AddModelError("", "Minimal harus ada satu detail ternak yang valid");
                 }
 
-                // Validate all required documents are uploaded
                 if (!ValidateAllDocumentsUploaded(model))
                 {
                     basicValidationErrors.Add("Semua dokumen wajib harus diupload");
                 }
 
-                // NEW: Validate document details for documents that require them
                 if (!ValidateDocumentDetails(model))
                 {
                     basicValidationErrors.Add("Detail dokumen (tanggal dan nomor) harus diisi dengan benar");
                 }
 
-                // Log validation results
                 if (basicValidationErrors.Any())
                 {
-                    Console.WriteLine("=== VALIDATION ERRORS ===");
                     basicValidationErrors.ForEach(error => Console.WriteLine($"❌ {error}"));
                 }
 
-                // Check if model state is valid
                 if (!ModelState.IsValid)
                 {
-                    Console.WriteLine("=== MODEL STATE ERRORS ===");
                     foreach (var modelError in ModelState)
                     {
                         foreach (var error in modelError.Value.Errors)
@@ -574,7 +569,6 @@ namespace PerizinanPeternakan.Controllers
                         }
                     }
 
-                    // Ensure there's at least one livestock detail for the form
                     if (model.LivestockDetails == null || !model.LivestockDetails.Any())
                     {
                         model.LivestockDetails.Add(new LivestockDetailViewModel());
@@ -583,9 +577,6 @@ namespace PerizinanPeternakan.Controllers
                     return View(model);
                 }
 
-                Console.WriteLine("✅ All validations passed, proceeding with permit creation");
-
-                // Get user information
                 var user = await _context.Users.FindAsync(userId.Value);
                 if (user == null)
                 {
@@ -593,17 +584,15 @@ namespace PerizinanPeternakan.Controllers
                     return View(model);
                 }
 
-                // Generate application number
                 var applicationNumber = await GenerateApplicationNumber();
-                Console.WriteLine($"📄 Generated application number: {applicationNumber}");
 
-                // Create permit application
+
                 var permitApplication = new LivestockPermitApplication
                 {
                     ApplicationNumber = applicationNumber,
                     UserId = userId.Value,
                     CompanyName = model.CompanyName.Trim(),
-                    CompanyAddress = model.CompanyAddress.Trim(),
+                    CompanyAddress = model.CompanyAddress,
                     OriginLocation = model.OriginLocation?.Trim() ?? "",
                     DestinationLocation = model.DestinationLocation?.Trim() ?? "",
                     DeparturePort = model.DeparturePort?.Trim() ?? "",
@@ -617,7 +606,6 @@ namespace PerizinanPeternakan.Controllers
                     DestinationRegencyId = model.DestinationRegencyId
                 };
 
-                // Add livestock details
                 foreach (var livestockDetail in model.LivestockDetails.Where(d => !string.IsNullOrEmpty(d.LivestockType) && d.Quantity > 0))
                 {
                     permitApplication.LivestockDetails.Add(new LivestockDetail
