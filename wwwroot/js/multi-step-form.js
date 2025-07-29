@@ -1,10 +1,11 @@
-﻿// Multi-Step Form JavaScript - Synchronized Version
+﻿// Multi-Step Form JavaScript - Fixed Version with Individual Support
 // This file handles ONLY the multi-step navigation and basic form validation
 // Location dropdowns, quota management, and other features are handled in Create.cshtml
 
 // ===============================================
 // GLOBAL VARIABLES
 // ===============================================
+
 let currentStep = 1;
 const totalSteps = 4;
 let livestockIndex = Math.max($('.livestock-item').length, 1);
@@ -18,12 +19,13 @@ const documentTypes = [
     'SKKHKabupatenAsal',
     'SKKHDinasProvinsi',
     'SuratJalanTernak',
-    'HasilPemeriksaanFisik'
+    'HasilPemeriksaanFisik',
+    'DokumenOpsional'
 ];
 
 const stepValidationRules = {
-    1: validateCompanyStep,  // Custom validation for step 1
-    2: ['OriginLocation', 'DestinationLocation', 'DeparturePort', 'ArrivalPort'],
+    1: validateCompanyStep,
+    2: validateShippingStep, // Changed from array to function
     3: validateLivestockStep,
     4: validateDocumentStep
 };
@@ -35,7 +37,7 @@ $(document).ready(function () {
     console.log('🚀 Initializing Multi-Step Form Navigation...');
 
     initializeForm();
-    initializeFileUpload(); // Add this back
+    initializeFileUpload();
     initializeEventHandlers();
     initializeDocumentDetailsValidation();
 
@@ -92,7 +94,6 @@ function initializeFileUpload() {
             e.preventDefault();
             e.stopPropagation();
             $(this).addClass('drag-over');
-            console.log(`📁 Drag over ${documentType}`);
         });
 
         $uploadArea.on('dragleave', function (e) {
@@ -235,7 +236,7 @@ function updateNavigationButtons() {
 }
 
 // ===============================================
-// VALIDATION FUNCTIONS
+// VALIDATION FUNCTIONS - ENHANCED
 // ===============================================
 function validateCurrentStep() {
     console.log(`🔍 Validating step ${currentStep}`);
@@ -243,7 +244,9 @@ function validateCurrentStep() {
     const rules = stepValidationRules[currentStep];
 
     if (typeof rules === 'function') {
-        return rules();
+        const isValid = rules();
+        console.log(`📊 Step ${currentStep} validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
+        return isValid;
     } else if (Array.isArray(rules)) {
         return validateRequiredFields(rules);
     }
@@ -271,6 +274,213 @@ function validateRequiredFields(fieldNames) {
     return isValid;
 }
 
+function validateCompanyStep() {
+    console.log('🏢 Validating step 1 (Company/Individual)...');
+
+    let isValid = true;
+    const errors = [];
+
+    // Get applicant type - check both radio button and hidden field (sinkron dengan inline script)
+    const applicantType = $('input[name="ApplicantType"]:checked').val() || $('#applicantTypeHidden').val();
+
+    console.log(`📋 Current applicant type: ${applicantType}`);
+
+    if (!applicantType) {
+        errors.push('Pilih tipe pemohon terlebih dahulu');
+        isValid = false;
+        console.log('❌ No applicant type selected');
+    } else if (applicantType === 'Company') {
+        // Validasi untuk form perusahaan - SAMA dengan logic di Create.cshtml
+        isValid = validateCompanyForm(errors);
+    } else if (applicantType === 'Individual') {
+        // Validasi untuk form perorangan - SAMA dengan logic di Create.cshtml  
+        isValid = validateIndividualForm(errors);
+    }
+
+    // Show errors if any
+    if (errors.length > 0) {
+        showAlert('Mohon lengkapi: ' + errors.join(', '), 'warning');
+        console.log('❌ Validation errors:', errors);
+    }
+
+    console.log(`📊 Step 1 validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
+    return isValid;
+}
+
+function validateCompanyForm(errors) {
+    let isValid = true;
+
+    console.log('🏢 Validating company form...');
+
+    // Clear previous validation state for individual form
+    clearFormValidation('#individualForm');
+
+    // Validasi nama perusahaan
+    const companyName = $('[name="CompanyName"]').val()?.trim();
+    if (!companyName) {
+        $('[name="CompanyName"]').addClass('is-invalid');
+        errors.push('Nama perusahaan harus diisi');
+        isValid = false;
+        console.log('❌ Company name is empty');
+    } else {
+        $('[name="CompanyName"]').removeClass('is-invalid').addClass('is-valid');
+        console.log('✅ Company name is valid');
+    }
+
+    // Validasi provinsi perusahaan 
+    const province = $('[name="CompanyProvince"]').val()?.trim();
+    if (!province) {
+        $('#companyProvinceSelect').addClass('is-invalid');
+        errors.push('Provinsi perusahaan harus dipilih');
+        isValid = false;
+        console.log('❌ Company province is empty');
+    } else {
+        $('#companyProvinceSelect').removeClass('is-invalid').addClass('is-valid');
+        console.log('✅ Company province is valid');
+    }
+
+    // Validasi kabupaten perusahaan
+    const regency = $('[name="CompanyRegency"]').val()?.trim();
+    if (!regency) {
+        $('#companyRegencySelect').addClass('is-invalid');
+        errors.push('Kabupaten/Kota perusahaan harus dipilih');
+        isValid = false;
+        console.log('❌ Company regency is empty');
+    } else {
+        $('#companyRegencySelect').removeClass('is-invalid').addClass('is-valid');
+        console.log('✅ Company regency is valid');
+    }
+
+    // TAMBAHAN: Validasi field alamat minimal (street address WAJIB untuk company)
+    const street = $('[name="AddressStreet"]').val()?.trim();
+    if (!street) {
+        $('[name="AddressStreet"]').addClass('is-invalid');
+        errors.push('Nama jalan harus diisi');
+        isValid = false;
+        console.log('❌ Company street address is empty');
+    } else {
+        $('[name="AddressStreet"]').removeClass('is-invalid').addClass('is-valid');
+        console.log('✅ Company street address is valid');
+    }
+
+    console.log(`🏢 Company form validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
+    return isValid;
+}
+
+function validateIndividualForm(errors) {
+    let isValid = true;
+
+    console.log('👤 Validating individual form...');
+
+    // Clear previous validation state for company form
+    clearFormValidation('#companyForm');
+
+    // Validasi nama lengkap
+    const individualName = $('[name="IndividualName"]').val()?.trim();
+    if (!individualName) {
+        $('[name="IndividualName"]').addClass('is-invalid');
+        errors.push('Nama lengkap harus diisi');
+        isValid = false;
+        console.log('❌ Individual name is empty');
+    } else {
+        $('[name="IndividualName"]').removeClass('is-invalid').addClass('is-valid');
+        console.log('✅ Individual name is valid');
+    }
+
+    // Validasi provinsi individual
+    const individualProvince = $('[name="IndividualProvince"]').val()?.trim();
+    if (!individualProvince) {
+        $('#individualProvinceSelect').addClass('is-invalid');
+        errors.push('Provinsi harus dipilih');
+        isValid = false;
+        console.log('❌ Individual province is empty');
+    } else {
+        $('#individualProvinceSelect').removeClass('is-invalid').addClass('is-valid');
+        console.log('✅ Individual province is valid');
+    }
+
+    // Validasi kabupaten individual
+    const individualRegency = $('[name="IndividualRegency"]').val()?.trim();
+    if (!individualRegency) {
+        $('#individualRegencySelect').addClass('is-invalid');
+        errors.push('Kabupaten/Kota harus dipilih');
+        isValid = false;
+        console.log('❌ Individual regency is empty');
+    } else {
+        $('#individualRegencySelect').removeClass('is-invalid').addClass('is-valid');
+        console.log('✅ Individual regency is valid');
+    }
+
+    // Validasi alamat lengkap individual
+    const individualAddress = $('[name="IndividualAddress"]').val()?.trim();
+    if (!individualAddress) {
+        $('[name="IndividualAddress"]').addClass('is-invalid');
+        errors.push('Alamat lengkap harus diisi');
+        isValid = false;
+        console.log('❌ Individual address is empty');
+    } else {
+        $('[name="IndividualAddress"]').removeClass('is-invalid').addClass('is-valid');
+        console.log('✅ Individual address is valid');
+    }
+
+    console.log(`👤 Individual form validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
+    return isValid;
+}
+
+
+function clearFormValidation(formSelector) {
+    console.log(`🧹 Clearing validation for: ${formSelector}`);
+
+    // Remove validation classes from all inputs in the specified form
+    $(formSelector + ' input, ' + formSelector + ' select, ' + formSelector + ' textarea')
+        .removeClass('is-invalid is-valid');
+
+    // Clear any error messages
+    $(formSelector + ' .text-danger').text('');
+}
+
+// ===============================================
+// STEP 2 VALIDATION - SHIPPING DETAILS
+// ===============================================
+function validateShippingStep() {
+    console.log('🚢 Validating shipping step...');
+
+    let isValid = true;
+    const errors = [];
+
+    // Check required shipping fields
+    const requiredFields = [
+        { field: 'OriginLocation', name: 'Asal Ternak' },
+        { field: 'DestinationLocation', name: 'Tujuan Pengiriman' },
+        { field: 'DeparturePort', name: 'Pelabuhan Keberangkatan' },
+        { field: 'ArrivalPort', name: 'Pelabuhan Tujuan' }
+    ];
+
+    requiredFields.forEach(item => {
+        const $field = $(`[name="${item.field}"]`);
+        const value = $field.val()?.trim();
+
+        if (!value) {
+            errors.push(item.name);
+            isValid = false;
+            console.log(`❌ ${item.name} is empty`);
+        } else {
+            console.log(`✅ ${item.name} is valid`);
+        }
+    });
+
+    if (errors.length > 0) {
+        showAlert(`Mohon lengkapi: ${errors.join(', ')}`, 'warning');
+        console.log('❌ Shipping validation errors:', errors);
+    }
+
+    console.log(`🚢 Shipping step validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
+    return isValid;
+}
+
+// ===============================================
+// STEP 3 VALIDATION - LIVESTOCK
+// ===============================================
 function validateLivestockStep() {
     console.log('🐄 Validating livestock step...');
 
@@ -282,6 +492,7 @@ function validateLivestockStep() {
 
         if (type && quantity > 0) {
             hasValidLivestock = true;
+            console.log(`✅ Found valid livestock: ${type} - ${quantity} ekor`);
         }
     });
 
@@ -290,122 +501,175 @@ function validateLivestockStep() {
 
     if (!hasValidLivestock) {
         showAlert('Minimal harus ada satu jenis ternak dengan jumlah yang valid', 'warning');
+        console.log('❌ No valid livestock found');
         return false;
     }
 
     if (hasQuotaErrors) {
         showAlert('Masih ada masalah dengan kuota ternak. Silakan periksa kembali jumlah yang diminta.', 'warning');
+        console.log('❌ Quota validation errors found');
         return false;
     }
 
+    console.log('✅ Livestock step validation passed');
     return true;
 }
 
-function validateCompanyStep() {
-    console.log('🏢 Validating company step...');
+// ===============================================
+// STEP 4 VALIDATION - DOCUMENTS
+// ===============================================
 
-    let isValid = true;
-    const errors = [];
-
-    // Validate company name
-    const companyName = $('[name="CompanyName"]').val()?.trim();
-    if (!companyName) {
-        $('[name="CompanyName"]').addClass('is-invalid');
-        errors.push('Nama perusahaan harus diisi');
-        isValid = false;
-    } else {
-        $('[name="CompanyName"]').removeClass('is-invalid');
-    }
-
-    // Validate address components (since we use dropdowns)
-    const province = $('[name="CompanyProvince"]').val()?.trim();
-    const regency = $('[name="CompanyRegency"]').val()?.trim();
-    const district = $('[name="AddressDistrict"]').val()?.trim();
-    const village = $('[name="AddressVillage"]').val()?.trim();
-
-    if (!province) {
-        $('#companyProvinceSelect').addClass('is-invalid');
-        errors.push('Provinsi perusahaan harus dipilih');
-        isValid = false;
-    } else {
-        $('#companyProvinceSelect').removeClass('is-invalid');
-    }
-
-    if (!regency) {
-        $('#companyRegencySelect').addClass('is-invalid');
-        errors.push('Kabupaten/Kota perusahaan harus dipilih');
-        isValid = false;
-    } else {
-        $('#companyRegencySelect').removeClass('is-invalid');
-    }
-
-    if (!district) {
-        $('#companyDistrictSelect').addClass('is-invalid');
-        errors.push('Kecamatan harus dipilih');
-        isValid = false;
-    } else {
-        $('#companyDistrictSelect').removeClass('is-invalid');
-    }
-
-    if (!village) {
-        $('#companyVillageSelect').addClass('is-invalid');
-        errors.push('Desa/Kelurahan harus dipilih');
-        isValid = false;
-    } else {
-        $('#companyVillageSelect').removeClass('is-invalid');
-    }
-
-    if (errors.length > 0) {
-        showAlert('Mohon lengkapi: ' + errors.join(', '), 'warning');
-    }
-
-    return isValid;
-}
 
 function validateDocumentStep() {
     console.log('📄 Validating document step...');
 
-    const uploadedCount = uploadedDocuments.size;
-    const documentsWithDetails = ['SuratPermohonan', 'RekomendasiDinasProv', 'RekomendasiDaerahTujuan'];
+    // ⭐ HITUNG HANYA DOKUMEN WAJIB (exclude DokumenOpsional)
+    const requiredDocs = documentTypes.filter(doc => doc !== 'DokumenOpsional');
+    const uploadedRequiredCount = requiredDocs.filter(doc => uploadedDocuments.has(doc)).length;
 
-    // Check if all documents are uploaded
-    if (uploadedCount < totalRequiredFiles) {
-        showAlert(`Dokumen belum lengkap. ${uploadedCount}/${totalRequiredFiles} dokumen telah diupload`, 'warning');
+    console.log(`📊 Required documents uploaded: ${uploadedRequiredCount}/${totalRequiredFiles}`);
+
+    if (uploadedRequiredCount < totalRequiredFiles) {
+        showAlert(`Dokumen wajib belum lengkap. ${uploadedRequiredCount}/${totalRequiredFiles} dokumen telah diupload`, 'warning');
+        console.log('❌ Required documents incomplete');
         return false;
     }
 
-    // Check document details for specific documents
+    // Validasi detail dokumen (tetap sama)
+    const documentsWithDetails = ['SuratPermohonan', 'RekomendasiDinasProv', 'RekomendasiDaerahTujuan'];
     let detailsValid = true;
     documentsWithDetails.forEach(docType => {
         if (!validateDocumentDetails(docType)) {
             detailsValid = false;
+            console.log(`❌ Document details invalid for: ${docType}`);
         }
     });
 
+    // ⭐ VALIDASI KHUSUS DOKUMEN OPSIONAL (jika diupload)
+    if (uploadedDocuments.has('DokumenOpsional')) {
+        if (!validateOptionalDocumentDetails()) {
+            detailsValid = false;
+            console.log('❌ Optional document details invalid');
+        }
+    }
+
     if (!detailsValid) {
-        showAlert('Mohon lengkapi tanggal dan nomor dokumen yang diperlukan', 'warning');
+        showAlert('Mohon lengkapi detail dokumen yang diperlukan', 'warning');
+        console.log('❌ Document details validation failed');
         return false;
     }
 
+    console.log('✅ Document step validation passed');
     return true;
 }
 
+// ⭐ TAMBAH FUNCTION BARU (setelah function validateDocumentDetails)
+function validateOptionalDocumentDetails() {
+    const nameInput = document.getElementById('DokumenOpsionalNama');
+    const fileInput = document.getElementById('DokumenOpsional');
+
+    let isValid = true;
+
+    // Jika ada file tapi nama kosong
+    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+        if (!nameInput.value || nameInput.value.trim() === '') {
+            showDocumentFieldError(nameInput, 'Nama dokumen harus diisi jika mengupload file');
+            isValid = false;
+        } else {
+            clearDocumentFieldError(nameInput);
+        }
+
+        // Validasi tanggal dan nomor (opsional tapi jika diisi harus valid)
+        const dateInput = document.getElementById('DokumenOpsionalTanggal');
+        const numberInput = document.getElementById('DokumenOpsionalNomor');
+
+        if (dateInput && dateInput.value) {
+            const inputDate = new Date(dateInput.value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (inputDate > today) {
+                showDocumentFieldError(dateInput, 'Tanggal tidak boleh di masa depan');
+                isValid = false;
+            } else {
+                clearDocumentFieldError(dateInput);
+            }
+        }
+
+        // Nomor dokumen tidak wajib, tapi jika diisi tidak boleh kosong
+        if (numberInput && numberInput.value && numberInput.value.trim() === '') {
+            showDocumentFieldError(numberInput, 'Nomor dokumen tidak boleh kosong');
+            isValid = false;
+        } else if (numberInput) {
+            clearDocumentFieldError(numberInput);
+        }
+    }
+
+    return isValid;
+}
+//function validateDocumentStep() {
+//    console.log('📄 Validating document step...');
+
+//    const uploadedCount = uploadedDocuments.size;
+//    const documentsWithDetails = ['SuratPermohonan', 'RekomendasiDinasProv', 'RekomendasiDaerahTujuan'];
+
+//    console.log(`📊 Documents uploaded: ${uploadedCount}/${totalRequiredFiles}`);
+
+//    if (uploadedCount < totalRequiredFiles) {
+//        showAlert(`Dokumen belum lengkap. ${uploadedCount}/${totalRequiredFiles} dokumen telah diupload`, 'warning');
+//        console.log('❌ Documents incomplete');
+//        return false;
+//    }
+
+//    let detailsValid = true;
+//    documentsWithDetails.forEach(docType => {
+//        if (!validateDocumentDetails(docType)) {
+//            detailsValid = false;
+//            console.log(`❌ Document details invalid for: ${docType}`);
+//        }
+//    });
+
+//    if (!detailsValid) {
+//        showAlert('Mohon lengkapi tanggal dan nomor dokumen yang diperlukan', 'warning');
+//        console.log('❌ Document details validation failed');
+//        return false;
+//    }
+
+//    console.log('✅ Document step validation passed');
+//    return true;
+//}
+
+// ===============================================
+// FINAL VALIDATION - ALL STEPS
+// ===============================================
 function validateAllSteps() {
     console.log('🔍 Validating all steps before submission...');
 
+    // Special check for applicant type
+    const applicantType = $('input[name="ApplicantType"]:checked').val() || $('#applicantTypeHidden').val();
+    console.log(`📋 Final applicant type check: ${applicantType}`);
+
+    if (!applicantType) {
+        showAlert('Tipe pemohon belum dipilih', 'error');
+        console.log('❌ No applicant type selected');
+        return false;
+    }
+
+    // Validate each step
     for (let step = 1; step <= totalSteps; step++) {
         const rules = stepValidationRules[step];
 
         if (typeof rules === 'function') {
+            console.log(`📝 Validating step ${step}...`);
             if (!rules()) {
                 console.log(`❌ Step ${step} validation failed`);
+                showAlert(`Validasi step ${step} gagal. Silakan periksa kembali data yang diisi.`, 'error');
+
+                // Navigate to failed step
+                showStep(step);
                 return false;
             }
-        } else if (Array.isArray(rules)) {
-            if (!validateRequiredFields(rules)) {
-                console.log(`❌ Step ${step} required fields validation failed`);
-                return false;
-            }
+            console.log(`✅ Step ${step} validation passed`);
         }
     }
 
@@ -421,34 +685,25 @@ function handleFileSelection(inputElement, file) {
     const documentType = $input.attr('id');
     const maxSize = parseInt($input.data('max-size')) || 5242880; // 5MB
 
-    console.log(`📄 Processing file for ${documentType}: ${file.name} (${formatFileSize(file.size)})`);
-
-    // Validate file
     if (!validateFile(file, maxSize)) {
-        console.log(`❌ File validation failed for ${documentType}`);
         $input.val('');
         return;
     }
 
-    // Update file preview
     updateFilePreview($input, file);
 
-    // Store in uploaded documents map
     uploadedDocuments.set(documentType, {
         file: file,
         name: file.name,
         size: file.size
     });
 
-    // Update UI
     updateUploadProgress();
     updateDocumentChecklist();
 
-    // Update upload status
     const $uploadItem = $input.closest('.upload-item');
     updateUploadStatus($uploadItem, true);
 
-    // Validate document details for specific documents
     const documentsWithDetails = ['SuratPermohonan', 'RekomendasiDinasProv', 'RekomendasiDaerahTujuan'];
     if (documentsWithDetails.includes(documentType)) {
         setTimeout(() => {
@@ -457,14 +712,11 @@ function handleFileSelection(inputElement, file) {
     }
 
     showAlert(`File "${file.name}" berhasil dipilih`, 'success');
-    console.log(`✅ File ${file.name} processed successfully for ${documentType}`);
 }
 
 function removeFile($input) {
     const documentType = $input.attr('id');
     const $uploadArea = $input.closest('.upload-area');
-
-    console.log(`🗑️ Removing file for ${documentType}`);
 
     $input.val('');
 
@@ -479,7 +731,6 @@ function removeFile($input) {
     updateUploadProgress();
     updateDocumentChecklist();
 
-    // Clear document details validation
     clearDocumentDetailsValidation(documentType);
 
     showAlert('File berhasil dihapus', 'info');
@@ -489,14 +740,12 @@ function validateFile(file, maxSize) {
     const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
     const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png'];
 
-    // Check file size
     if (file.size > maxSize) {
         const maxSizeMB = (maxSize / 1024 / 1024).toFixed(1);
         showAlert(`Ukuran file terlalu besar. Maksimal ${maxSizeMB}MB`, 'danger');
         return false;
     }
 
-    // Check file type
     const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
     if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
         showAlert('Format file tidak didukung. Gunakan PDF, JPG, JPEG, atau PNG', 'danger');
@@ -511,25 +760,17 @@ function updateFilePreview($input, file) {
     const $placeholder = $uploadArea.find('.upload-placeholder');
     const $preview = $uploadArea.find('.file-preview');
 
-    console.log(`🖼️ Updating preview for: ${file.name}`);
-
-    // Update file info
     $preview.find('.file-name').text(file.name);
     $preview.find('.file-size').text(formatFileSize(file.size));
 
-    // Update file icon
     const fileIcon = getFileIcon(file.type, file.name);
     $preview.find('.file-info i').removeClass().addClass(fileIcon);
 
-    // Update upload status
     const $status = $uploadArea.closest('.upload-item').find('.upload-status');
     $status.html('<i class="fas fa-check-circle text-success"></i> Sudah Upload');
 
-    // Show preview, hide placeholder
     $placeholder.hide();
     $preview.show();
-
-    console.log(`✅ Preview updated for: ${file.name}`);
 }
 
 function getFileIcon(fileType, fileName) {
@@ -573,13 +814,29 @@ function updateDocumentChecklist() {
         const $icon = $item.find('i');
 
         if (uploadedDocuments.has(docType)) {
-            $icon.removeClass('fas fa-times-circle text-danger')
-                .addClass('fas fa-check-circle text-success');
-            $item.addClass('completed');
+            if (docType === 'DokumenOpsional') {
+                // ⭐ KHUSUS UNTUK DOKUMEN OPSIONAL
+                $icon.removeClass('fas fa-circle text-info fas fa-times-circle text-danger')
+                    .addClass('fas fa-check-circle text-success');
+                $item.addClass('completed');
+            } else {
+                // Dokumen wajib
+                $icon.removeClass('fas fa-times-circle text-danger')
+                    .addClass('fas fa-check-circle text-success');
+                $item.addClass('completed');
+            }
         } else {
-            $icon.removeClass('fas fa-check-circle text-success')
-                .addClass('fas fa-times-circle text-danger');
-            $item.removeClass('completed');
+            if (docType === 'DokumenOpsional') {
+                // ⭐ DOKUMEN OPSIONAL BELUM UPLOAD
+                $icon.removeClass('fas fa-check-circle text-success fas fa-times-circle text-danger')
+                    .addClass('fas fa-circle text-info');
+                $item.removeClass('completed');
+            } else {
+                // Dokumen wajib belum upload
+                $icon.removeClass('fas fa-check-circle text-success')
+                    .addClass('fas fa-times-circle text-danger');
+                $item.removeClass('completed');
+            }
         }
     });
 }
@@ -588,8 +845,6 @@ function updateDocumentChecklist() {
 // DOCUMENT DETAILS VALIDATION
 // ===============================================
 function initializeDocumentDetailsValidation() {
-    console.log('🔧 Initializing document details validation...');
-
     const documentsWithDetails = ['SuratPermohonan', 'RekomendasiDinasProv', 'RekomendasiDaerahTujuan'];
 
     documentsWithDetails.forEach(docType => {
@@ -598,7 +853,6 @@ function initializeDocumentDetailsValidation() {
         const numberInput = document.getElementById(docType + 'Nomor');
 
         if (fileInput && dateInput && numberInput) {
-            // File change handler
             fileInput.addEventListener('change', function () {
                 if (this.files && this.files.length > 0) {
                     validateDocumentDetails(docType);
@@ -607,7 +861,6 @@ function initializeDocumentDetailsValidation() {
                 }
             });
 
-            // Date and number validation
             dateInput.addEventListener('change', function () {
                 validateDocumentDate(docType, this.value);
             });
@@ -617,6 +870,40 @@ function initializeDocumentDetailsValidation() {
             });
         }
     });
+
+    // ⭐ TAMBAH HANDLER UNTUK DOKUMEN OPSIONAL
+    const optionalFileInput = document.getElementById('DokumenOpsional');
+    const optionalNameInput = document.getElementById('DokumenOpsionalNama');
+    const optionalDateInput = document.getElementById('DokumenOpsionalTanggal');
+    const optionalNumberInput = document.getElementById('DokumenOpsionalNomor');
+
+    if (optionalFileInput && optionalNameInput) {
+        optionalFileInput.addEventListener('change', function () {
+            if (this.files && this.files.length > 0) {
+                validateOptionalDocumentDetails();
+            } else {
+                clearDocumentFieldError(optionalNameInput);
+                if (optionalDateInput) clearDocumentFieldError(optionalDateInput);
+                if (optionalNumberInput) clearDocumentFieldError(optionalNumberInput);
+            }
+        });
+
+        optionalNameInput.addEventListener('input', function () {
+            validateOptionalDocumentDetails();
+        });
+
+        if (optionalDateInput) {
+            optionalDateInput.addEventListener('change', function () {
+                validateOptionalDocumentDetails();
+            });
+        }
+
+        if (optionalNumberInput) {
+            optionalNumberInput.addEventListener('input', function () {
+                validateOptionalDocumentDetails();
+            });
+        }
+    }
 }
 
 function validateDocumentDetails(documentType) {
@@ -626,7 +913,6 @@ function validateDocumentDetails(documentType) {
 
     let isValid = true;
 
-    // Only validate if file is uploaded
     if (fileInput && fileInput.files && fileInput.files.length > 0) {
         if (!dateInput.value) {
             showDocumentFieldError(dateInput, 'Tanggal pengajuan harus diisi');
@@ -734,19 +1020,61 @@ function initializeEventHandlers() {
     $('#nextBtn').on('click', nextStep);
     $('#prevBtn').on('click', prevStep);
 
-    // Form submission
+    // Form submission with enhanced validation
     $('#permitForm').on('submit', function (e) {
-        console.log('📤 Form submission attempt...');
+        console.log('📤 Form submission initiated...');
 
+        // Final validation check
         if (!validateAllSteps()) {
             e.preventDefault();
             showAlert('Mohon lengkapi semua langkah sebelum submit', 'danger');
             return false;
         }
 
+        // Additional check for applicant type
+        const applicantType = $('input[name="ApplicantType"]:checked').val() || $('#applicantTypeHidden').val();
+        if (!applicantType) {
+            e.preventDefault();
+            showAlert('Tipe pemohon belum dipilih. Silakan pilih "Perorangan" atau "Perusahaan".', 'danger');
+            return false;
+        }
+
+        // Validate applicant-specific data
+        if (applicantType === 'Individual') {
+            const name = $('input[name="IndividualName"]').val();
+            const province = $('input[name="IndividualProvince"]').val();
+            const regency = $('input[name="IndividualRegency"]').val();
+            const address = $('textarea[name="IndividualAddress"]').val();
+
+            console.log('Individual form data check:', { name, province, regency, address });
+
+            if (!name || !province || !regency || !address) {
+                e.preventDefault();
+                showAlert('Mohon lengkapi semua field untuk pemohon perorangan.', 'danger');
+                showStep(1); // Navigate back to step 1
+                return false;
+            }
+        } else if (applicantType === 'Company') {
+            const companyName = $('input[name="CompanyName"]').val();
+            const companyProvince = $('input[name="CompanyProvince"]').val();
+            const companyRegency = $('input[name="CompanyRegency"]').val();
+            const street = $('input[name="AddressStreet"]').val();
+
+            console.log('Company form data check:', { companyName, companyProvince, companyRegency, street });
+
+            if (!companyName || !companyProvince || !companyRegency || !street) {
+                e.preventDefault();
+                showAlert('Mohon lengkapi semua field untuk perusahaan.', 'danger');
+                showStep(1); // Navigate back to step 1
+                return false;
+            }
+        }
+
         // Show loading state
         $('#submitBtn').html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...').prop('disabled', true);
         showAlert('Sedang memproses permohonan...', 'info');
+
+        console.log('✅ Form validation passed, proceeding with submission...');
     });
 
     // Field validation on blur
@@ -769,6 +1097,8 @@ function initializeEventHandlers() {
             }
         }
     });
+
+    console.log('✅ Event handlers initialized');
 }
 
 function validateField($field) {
@@ -796,22 +1126,23 @@ function formatFileSize(bytes) {
 }
 
 function showAlert(message, type) {
-    console.log(`🔔 Alert (${type}): ${message}`);
-
+    // Remove existing alerts
     $('.custom-alert').remove();
 
     const alertClass = {
         'success': 'alert-success',
         'danger': 'alert-danger',
         'warning': 'alert-warning',
-        'info': 'alert-info'
+        'info': 'alert-info',
+        'error': 'alert-danger'
     }[type] || 'alert-info';
 
     const icon = {
         'success': 'fa-check-circle',
         'danger': 'fa-exclamation-circle',
         'warning': 'fa-exclamation-triangle',
-        'info': 'fa-info-circle'
+        'info': 'fa-info-circle',
+        'error': 'fa-exclamation-circle'
     }[type] || 'fa-info-circle';
 
     const alert = $(`
@@ -830,7 +1161,7 @@ function showAlert(message, type) {
 
     $('body').append(alert);
 
-    const delay = type === 'danger' ? 6000 : 4000;
+    const delay = type === 'danger' || type === 'error' ? 6000 : 4000;
     setTimeout(() => {
         alert.fadeOut(300, () => alert.remove());
     }, delay);
@@ -847,7 +1178,25 @@ window.MultiStepForm = {
     validateAllSteps,
     currentStep: () => currentStep,
     totalSteps: () => totalSteps,
-    uploadedDocuments: () => uploadedDocuments
+    uploadedDocuments: () => uploadedDocuments,
+
+    // Debug functions
+    debug: {
+        validateStep1: validateCompanyStep,
+        validateStep2: validateShippingStep,
+        validateStep3: validateLivestockStep,
+        validateStep4: validateDocumentStep,
+        checkApplicantType: function () {
+            return {
+                radioValue: $('input[name="ApplicantType"]:checked').val(),
+                hiddenValue: $('#applicantTypeHidden').val(),
+                formsVisible: {
+                    individual: $('#individualForm').is(':visible'),
+                    company: $('#companyForm').is(':visible')
+                }
+            };
+        }
+    }
 };
 
 // ===============================================
@@ -867,4 +1216,20 @@ window.onShippingValidationChange = function (isValid) {
     // This allows the main script to communicate validation status to the multi-step form
 };
 
-console.log('✅ Multi-Step Form module loaded successfully');
+// Export for debugging
+if (typeof window !== 'undefined') {
+    window.debugMultiStepForm = {
+        validateCompanyStep,
+        validateIndividualForm,
+        validateCompanyForm,
+        validateShippingStep,
+        validateLivestockStep,
+        validateDocumentStep,
+        validateAllSteps,
+        clearFormValidation,
+        currentStep: () => currentStep,
+        uploadedDocuments: () => Array.from(uploadedDocuments.keys())
+    };
+
+    console.log('🛠️ Debug functions available at window.debugMultiStepForm');
+}

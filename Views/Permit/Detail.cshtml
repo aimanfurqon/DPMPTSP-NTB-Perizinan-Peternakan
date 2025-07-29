@@ -4,6 +4,8 @@
     var userRole = Context.Session.GetString("Role");
 }
 
+
+
 <div class="permit-detail-container">
     <div class="detail-header">
         <div class="header-content">
@@ -220,23 +222,58 @@
 
         <!-- Dokumen Pendukung -->
         <div class="info-card full-width">
+        
             <div class="card-header">
                 <h3>
                     <i class="fas fa-file-alt"></i>
                     Dokumen Pendukung
                 </h3>
-                @if (Model.Documents.Count >= 7)
+                <!-- ⭐ UPDATE LOGIC PENGHITUNGAN -->
+                @{
+                    // ⭐ DEKLARASI DICTIONARY DI AWAL
+                    var requiredDocs = new Dictionary<string, string>
+                                {
+                                { "SURAT_PERMOHONAN", "Surat Permohonan" },
+                                { "REKOMENDASI_DINAS_PROV", "Rekomendasi Dinas Peternakan Provinsi NTB" },
+                                { "REKOMENDASI_DAERAH_TUJUAN", "Rekomendasi Pemasukan Ternak dari Daerah Tujuan" },
+                                { "SKKH_KABUPATEN_ASAL", "SKKH dari Kabupaten Asal" },
+                                { "SKKH_DINAS_PROVINSI", "SKKH dari Dinas Peternakan Provinsi NTB" },
+                                { "SURAT_JALAN_TERNAK", "Surat Keterangan Jalan Ternak/Rekomendasi Asal" },
+                                { "HASIL_PEMERIKSAAN_FISIK", "Hasil Pemeriksaan Fisik (Holding Ground)" }
+                                };
+
+                    var optionalDocs = new Dictionary<string, string>
+                                {
+                                { "DOKUMEN_OPSIONAL", "Dokumen Opsional" }
+                                };
+
+                    // PENGHITUNGAN SETELAH DEKLARASI
+                    var requiredDocsCount = Model.Documents.Count(d => requiredDocs.ContainsKey(d.DocumentType));
+                    var optionalDocsCount = Model.Documents.Count(d => optionalDocs.ContainsKey(d.DocumentType));
+                }
+
+                @if (requiredDocsCount >= 7)
                 {
                     <span class="document-status complete">
                         <i class="fas fa-check-circle"></i>
-                        Lengkap (@Model.Documents.Count/7)
+                        Lengkap (@requiredDocsCount/7 wajib
+                        @if (optionalDocsCount > 0)
+                        {
+                            <text> + @optionalDocsCount opsional</text>
+                        }
+                        )
                     </span>
                 }
                 else
                 {
                     <span class="document-status incomplete">
                         <i class="fas fa-exclamation-triangle"></i>
-                        Tidak Lengkap (@Model.Documents.Count/7)
+                        Tidak Lengkap (@requiredDocsCount/7 wajib
+                        @if (optionalDocsCount > 0)
+                        {
+                            <text> + @optionalDocsCount opsional</text>
+                        }
+                        )
                     </span>
                 }
             </div>
@@ -266,6 +303,40 @@
                                     </div>
                                     <div class="document-info">
                                         <h4>@doc.DocumentDisplayName</h4>
+
+                                        <!-- ⭐ TAMBAH BADGE TIPE DOKUMEN -->
+                                        <div class="document-badges">
+                                            @if (optionalDocs.ContainsKey(doc.DocumentType))
+                                            {
+                                                <span class="doc-badge optional">Opsional</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="doc-badge required">Wajib</span>
+                                            }
+                                        </div>
+
+                                        <!-- ⭐ TAMPILKAN DETAIL DOKUMEN JIKA ADA -->
+                                        @if (!string.IsNullOrEmpty(doc.DocumentNumber) || doc.DocumentDate.HasValue)
+                                        {
+                                            <div class="document-details">
+                                                @if (doc.DocumentDate.HasValue)
+                                                {
+                                                    <div class="detail-item">
+                                                        <i class="fas fa-calendar"></i>
+                                                        <span>@doc.DocumentDate.Value.ToString("dd/MM/yyyy")</span>
+                                                    </div>
+                                                }
+                                                @if (!string.IsNullOrEmpty(doc.DocumentNumber))
+                                                {
+                                                    <div class="detail-item">
+                                                        <i class="fas fa-hashtag"></i>
+                                                        <span>@doc.DocumentNumber</span>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+
                                         <div class="document-meta">
                                             <span class="file-size">@doc.FormattedFileSize</span>
                                             <span class="upload-date">@doc.UploadDate.ToString("dd/MM/yyyy HH:mm")</span>
@@ -311,30 +382,35 @@
                             <i class="fas fa-clipboard-check"></i>
                             Status Kelengkapan Dokumen
                         </h4>
-                        
-                        @{
-                            var requiredDocs = new Dictionary<string, string>
-                            {
-                                { "SURAT_PERMOHONAN", "Surat Permohonan" },
-                                { "REKOMENDASI_DINAS_PROV", "Rekomendasi Dinas Peternakan Provinsi NTB" },
-                                { "REKOMENDASI_DAERAH_TUJUAN", "Rekomendasi Pemasukan Ternak dari Daerah Tujuan" },
-                                { "SKKH_KABUPATEN_ASAL", "SKKH dari Kabupaten Asal" },
-                                { "SKKH_DINAS_PROVINSI", "SKKH dari Dinas Peternakan Provinsi NTB" },
-                                { "SURAT_JALAN_TERNAK", "Surat Keterangan Jalan Ternak/Rekomendasi Asal" },
-                                { "HASIL_PEMERIKSAAN_FISIK", "Hasil Pemeriksaan Fisik (Holding Ground)" }
-                            };
-                        }
 
                         <div class="checklist-summary">
+                            <!-- ⭐ DOKUMEN WAJIB -->
                             @foreach (var requiredDoc in requiredDocs)
                             {
                                 var hasDoc = Model.Documents.Any(d => d.DocumentType == requiredDoc.Key);
                                 <div class="summary-item @(hasDoc ? "completed" : "missing")">
                                     <i class="fas @(hasDoc ? "fa-check-circle" : "fa-times-circle")"></i>
-                                    <span>@requiredDoc.Value</span>
+                                    <span class="doc-name">@requiredDoc.Value</span>
+                                    <span class="doc-type-badge required">Wajib</span>
                                     @if (hasDoc)
                                     {
                                         var doc = Model.Documents.First(d => d.DocumentType == requiredDoc.Key);
+                                        <small class="file-info">(@doc.FormattedFileSize)</small>
+                                    }
+                                </div>
+                            }
+
+                            <!-- ⭐ DOKUMEN OPSIONAL -->
+                            @foreach (var optionalDoc in optionalDocs)
+                            {
+                                var hasDoc = Model.Documents.Any(d => d.DocumentType == optionalDoc.Key);
+                                <div class="summary-item @(hasDoc ? "completed" : "optional")">
+                                    <i class="fas @(hasDoc ? "fa-check-circle" : "fa-circle")"></i>
+                                    <span class="doc-name">@optionalDoc.Value</span>
+                                    <span class="doc-type-badge optional">Opsional</span>
+                                    @if (hasDoc)
+                                    {
+                                        var doc = Model.Documents.First(d => d.DocumentType == optionalDoc.Key);
                                         <small class="file-info">(@doc.FormattedFileSize)</small>
                                     }
                                 </div>
@@ -1218,4 +1294,101 @@
             width: 100%;
         }
     }
+    /* ⭐ TAMBAHAN CSS UNTUK DOKUMEN OPSIONAL */
+    .document-card.optional-doc {
+        border-color: #17a2b8;
+        background: #f0fcff;
+    }
+
+    .document-card.required-doc {
+        border-color: #e9ecef;
+        background: #f8f9fa;
+    }
+
+    .document-badges {
+        margin-bottom: 8px;
+    }
+
+    .doc-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+        .doc-badge.required {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .doc-badge.optional {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+    .document-details {
+        margin-bottom: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        color: #666;
+        background: rgba(255,255,255,0.7);
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+
+        .detail-item i {
+            font-size: 10px;
+        }
+
+    .summary-item.optional {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+        .summary-item.optional i {
+            color: #17a2b8;
+        }
+
+    .summary-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        position: relative;
+    }
+
+    .doc-name {
+        flex: 1;
+    }
+
+    .doc-type-badge {
+        padding: 2px 6px;
+        border-radius: 8px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+        .doc-type-badge.required {
+            background: rgba(255, 243, 205, 0.8);
+            color: #856404;
+        }
+
+        .doc-type-badge.optional {
+            background: rgba(209, 236, 241, 0.8);
+            color: #0c5460;
+        }
 </style>

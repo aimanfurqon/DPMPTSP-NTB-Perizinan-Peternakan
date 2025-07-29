@@ -20,6 +20,7 @@ namespace PerizinanPeternakan.Controllers
 
             try
             {
+
                 var response = await client.GetAsync(url);
 
                 if (response.IsSuccessStatusCode)
@@ -82,7 +83,6 @@ namespace PerizinanPeternakan.Controllers
             return StatusCode(500, new { message = "Gagal mengambil data kecamatan." });
         }
 
-        // GET: /Location/GetVillages/52.71.02
         public async Task<IActionResult> GetVillages(string districtId)
         {
             if (string.IsNullOrEmpty(districtId))

@@ -17,9 +17,6 @@ namespace PerizinanPeternakan.Controllers
             _logger = logger;
         }
 
-        /// <summary>
-        /// Search ports with term - untuk Select2 search
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Search(string term)
         {
@@ -56,9 +53,7 @@ namespace PerizinanPeternakan.Controllers
             }
         }
 
-        /// <summary>
-        /// Get ports by province code - untuk dropdown berdasarkan provinsi
-        /// </summary>
+       
         [HttpGet]
         public async Task<IActionResult> GetByProvince(string provinceCode)
         {
@@ -101,9 +96,6 @@ namespace PerizinanPeternakan.Controllers
             }
         }
 
-        /// <summary>
-        /// Get all ports - untuk debugging atau keperluan admin
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {

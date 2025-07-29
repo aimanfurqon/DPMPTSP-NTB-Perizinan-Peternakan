@@ -1894,3 +1894,305 @@
         grid-column: span 2;
     }
 }
+
+/*CSS form toggle button*/
+
+/* ===============================================
+   APPLICANT TYPE SELECTION STYLES
+   =============================================== */
+
+.applicant-type-selection {
+    margin-bottom: 2rem;
+}
+
+.radio-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.radio-item {
+    position: relative;
+}
+
+.form-radio {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.radio-label {
+    display: block;
+    cursor: pointer;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.5rem 1rem;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    position: relative;
+    overflow: hidden;
+}
+
+    .radio-label:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        transform: translateY(-2px);
+    }
+
+.form-radio:checked + .radio-label {
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, #f8faff 0%, #eff6ff 100%);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.25);
+}
+
+    .form-radio:checked + .radio-label::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+        border-radius: 12px 12px 0 0;
+    }
+
+.radio-content {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+    .radio-content i {
+        font-size: 2rem;
+        color: #64748b;
+        margin-bottom: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+.form-radio:checked + .radio-label .radio-content i {
+    color: #3b82f6;
+    transform: scale(1.1);
+}
+
+.radio-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+    display: block;
+}
+
+.radio-subtitle {
+    font-size: 0.875rem;
+    color: #64748b;
+    display: block;
+}
+
+.form-radio:checked + .radio-label .radio-title {
+    color: #1d4ed8;
+}
+
+/* ===============================================
+   APPLICANT FORM STYLES
+   =============================================== */
+
+.applicant-form {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+    .applicant-form .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .applicant-form .form-label {
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+        .applicant-form .form-label i {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .applicant-form .form-label.required::after {
+            content: ' *';
+            color: #ef4444;
+            font-weight: bold;
+        }
+
+    .applicant-form .form-control {
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 0.75rem;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+    }
+
+        .applicant-form .form-control:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            outline: none;
+        }
+
+        .applicant-form .form-control.is-invalid {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+        }
+
+        .applicant-form .form-control.is-valid {
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+    .applicant-form .text-danger {
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        display: block;
+    }
+
+    .applicant-form .form-text {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+        .applicant-form .form-text::before {
+            content: '💡';
+            font-size: 0.75rem;
+        }
+
+/* ===============================================
+   ADDRESS GRID STYLES
+   =============================================== */
+
+.address-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.address-group {
+    display: flex;
+    flex-direction: column;
+}
+
+    .address-group.span-2 {
+        grid-column: span 2;
+    }
+
+    .address-group.span-4 {
+        grid-column: span 4;
+    }
+
+    .address-group label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+
+/* ===============================================
+   RESPONSIVE DESIGN
+   =============================================== */
+
+@media (max-width: 768px) {
+    .radio-group {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .radio-content {
+        padding: 0.5rem;
+    }
+
+        .radio-content i {
+            font-size: 1.5rem;
+        }
+
+    .address-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .address-group.span-2,
+    .address-group.span-4 {
+        grid-column: span 1;
+    }
+
+    .applicant-form {
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .applicant-form .form-control {
+        padding: 0.625rem;
+        font-size: 0.875rem;
+    }
+
+    .radio-label {
+        padding: 1rem 0.75rem;
+    }
+
+    .radio-title {
+        font-size: 1rem;
+    }
+
+    .radio-subtitle {
+        font-size: 0.8rem;
+    }
+}
+
+/* ===============================================
+   LOADING STATES
+   =============================================== */
+
+.applicant-form.loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+    .applicant-form.loading::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        border-radius: 12px;
+    }
+
+    .applicant-form.loading::after {
+        content: '⏳ Memuat data...';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 0.875rem;
+        color: #6b7280;
+        z-index: 11;
+    }

@@ -6,6 +6,25 @@ namespace PerizinanPeternakan.ViewModels
 {
     public class PermitApplicationViewModel
     {
+
+
+        // Dokumen Opsional
+        [Display(Name = "Dokumen Opsional")]
+        public IFormFile? DokumenOpsional { get; set; }
+
+        [Display(Name = "Tanggal Dokumen Opsional")]
+        [DataType(DataType.Date)]
+        public DateTime? DokumenOpsionalTanggal { get; set; }
+
+        [Display(Name = "Nomor Dokumen Opsional")]
+        public string? DokumenOpsionalNomor { get; set; }
+
+        [Display(Name = "Nama Dokumen Opsional")]
+        public string? DokumenOpsionalNama { get; set; }
+
+        [Display(Name = "Tipe Pemohon")]
+        public string ApplicantType { get; set; } = "Company"; // Set default value
+
         [Display(Name = "Provinsi Asal")]
         public int? OriginProvinceId { get; set; }
 
@@ -26,22 +45,22 @@ namespace PerizinanPeternakan.ViewModels
         [Display(Name = "Tujuan Pengiriman")]
         public string DestinationLocation { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Nama perusahaan harus diisi")]
+        // REMOVE [Required] - validation will be handled conditionally in controller
         [StringLength(200, ErrorMessage = "Nama perusahaan maksimal 200 karakter")]
         [Display(Name = "Nama Perusahaan")]
         public string CompanyName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Alamat perusahaan harus diisi")]
+        // REMOVE [Required] - validation will be handled conditionally in controller  
         [StringLength(500, ErrorMessage = "Alamat perusahaan maksimal 500 karakter")]
         [Display(Name = "Alamat Perusahaan")]
         public string CompanyAddress { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Pelabuhan asal harus diisi")]
+        // REMOVE [Required] - validation will be handled conditionally in controller
         [StringLength(100, ErrorMessage = "Pelabuhan asal maksimal 100 karakter")]
         [Display(Name = "Pelabuhan Asal")]
         public string DeparturePort { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Pelabuhan bongkar harus diisi")]
+        // REMOVE [Required] - validation will be handled conditionally in controller
         [StringLength(100, ErrorMessage = "Pelabuhan bongkar maksimal 100 karakter")]
         [Display(Name = "Pelabuhan Bongkar")]
         public string ArrivalPort { get; set; } = string.Empty;
@@ -49,6 +68,7 @@ namespace PerizinanPeternakan.ViewModels
         [Display(Name = "Detail Ternak")]
         public List<LivestockDetailViewModel> LivestockDetails { get; set; } = new List<LivestockDetailViewModel>();
 
+        // Document upload properties (unchanged)
         [Display(Name = "Surat Permohonan")]
         public IFormFile? SuratPermohonan { get; set; }
 
@@ -70,7 +90,7 @@ namespace PerizinanPeternakan.ViewModels
         [Display(Name = "Hasil Pemeriksaan Fisik (Holding Ground)")]
         public IFormFile? HasilPemeriksaanFisik { get; set; }
 
-        // Surat Permohonan Details
+        // Document details properties (unchanged)
         [Display(Name = "Tanggal Pengajuan Surat Permohonan")]
         [DataType(DataType.Date)]
         public DateTime? SuratPermohonanTanggal { get; set; }
@@ -79,7 +99,6 @@ namespace PerizinanPeternakan.ViewModels
         [StringLength(50, ErrorMessage = "Nomor dokumen maksimal 50 karakter")]
         public string? SuratPermohonanNomor { get; set; }
 
-        // Rekomendasi Dinas Provinsi Details
         [Display(Name = "Tanggal Pengajuan Rekomendasi Dinas Provinsi")]
         [DataType(DataType.Date)]
         public DateTime? RekomendasiDinasProvTanggal { get; set; }
@@ -88,7 +107,6 @@ namespace PerizinanPeternakan.ViewModels
         [StringLength(50, ErrorMessage = "Nomor dokumen maksimal 50 karakter")]
         public string? RekomendasiDinasProvNomor { get; set; }
 
-        // Rekomendasi Daerah Tujuan Details
         [Display(Name = "Tanggal Pengajuan Rekomendasi Daerah Tujuan")]
         [DataType(DataType.Date)]
         public DateTime? RekomendasiDaerahTujuanTanggal { get; set; }
@@ -97,7 +115,7 @@ namespace PerizinanPeternakan.ViewModels
         [StringLength(50, ErrorMessage = "Nomor dokumen maksimal 50 karakter")]
         public string? RekomendasiDaerahTujuanNomor { get; set; }
 
-        //Specific Address
+        // Address component properties (unchanged)
         [Display(Name = "Nama Jalan / Dusun")]
         [StringLength(200)]
         public string? AddressStreet { get; set; }
@@ -132,7 +150,137 @@ namespace PerizinanPeternakan.ViewModels
         [StringLength(100)]
         public string? AddressDistrict { get; set; }
 
+        // Individual applicant properties (unchanged)
+        [Display(Name = "Nama Lengkap")]
+        [StringLength(200, ErrorMessage = "Nama lengkap maksimal 200 karakter")]
+        public string? IndividualName { get; set; }
 
+        [Display(Name = "Provinsi")]
+        public string? IndividualProvince { get; set; }
+
+        [Display(Name = "Kabupaten/Kota")]
+        public string? IndividualRegency { get; set; }
+
+        [Display(Name = "Alamat Lengkap")]
+        [StringLength(500, ErrorMessage = "Alamat lengkap maksimal 500 karakter")]
+        public string? IndividualAddress { get; set; }
+
+        // Helper methods (unchanged)
+        public string GetApplicantName()
+        {
+            return ApplicantType == "Individual"
+                ? IndividualName ?? ""
+                : CompanyName ?? "";
+        }
+
+        public string GetApplicantAddress()
+        {
+            if (ApplicantType == "Individual")
+            {
+                if (!string.IsNullOrEmpty(IndividualAddress))
+                {
+                    var addressParts = new List<string> { IndividualAddress };
+                    if (!string.IsNullOrEmpty(IndividualRegency)) addressParts.Add(IndividualRegency);
+                    if (!string.IsNullOrEmpty(IndividualProvince)) addressParts.Add(IndividualProvince);
+                    return string.Join(", ", addressParts);
+                }
+                return "";
+            }
+
+            return CompanyAddress ?? "";
+        }
+
+        public string GetApplicantTypeLabel()
+        {
+            return ApplicantType == "Individual" ? "Perorangan" : "Perusahaan";
+        }
+
+        public bool IsApplicantDataComplete()
+        {
+            if (ApplicantType == "Individual")
+            {
+                return !string.IsNullOrWhiteSpace(IndividualName) &&
+                       !string.IsNullOrWhiteSpace(IndividualProvince) &&
+                       !string.IsNullOrWhiteSpace(IndividualRegency) &&
+                       !string.IsNullOrWhiteSpace(IndividualAddress);
+            }
+            else
+            {
+                return !string.IsNullOrWhiteSpace(CompanyName) &&
+                       !string.IsNullOrWhiteSpace(CompanyProvince) &&
+                       !string.IsNullOrWhiteSpace(CompanyRegency) &&
+                       !string.IsNullOrWhiteSpace(CompanyAddress);
+            }
+        }
+
+        public List<string> GetApplicantValidationErrors()
+        {
+            var errors = new List<string>();
+
+            if (ApplicantType == "Individual")
+            {
+                if (string.IsNullOrWhiteSpace(IndividualName))
+                    errors.Add("Nama lengkap wajib diisi");
+
+                if (string.IsNullOrWhiteSpace(IndividualProvince))
+                    errors.Add("Provinsi wajib diisi");
+
+                if (string.IsNullOrWhiteSpace(IndividualRegency))
+                    errors.Add("Kabupaten/Kota wajib diisi");
+
+                if (string.IsNullOrWhiteSpace(IndividualAddress))
+                    errors.Add("Alamat lengkap wajib diisi");
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(CompanyName))
+                    errors.Add("Nama perusahaan wajib diisi");
+
+                if (string.IsNullOrWhiteSpace(CompanyProvince))
+                    errors.Add("Provinsi perusahaan wajib diisi");
+
+                if (string.IsNullOrWhiteSpace(CompanyRegency))
+                    errors.Add("Kabupaten perusahaan wajib diisi");
+
+                if (string.IsNullOrWhiteSpace(CompanyAddress))
+                    errors.Add("Alamat perusahaan wajib diisi");
+            }
+
+            return errors;
+        }
+    }
+
+    public class ConditionalRequiredAttribute : ValidationAttribute
+    {
+        private readonly string _dependentProperty;
+        private readonly object _targetValue;
+
+        public ConditionalRequiredAttribute(string dependentProperty, object targetValue)
+        {
+            _dependentProperty = dependentProperty;
+            _targetValue = targetValue;
+        }
+
+        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        {
+            var dependentProperty = validationContext.ObjectType.GetProperty(_dependentProperty);
+            if (dependentProperty == null)
+            {
+                return new ValidationResult($"Property {_dependentProperty} not found");
+            }
+
+            var dependentValue = dependentProperty.GetValue(validationContext.ObjectInstance, null);
+
+            if (Equals(dependentValue, _targetValue))
+            {
+                if (value == null || string.IsNullOrWhiteSpace(value.ToString()))
+                {
+                    return new ValidationResult(ErrorMessage ?? "Field ini wajib diisi");
+                }
+            }
+
+            return ValidationResult.Success;
+        }
     }
 
     public class AdminHistoryViewModel
@@ -547,10 +695,6 @@ namespace PerizinanPeternakan.ViewModels
         public bool CanApprove { get; set; }
         public string UserRole { get; set; } = string.Empty;
     }
-
-    // =================================================================
-    // NEW VIEWMODELS FOR DOCUMENT DETAILS MANAGEMENT
-    // =================================================================
 
     public class DocumentDetailsViewModel
     {

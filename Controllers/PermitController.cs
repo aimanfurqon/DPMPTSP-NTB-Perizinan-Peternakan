@@ -136,6 +136,105 @@ namespace PerizinanPeternakan.Controllers
                 return View(new List<AdminHistoryViewModel>());
             }
         }
+        [HttpGet]
+        public async Task<IActionResult> GetCurrentUserData()
+        {
+            try
+            {
+                var username = HttpContext.Session.GetString("Username");
+
+                if (string.IsNullOrEmpty(username))
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Session tidak valid atau sudah berakhir. Silakan login kembali.",
+                        redirectToLogin = true
+                    });
+                }
+
+                var user = await _context.Users
+                    .Where(u => u.Username == username)
+                    .Select(u => new {
+                        namaLengkap = u.NamaLengkap,
+                        alamat = u.Alamat,
+                        email = u.Email,
+                        noTelepon = u.NoTelepon,
+                        username = u.Username,
+                        userId = u.Id
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (user == null)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Data user tidak ditemukan"
+                    });
+                }
+
+                var response = new
+                {
+                    success = true,
+                    data = new
+                    {
+                        namaLengkap = user.namaLengkap ?? "",
+                        alamat = user.alamat ?? "",
+                        email = user.email ?? "",
+                        noTelepon = user.noTelepon ?? "",
+                        username = user.username ?? "",
+
+                        hasCompleteProfile = !string.IsNullOrEmpty(user.namaLengkap) &&
+                                           !string.IsNullOrEmpty(user.alamat),
+                        displayName = !string.IsNullOrEmpty(user.namaLengkap) ? user.namaLengkap : user.username,
+
+                        dataFetchedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                        profileCompleteness = CalculateProfileCompleteness(user),
+
+                        sessionInfo = new
+                        {
+                            role = HttpContext.Session.GetString("Role") ?? "",
+                            namaLengkapSession = HttpContext.Session.GetString("NamaLengkap") ?? "",
+                            isAuthenticated = true
+                        }
+                    },
+                    message = "Data user berhasil dimuat"
+                };
+
+                return Json(response);
+            }
+            catch (Exception ex)
+            {
+
+                return Json(new
+                {
+                    success = false,
+                    message = "Terjadi kesalahan saat mengambil data user",
+                    error = ex.Message // Remove this in production
+                });
+            }
+        }
+
+        private int CalculateProfileCompleteness(dynamic user)
+        {
+            try
+            {
+                int totalFields = 4; 
+                int completedFields = 0;
+
+                if (!string.IsNullOrEmpty(user.namaLengkap)) completedFields++;
+                if (!string.IsNullOrEmpty(user.alamat)) completedFields++;
+                if (!string.IsNullOrEmpty(user.email)) completedFields++;
+                if (!string.IsNullOrEmpty(user.noTelepon)) completedFields++;
+
+                return (int)Math.Round((double)completedFields / totalFields * 100);
+            }
+            catch
+            {
+                return 0;
+            }
+        }
 
         [HttpGet]
         public async Task<IActionResult> TestAddAdminHistory()
@@ -484,9 +583,10 @@ namespace PerizinanPeternakan.Controllers
             }
 
             var model = new PermitApplicationViewModel();
-            model.LivestockDetails.Add(new LivestockDetailViewModel()); // Default 1 item
+            model.LivestockDetails.Add(new LivestockDetailViewModel()); 
             return View(model);
         }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -502,73 +602,188 @@ namespace PerizinanPeternakan.Controllers
 
             try
             {
-                
-                var keysToRemove = new[] { "CompanyName", "CompanyAddress", "OriginLocation", "DestinationLocation", "DeparturePort", "ArrivalPort" };
+                // ===============================================
+                // STEP 1: NORMALIZE APPLICANT TYPE
+                // ===============================================
+
+                if (string.IsNullOrEmpty(model.ApplicantType))
+                {
+                    model.ApplicantType = "Company";
+                }
+
+                Console.WriteLine($"🔍 ApplicantType received: '{model.ApplicantType}'");
+
+                // ===============================================
+                // STEP 2: REMOVE PROBLEMATIC MODELSTATE KEYS FIRST
+                // ===============================================
+
+                // Remove keys that will cause validation issues before mapping
+                var keysToRemove = new[] {
+            "OriginLocation",
+            "DestinationLocation",
+            "DeparturePort",
+            "ArrivalPort",
+            "CompanyName",        // Remove this temporarily for Individual
+            "CompanyAddress",     // Remove this temporarily for Individual
+            "CompanyProvince",    // Remove this temporarily for Individual
+            "CompanyRegency"      // Remove this temporarily for Individual
+        };
+
                 foreach (var key in keysToRemove)
                 {
                     ModelState.Remove(key);
-                 }
+                }
 
-                var basicValidationErrors = new List<string>();
+                // ===============================================
+                // STEP 3: VALIDATE AND MAP BASED ON APPLICANT TYPE
+                // ===============================================
 
+                if (model.ApplicantType == "Individual")
+                {
+                    Console.WriteLine("👤 Processing Individual applicant...");
+
+                    // Validate individual fields FIRST
+                    var individualErrors = new List<string>();
+
+                    if (string.IsNullOrWhiteSpace(model.IndividualName))
+                    {
+                        individualErrors.Add("Nama lengkap wajib diisi");
+                        ModelState.AddModelError("IndividualName", "Nama lengkap wajib diisi");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(model.IndividualProvince))
+                    {
+                        individualErrors.Add("Provinsi wajib diisi");
+                        ModelState.AddModelError("IndividualProvince", "Provinsi wajib diisi");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(model.IndividualRegency))
+                    {
+                        individualErrors.Add("Kabupaten wajib diisi");
+                        ModelState.AddModelError("IndividualRegency", "Kabupaten wajib diisi");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(model.IndividualAddress))
+                    {
+                        individualErrors.Add("Alamat lengkap wajib diisi");
+                        ModelState.AddModelError("IndividualAddress", "Alamat lengkap wajib diisi");
+                    }
+
+                    // If individual validation passes, map to company fields
+                    if (individualErrors.Count == 0)
+                    {
+                        model.CompanyName = model.IndividualName.Trim();
+                        model.CompanyAddress = $"{model.IndividualAddress.Trim()}, {model.IndividualRegency.Trim()}, {model.IndividualProvince.Trim()}";
+                        model.CompanyProvince = model.IndividualProvince.Trim();
+                        model.CompanyRegency = model.IndividualRegency.Trim();
+
+                        Console.WriteLine($"✅ Individual data mapped - Name: '{model.CompanyName}', Address: '{model.CompanyAddress}'");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"❌ Individual validation failed: {string.Join(", ", individualErrors)}");
+                    }
+                }
+                else if (model.ApplicantType == "Company")
+                {
+                    Console.WriteLine("🏢 Processing Company applicant...");
+
+                    // Validate company fields
+                    if (string.IsNullOrWhiteSpace(model.CompanyName))
+                    {
+                        ModelState.AddModelError("CompanyName", "Nama perusahaan wajib diisi");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(model.CompanyProvince))
+                    {
+                        ModelState.AddModelError("CompanyProvince", "Provinsi perusahaan wajib diisi");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(model.CompanyRegency))
+                    {
+                        ModelState.AddModelError("CompanyRegency", "Kabupaten perusahaan wajib diisi");
+                    }
+
+                    // Build company address from components
+                    var addressParts = new List<string>();
+                    if (!string.IsNullOrWhiteSpace(model.AddressStreet)) addressParts.Add(model.AddressStreet);
+                    if (!string.IsNullOrWhiteSpace(model.AddressRT) || !string.IsNullOrWhiteSpace(model.AddressRW))
+                    {
+                        addressParts.Add($"RT {model.AddressRT ?? "-"} / RW {model.AddressRW ?? "-"}");
+                    }
+                    if (!string.IsNullOrWhiteSpace(model.AddressVillage)) addressParts.Add($"Desa/Kel. {model.AddressVillage}");
+                    if (!string.IsNullOrWhiteSpace(model.AddressDistrict)) addressParts.Add($"Kec. {model.AddressDistrict}");
+                    if (!string.IsNullOrWhiteSpace(model.CompanyRegency)) addressParts.Add(model.CompanyRegency);
+                    if (!string.IsNullOrWhiteSpace(model.CompanyProvince)) addressParts.Add(model.CompanyProvince);
+                    if (!string.IsNullOrWhiteSpace(model.AddressPostalCode)) addressParts.Add(model.AddressPostalCode);
+
+                    model.CompanyAddress = string.Join(", ", addressParts);
+
+                    if (string.IsNullOrWhiteSpace(model.CompanyAddress))
+                    {
+                        ModelState.AddModelError("CompanyAddress", "Alamat perusahaan harus diisi");
+                    }
+
+                    Console.WriteLine($"✅ Company data processed - Name: '{model.CompanyName}', Address: '{model.CompanyAddress}'");
+                }
+
+                // ===============================================
+                // STEP 4: FINAL VALIDATION AFTER MAPPING
+                // ===============================================
+
+                // Now validate the mapped/processed data
                 if (string.IsNullOrWhiteSpace(model.CompanyName))
                 {
-                    basicValidationErrors.Add("Nama perusahaan harus diisi");
-                    ModelState.AddModelError(nameof(model.CompanyName), "Nama perusahaan harus diisi");
+                    var fieldName = model.ApplicantType == "Individual" ? "nama lengkap" : "nama perusahaan";
+                    ModelState.AddModelError("CompanyName", $"Field {fieldName} harus diisi");
+                    Console.WriteLine($"❌ Final validation failed: CompanyName is empty after mapping");
                 }
 
-                var addressParts = new List<string>();
-                if (!string.IsNullOrWhiteSpace(model.AddressStreet)) addressParts.Add(model.AddressStreet);
-                if (!string.IsNullOrWhiteSpace(model.AddressRT) || !string.IsNullOrWhiteSpace(model.AddressRW))
-                {
-                    addressParts.Add($"RT {model.AddressRT ?? "-"} / RW {model.AddressRW ?? "-"}");
-                }
-                if (!string.IsNullOrWhiteSpace(model.AddressVillage)) addressParts.Add($"Desa/Kel. {model.AddressVillage}");
-                if (!string.IsNullOrWhiteSpace(model.AddressDistrict)) addressParts.Add($"Kec. {model.AddressDistrict}");
-                if (!string.IsNullOrWhiteSpace(model.CompanyRegency)) addressParts.Add(model.CompanyRegency);
-                if (!string.IsNullOrWhiteSpace(model.CompanyProvince)) addressParts.Add(model.CompanyProvince);
-                if (!string.IsNullOrWhiteSpace(model.AddressPostalCode)) addressParts.Add(model.AddressPostalCode);
-
-                model.CompanyAddress = string.Join(", ", addressParts);
-
-                // Sekarang validasi CompanyAddress setelah digabungkan
                 if (string.IsNullOrWhiteSpace(model.CompanyAddress))
                 {
-                    basicValidationErrors.Add("Alamat perusahaan harus diisi");
-                    ModelState.AddModelError(nameof(model.CompanyAddress), "Alamat perusahaan harus diisi");
+                    var fieldName = model.ApplicantType == "Individual" ? "alamat lengkap" : "alamat perusahaan";
+                    ModelState.AddModelError("CompanyAddress", $"Field {fieldName} harus diisi");
+                    Console.WriteLine($"❌ Final validation failed: CompanyAddress is empty after mapping");
                 }
 
+                // ===============================================
+                // STEP 5: VALIDATE LIVESTOCK AND DOCUMENTS
+                // ===============================================
+
+                // Validate livestock details
                 if (model.LivestockDetails == null || !model.LivestockDetails.Any(d => !string.IsNullOrEmpty(d.LivestockType) && d.Quantity > 0))
                 {
-                    basicValidationErrors.Add("Minimal harus ada satu detail ternak yang valid");
                     ModelState.AddModelError("", "Minimal harus ada satu detail ternak yang valid");
                 }
 
+                // Validate required documents
                 if (!ValidateAllDocumentsUploaded(model))
                 {
-                    basicValidationErrors.Add("Semua dokumen wajib harus diupload");
+                    ModelState.AddModelError("", "Semua dokumen wajib harus diupload");
                 }
 
+                // Validate document details
                 if (!ValidateDocumentDetails(model))
                 {
-                    basicValidationErrors.Add("Detail dokumen (tanggal dan nomor) harus diisi dengan benar");
+                    ModelState.AddModelError("", "Detail dokumen (tanggal dan nomor) harus diisi dengan benar");
                 }
 
-                if (basicValidationErrors.Any())
-                {
-                    basicValidationErrors.ForEach(error => Console.WriteLine($"❌ {error}"));
-                }
+                // ===============================================
+                // STEP 6: CHECK MODELSTATE AND RETURN IF ERRORS
+                // ===============================================
 
                 if (!ModelState.IsValid)
                 {
+                    Console.WriteLine("❌ ModelState validation failed:");
                     foreach (var modelError in ModelState)
                     {
                         foreach (var error in modelError.Value.Errors)
                         {
-                            Console.WriteLine($"Field: {modelError.Key}, Error: {error.ErrorMessage}");
+                            Console.WriteLine($"❌ ModelState Error - Field: {modelError.Key}, Error: {error.ErrorMessage}");
                         }
                     }
 
+                    // Ensure there's at least one livestock detail for the form
                     if (model.LivestockDetails == null || !model.LivestockDetails.Any())
                     {
                         model.LivestockDetails.Add(new LivestockDetailViewModel());
@@ -576,6 +791,10 @@ namespace PerizinanPeternakan.Controllers
 
                     return View(model);
                 }
+
+                // ===============================================
+                // STEP 7: PROCESS SUCCESSFUL SUBMISSION
+                // ===============================================
 
                 var user = await _context.Users.FindAsync(userId.Value);
                 if (user == null)
@@ -586,26 +805,32 @@ namespace PerizinanPeternakan.Controllers
 
                 var applicationNumber = await GenerateApplicationNumber();
 
+                Console.WriteLine($"✅ Creating permit application - Number: {applicationNumber}");
 
                 var permitApplication = new LivestockPermitApplication
                 {
                     ApplicationNumber = applicationNumber,
                     UserId = userId.Value,
+
                     CompanyName = model.CompanyName.Trim(),
                     CompanyAddress = model.CompanyAddress,
+
                     OriginLocation = model.OriginLocation?.Trim() ?? "",
                     DestinationLocation = model.DestinationLocation?.Trim() ?? "",
                     DeparturePort = model.DeparturePort?.Trim() ?? "",
                     ArrivalPort = model.ArrivalPort?.Trim() ?? "",
+
                     Status = PermitStatus.Submitted,
                     SubmissionDate = DateTime.Now,
                     CurrentApprovalLevel = 1,
+
                     OriginProvinceId = model.OriginProvinceId,
                     OriginRegencyId = model.OriginRegencyId,
                     DestinationProvinceId = model.DestinationProvinceId,
                     DestinationRegencyId = model.DestinationRegencyId
                 };
 
+                // Add livestock details
                 foreach (var livestockDetail in model.LivestockDetails.Where(d => !string.IsNullOrEmpty(d.LivestockType) && d.Quantity > 0))
                 {
                     permitApplication.LivestockDetails.Add(new LivestockDetail
@@ -616,22 +841,17 @@ namespace PerizinanPeternakan.Controllers
                     });
                 }
 
-                Console.WriteLine($"🐄 Added {permitApplication.LivestockDetails.Count} livestock details");
-
-                // Save permit application first
+                // Save permit application
                 _context.PermitApplications.Add(permitApplication);
                 await _context.SaveChangesAsync();
 
-                Console.WriteLine($"💾 Permit application saved with ID: {permitApplication.Id}");
+                Console.WriteLine($"✅ Permit application saved with ID: {permitApplication.Id}");
 
                 // Upload supporting documents
                 var uploadResult = await UploadSupportingDocuments(permitApplication.Id, model, userId.Value);
 
                 if (!uploadResult.Success)
                 {
-                    Console.WriteLine($"❌ Document upload failed: {uploadResult.ErrorMessage}");
-
-                    // Remove the permit application if document upload fails
                     _context.PermitApplications.Remove(permitApplication);
                     await _context.SaveChangesAsync();
 
@@ -645,9 +865,7 @@ namespace PerizinanPeternakan.Controllers
                     return View(model);
                 }
 
-                Console.WriteLine($"✅ Successfully uploaded {uploadResult.UploadedCount} documents");
-
-                // Add approval history entry
+                // Add approval history
                 var approvalHistory = new PermitApprovalHistory
                 {
                     PermitApplicationId = permitApplication.Id,
@@ -655,32 +873,35 @@ namespace PerizinanPeternakan.Controllers
                     FromStatus = PermitStatus.Draft,
                     ToStatus = PermitStatus.Submitted,
                     Action = "Submit",
-                    Comments = "Permohonan izin diajukan oleh pemohon",
+                    Comments = model.ApplicantType == "Individual"
+                        ? $"Permohonan izin diajukan oleh pemohon perorangan: {model.IndividualName}"
+                        : $"Permohonan izin diajukan oleh perusahaan: {model.CompanyName}",
                     ActionDate = DateTime.Now
                 };
 
                 _context.PermitApprovalHistories.Add(approvalHistory);
                 await _context.SaveChangesAsync();
 
-                Console.WriteLine("📝 Approval history entry created");
+                // Success message
+                var applicantTypeText = model.ApplicantType == "Individual" ? "perorangan" : "perusahaan";
+                var applicantName = model.ApplicantType == "Individual" ? model.IndividualName : model.CompanyName;
 
-                // Set success message
                 TempData["SuccessMessage"] = $"Permohonan izin berhasil diajukan dengan nomor {applicationNumber}. " +
+                                           $"Pemohon: {applicantName} ({applicantTypeText}). " +
                                            $"Total {uploadResult.UploadedCount} dokumen pendukung telah diupload. " +
                                            "Permohonan Anda akan segera diproses oleh tim admin.";
 
-                Console.WriteLine("🎉 Permit creation process completed successfully");
+                Console.WriteLine($"✅ Permit application created successfully - ID: {permitApplication.Id}, Number: {applicationNumber}");
 
                 return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error creating permit: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                Console.WriteLine($"❌ Error in Create method: {ex.Message}");
+                Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
 
                 ModelState.AddModelError("", "Terjadi kesalahan saat menyimpan permohonan. Silakan coba lagi.");
 
-                // Ensure there's at least one livestock detail for the form
                 if (model.LivestockDetails == null || !model.LivestockDetails.Any())
                 {
                     model.LivestockDetails.Add(new LivestockDetailViewModel());
@@ -689,15 +910,15 @@ namespace PerizinanPeternakan.Controllers
                 return View(model);
             }
         }
+
         private async Task<(bool Success, string ErrorMessage, int UploadedCount)> UploadSupportingDocuments(int permitId, PermitApplicationViewModel model, int userId)
         {
-            var uploadedFiles = new List<string>(); // For cleanup in case of error
+            var uploadedFiles = new List<string>(); 
 
             try
             {
                 Console.WriteLine($"🚀 Starting document upload process for permit ID: {permitId}");
 
-                // Updated documents array with additional details
                 var documentsToUpload = new[]
                 {
             (File: model.SuratPermohonan, Type: "SURAT_PERMOHONAN", Name: "Surat Permohonan",
@@ -719,7 +940,10 @@ namespace PerizinanPeternakan.Controllers
              Date: (DateTime?)null, Number: (string?)null),
 
             (File: model.HasilPemeriksaanFisik, Type: "HASIL_PEMERIKSAAN_FISIK", Name: "Hasil Pemeriksaan Fisik (Holding Ground)",
-             Date: (DateTime?)null, Number: (string?)null)
+             Date: (DateTime?)null, Number: (string?)null),
+                (File: model.DokumenOpsional, Type: "DOKUMEN_OPSIONAL", Name: model.DokumenOpsionalNama ?? "Dokumen Opsional",
+     Date: model.DokumenOpsionalTanggal, Number: model.DokumenOpsionalNomor)
+
         };
 
                 // Create upload directory if it doesn't exist
@@ -727,7 +951,6 @@ namespace PerizinanPeternakan.Controllers
                 if (!Directory.Exists(uploadsPath))
                 {
                     Directory.CreateDirectory(uploadsPath);
-                    Console.WriteLine($"📁 Created upload directory: {uploadsPath}");
                 }
 
                 int uploadedCount = 0;
@@ -738,10 +961,6 @@ namespace PerizinanPeternakan.Controllers
                 {
                     if (file != null && file.Length > 0)
                     {
-                        Console.WriteLine($"📄 Processing document: {name}");
-                        Console.WriteLine($"   File: {file.FileName} ({FormatFileSize(file.Length)})");
-                        Console.WriteLine($"   Date: {date?.ToString("yyyy-MM-dd") ?? "N/A"}");
-                        Console.WriteLine($"   Number: {number ?? "N/A"}");
 
                         // Validate file
                         if (!IsValidFile(file))
@@ -763,17 +982,14 @@ namespace PerizinanPeternakan.Controllers
                             {
                                 await file.CopyToAsync(stream);
                             }
-                            uploadedFiles.Add(filePath); // Track for cleanup
-                            Console.WriteLine($"💾 File saved to: {uniqueFileName}");
+                            uploadedFiles.Add(filePath); 
                         }
                         catch (Exception fileEx)
                         {
-                            Console.WriteLine($"❌ Error saving file {name}: {fileEx.Message}");
                             CleanupUploadedFiles(uploadedFiles);
                             return (false, $"Gagal menyimpan file {name}: {fileEx.Message}", uploadedCount);
                         }
 
-                        // Create database record with document details
                         var document = new PermitDocument
                         {
                             PermitApplicationId = permitId,
@@ -785,7 +1001,6 @@ namespace PerizinanPeternakan.Controllers
                             UploadedByUserId = userId,
                             UploadDate = DateTime.Now,
 
-                            // NEW: Document details
                             DocumentDate = date,
                             DocumentNumber = number,
                             DocumentDescription = GenerateDocumentDescription(name, number, date)
@@ -793,44 +1008,32 @@ namespace PerizinanPeternakan.Controllers
 
                         uploadedDocuments.Add(document);
                         uploadedCount++;
-
-                        Console.WriteLine($"✅ Document {name} processed successfully");
-                        Console.WriteLine($"   Document details: Date={date?.ToString("yyyy-MM-dd") ?? "N/A"}, Number={number ?? "N/A"}");
                     }
                     else
                     {
-                        Console.WriteLine($"⚠️ Document {name} is null or empty - skipping");
                     }
                 }
 
-                // Validate that we have at least some documents
                 if (!uploadedDocuments.Any())
                 {
                     return (false, "Tidak ada dokumen yang berhasil diupload", 0);
                 }
 
-                // Save all documents to database
                 try
                 {
                     _context.PermitDocuments.AddRange(uploadedDocuments);
                     await _context.SaveChangesAsync();
 
-                    Console.WriteLine($"💾 Saved {uploadedDocuments.Count} documents to database");
-                    Console.WriteLine($"🎉 Upload process completed successfully. Total uploaded: {uploadedCount}");
-
                     return (true, string.Empty, uploadedCount);
                 }
                 catch (Exception dbEx)
                 {
-                    Console.WriteLine($"❌ Database error: {dbEx.Message}");
                     CleanupUploadedFiles(uploadedFiles);
                     return (false, $"Gagal menyimpan informasi dokumen ke database: {dbEx.Message}", 0);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Unexpected error in UploadSupportingDocuments: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 CleanupUploadedFiles(uploadedFiles);
                 return (false, $"Terjadi kesalahan saat upload dokumen: {ex.Message}", 0);
             }
@@ -907,8 +1110,8 @@ namespace PerizinanPeternakan.Controllers
         private (bool IsValid, List<string> Errors) ValidateUploadedFile(IFormFile file)
         {
             var errors = new List<string>();
-            const int maxFileSize = 5 * 1024 * 1024; // 5MB
-            const int minFileSize = 1024; // 1KB minimum
+            const int maxFileSize = 5 * 1024 * 1024; 
+            const int minFileSize = 1024; 
 
             var allowedExtensions = new[] { ".pdf", ".jpg", ".jpeg", ".png" };
             var allowedMimeTypes = new[] {
@@ -916,7 +1119,7 @@ namespace PerizinanPeternakan.Controllers
         "image/jpeg",
         "image/jpg",
         "image/png",
-        "image/pjpeg" // IE compatibility
+        "image/pjpeg" 
     };
 
             if (file == null || file.Length == 0)
@@ -925,7 +1128,6 @@ namespace PerizinanPeternakan.Controllers
                 return (false, errors);
             }
 
-            // Check file size
             if (file.Length > maxFileSize)
             {
                 errors.Add($"Ukuran file terlalu besar. Maksimal {FormatFileSize(maxFileSize)} (saat ini: {FormatFileSize(file.Length)})");
@@ -1255,6 +1457,7 @@ namespace PerizinanPeternakan.Controllers
         }
 
         #endregion
+        
         [HttpGet]
         public async Task<IActionResult> Approve(int id)
         {
@@ -1303,7 +1506,6 @@ namespace PerizinanPeternakan.Controllers
                     Quantity = d.Quantity,
                     Description = d.Description
                 }).ToList(),
-                // ENHANCED: Include document details in approval view
                 Documents = permit.Documents.Select(d => new DocumentViewModel
                 {
                     Id = d.Id,
@@ -1314,7 +1516,6 @@ namespace PerizinanPeternakan.Controllers
                     FileExtension = d.FileExtension,
                     UploadDate = d.UploadDate,
                     UploadedBy = d.UploadedByUser.NamaLengkap,
-                    // NEW: Document details for approval review
                     DocumentDate = d.DocumentDate,
                     DocumentNumber = d.DocumentNumber,
                     DocumentDescription = d.DocumentDescription
@@ -1340,7 +1541,6 @@ namespace PerizinanPeternakan.Controllers
 
             var userRole = HttpContext.Session.GetString("Role");
 
-            // Check permission
             bool canDownload = false;
             if (userRole == "User" && document.PermitApplication.UserId == userId.Value)
             {
@@ -1401,7 +1601,6 @@ namespace PerizinanPeternakan.Controllers
                 return NotFound();
             }
 
-            // Check permission to view document
             bool canView = false;
             switch (userRole)
             {
@@ -1424,14 +1623,12 @@ namespace PerizinanPeternakan.Controllers
                 return Forbid();
             }
 
-            // Generate fresh PDF content if needed or document doesn't exist
             if (string.IsNullOrEmpty(permit.GeneratedDocumentPath))
             {
                 await GeneratePermitDocument(permit);
                 await _context.SaveChangesAsync();
             }
 
-            // Create view model for document viewer
             var viewModel = new PermitDocumentViewModel
             {
                 PermitId = permit.Id,
@@ -1446,7 +1643,6 @@ namespace PerizinanPeternakan.Controllers
             return View(viewModel);
         }
 
-        // Method untuk mendapatkan konten dokumen sebagai HTML
         private async Task<string> GetDocumentContent(LivestockPermitApplication permit)
         {
             try
@@ -1684,7 +1880,7 @@ namespace PerizinanPeternakan.Controllers
             }
         }
 
-        // GET: Permit/Download/5 - Download PDF (hanya untuk User dengan status FinalApproved)
+        
         public async Task<IActionResult> Download(int id)
         {
             var userId = GetCurrentUserId();
@@ -1706,7 +1902,6 @@ namespace PerizinanPeternakan.Controllers
                 return RedirectToAction("Index");
             }
 
-            // Check access rights - hanya User yang bisa download
             if (userRole != "User")
             {
                 TempData["ErrorMessage"] = "Download hanya tersedia untuk pemohon";
@@ -1719,7 +1914,7 @@ namespace PerizinanPeternakan.Controllers
                 return RedirectToAction("Index");
             }
 
-            // User hanya bisa download jika sudah final approved
+
             if (permit.Status != PermitStatus.FinalApproved || string.IsNullOrEmpty(permit.GeneratedDocumentPath))
             {
                 TempData["ErrorMessage"] = "Dokumen belum tersedia untuk didownload. Menunggu persetujuan akhir.";
@@ -1909,9 +2104,6 @@ namespace PerizinanPeternakan.Controllers
 
         #region Helper Methods for Index DataTable
 
-        /// <summary>
-        /// API endpoint untuk mendapatkan data permits dalam format JSON untuk DataTables
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetPermitsData(
             int draw = 1,
@@ -1930,7 +2122,6 @@ namespace PerizinanPeternakan.Controllers
             {
                 var query = GetPermitsQuery(userRole, userId.Value);
 
-                // Apply search filter
                 if (!string.IsNullOrEmpty(search))
                 {
                     query = query.Where(p =>
@@ -2706,6 +2897,29 @@ namespace PerizinanPeternakan.Controllers
                     }
                 }
 
+                // Validate Dokumen Opsional details (jika ada)
+                if (model.DokumenOpsional != null && model.DokumenOpsional.Length > 0)
+                {
+                    // Validasi tanggal (opsional tapi jika diisi harus valid)
+                    if (model.DokumenOpsionalTanggal.HasValue && model.DokumenOpsionalTanggal.Value > DateTime.Today)
+                    {
+                        errors.Add("Tanggal dokumen opsional tidak boleh di masa depan");
+                    }
+
+                    // Validasi nomor dokumen (opsional tapi jika diisi harus valid format)
+                    if (!string.IsNullOrWhiteSpace(model.DokumenOpsionalNomor) &&
+                        !IsValidDocumentNumber(model.DokumenOpsionalNomor))
+                    {
+                        errors.Add("Format nomor dokumen opsional tidak valid");
+                    }
+
+                    // Validasi nama dokumen (wajib jika upload dokumen)
+                    if (string.IsNullOrWhiteSpace(model.DokumenOpsionalNama))
+                    {
+                        errors.Add("Nama dokumen opsional harus diisi jika mengupload dokumen");
+                    }
+                }
+
                 // Add errors to ModelState
                 foreach (var error in errors)
                 {
@@ -3120,6 +3334,376 @@ namespace PerizinanPeternakan.Controllers
                 });
             }
         }
+
+        // Baru banget ini
+
+        /// <summary>
+        /// API endpoint untuk mengambil data user dengan format yang lebih spesifik
+        /// untuk form individual applicant
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetCurrentUserForIndividualForm()
+        {
+            try
+            {
+                var username = User.Identity.Name;
+                if (string.IsNullOrEmpty(username))
+                {
+                    return Json(new { success = false, message = "User tidak terautentikasi" });
+                }
+
+                var user = await _context.Users
+                    .Where(u => u.Username == username)
+                    .FirstOrDefaultAsync();
+
+                if (user == null)
+                {
+                    return Json(new { success = false, message = "Data user tidak ditemukan" });
+                }
+
+                // Format response khusus untuk individual form
+                var individualFormData = new
+                {
+                    success = true,
+                    data = new
+                    {
+                        // Data untuk form individual
+                        individualName = user.NamaLengkap ?? "",
+                        individualAddress = user.Alamat ?? "",
+                        individualProvince = "", // Set dari session atau database jika ada
+                        individualRegency = "", // Set dari session atau database jika ada
+
+                        // Data tambahan
+                        email = user.Email ?? "",
+                        noTelepon = user.NoTelepon ?? "",
+
+                        // Helper flags
+                        hasAddress = !string.IsNullOrEmpty(user.Alamat),
+                        hasName = !string.IsNullOrEmpty(user.NamaLengkap),
+                        needsLocationData = string.IsNullOrEmpty(user.Alamat),
+
+                        // Instructions for user
+                        suggestions = GenerateFormSuggestions(user)
+                    },
+                    message = "Data berhasil dimuat untuk form perorangan"
+                };
+
+                return Json(individualFormData);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error in GetCurrentUserForIndividualForm: {ex.Message}");
+                return Json(new
+                {
+                    success = false,
+                    message = "Terjadi kesalahan saat mengambil data user"
+                });
+            }
+        }
+
+        /// <summary>
+        /// Generate suggestions untuk user berdasarkan kelengkapan profil
+        /// </summary>
+        private List<string> GenerateFormSuggestions(User user)
+        {
+            var suggestions = new List<string>();
+
+            if (string.IsNullOrEmpty(user.NamaLengkap))
+            {
+                suggestions.Add("Lengkapi nama lengkap di profil untuk mempercepat pengisian form");
+            }
+
+            if (string.IsNullOrEmpty(user.Alamat))
+            {
+                suggestions.Add("Tambahkan alamat di profil untuk mempercepat pengisian form");
+            }
+
+            if (string.IsNullOrEmpty(user.NoTelepon))
+            {
+                suggestions.Add("Tambahkan nomor telepon di profil untuk keperluan komunikasi");
+            }
+
+            if (suggestions.Count == 0)
+            {
+                suggestions.Add("Profil Anda sudah lengkap!");
+            }
+
+            return suggestions;
+        }
+
+        /// <summary>
+        /// Bulk update user profile data
+        /// Useful jika user ingin mengupdate profil dari form individual
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> UpdateUserProfileFromForm([FromBody] UpdateProfileRequest request)
+        {
+            try
+            {
+                var username = User.Identity.Name;
+                if (string.IsNullOrEmpty(username))
+                {
+                    return Json(new { success = false, message = "User tidak terautentikasi" });
+                }
+
+                var user = await _context.Users
+                    .Where(u => u.Username == username)
+                    .FirstOrDefaultAsync();
+
+                if (user == null)
+                {
+                    return Json(new { success = false, message = "User tidak ditemukan" });
+                }
+
+                // Update only if new data is provided and different from current
+                bool hasChanges = false;
+
+                if (!string.IsNullOrEmpty(request.NamaLengkap) && user.NamaLengkap != request.NamaLengkap)
+                {
+                    user.NamaLengkap = request.NamaLengkap.Trim();
+                    hasChanges = true;
+                }
+
+                if (!string.IsNullOrEmpty(request.Alamat) && user.Alamat != request.Alamat)
+                {
+                    user.Alamat = request.Alamat.Trim();
+                    hasChanges = true;
+                }
+
+                if (!string.IsNullOrEmpty(request.NoTelepon) && user.NoTelepon != request.NoTelepon)
+                {
+                    user.NoTelepon = request.NoTelepon.Trim();
+                    hasChanges = true;
+                }
+
+                if (hasChanges)
+                {
+                    await _context.SaveChangesAsync();
+                    Console.WriteLine($"✅ Updated profile for user: {username}");
+
+                    return Json(new
+                    {
+                        success = true,
+                        message = "Profil berhasil diperbarui",
+                        data = new
+                        {
+                            namaLengkap = user.NamaLengkap,
+                            alamat = user.Alamat,
+                            noTelepon = user.NoTelepon
+                        }
+                    });
+                }
+                else
+                {
+                    return Json(new
+                    {
+                        success = true,
+                        message = "Tidak ada perubahan data",
+                        data = new
+                        {
+                            namaLengkap = user.NamaLengkap,
+                            alamat = user.Alamat,
+                            noTelepon = user.NoTelepon
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error updating user profile: {ex.Message}");
+                return Json(new
+                {
+                    success = false,
+                    message = "Terjadi kesalahan saat memperbarui profil"
+                });
+            }
+        }
+
+        /// <summary>
+        /// Validate individual form data before submission
+        /// </summary>
+        [HttpPost]
+        public IActionResult ValidateIndividualData([FromBody] IndividualValidationRequest request)
+        {
+            try
+            {
+                var errors = new List<string>();
+                var warnings = new List<string>();
+
+                // Required field validation
+                if (string.IsNullOrWhiteSpace(request.IndividualName))
+                    errors.Add("Nama lengkap wajib diisi");
+
+                if (string.IsNullOrWhiteSpace(request.IndividualProvince))
+                    errors.Add("Provinsi wajib diisi");
+
+                if (string.IsNullOrWhiteSpace(request.IndividualRegency))
+                    errors.Add("Kabupaten/Kota wajib diisi");
+
+                if (string.IsNullOrWhiteSpace(request.IndividualAddress))
+                    errors.Add("Alamat lengkap wajib diisi");
+
+                // Data quality validation
+                if (!string.IsNullOrEmpty(request.IndividualName))
+                {
+                    if (request.IndividualName.Length < 3)
+                        warnings.Add("Nama terlalu pendek, pastikan nama lengkap sudah benar");
+
+                    if (request.IndividualName.Split(' ').Length < 2)
+                        warnings.Add("Disarankan menggunakan nama lengkap (minimal 2 kata)");
+                }
+
+                if (!string.IsNullOrEmpty(request.IndividualAddress))
+                {
+                    if (request.IndividualAddress.Length < 10)
+                        warnings.Add("Alamat terlalu pendek, pastikan alamat lengkap sudah benar");
+                }
+
+                // Business logic validation
+                if (errors.Count == 0)
+                {
+                    // Check for duplicate names (optional)
+                    // var duplicateCount = await _context.PermitApplications
+                    //     .CountAsync(p => p.CompanyName.Contains(request.IndividualName));
+                    // 
+                    // if (duplicateCount > 0)
+                    // {
+                    //     warnings.Add($"Ditemukan {duplicateCount} permohonan dengan nama serupa");
+                    // }
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    isValid = errors.Count == 0,
+                    errors = errors,
+                    warnings = warnings,
+                    validationSummary = new
+                    {
+                        totalErrors = errors.Count,
+                        totalWarnings = warnings.Count,
+                        canProceed = errors.Count == 0,
+                        severity = errors.Count > 0 ? "error" : (warnings.Count > 0 ? "warning" : "success")
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error in individual validation: {ex.Message}");
+                return Json(new
+                {
+                    success = false,
+                    message = "Terjadi kesalahan saat validasi data"
+                });
+            }
+        }
+
+        /// <summary>
+        /// Get location suggestions based on user input
+        /// Helpful untuk autocomplete provinsi/kabupaten
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetLocationSuggestions(string query, string type = "province")
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(query) || query.Length < 2)
+                {
+                    return Json(new { success = true, data = new List<object>() });
+                }
+
+                // This is a placeholder - replace with your actual location data source
+                var suggestions = new List<object>();
+
+                if (type.ToLower() == "province")
+                {
+                    // Example province suggestions
+                    var provinces = new[]
+                    {
+                "Nusa Tenggara Barat",
+                "Nusa Tenggara Timur",
+                "Bali",
+                "Jawa Barat",
+                "Jawa Tengah",
+                "Jawa Timur",
+                "DKI Jakarta"
+            };
+
+                    suggestions = provinces
+                        .Where(p => p.ToLower().Contains(query.ToLower()))
+                        .Select(p => new { text = p, value = p })
+                        .ToList<object>();
+                }
+                else if (type.ToLower() == "regency")
+                {
+                    // Example regency suggestions for NTB
+                    var regencies = new[]
+                    {
+                "Kota Mataram",
+                "Kabupaten Lombok Barat",
+                "Kabupaten Lombok Tengah",
+                "Kabupaten Lombok Timur",
+                "Kabupaten Lombok Utara",
+                "Kabupaten Sumbawa",
+                "Kabupaten Sumbawa Barat",
+                "Kabupaten Dompu",
+                "Kabupaten Bima",
+                "Kota Bima"
+            };
+
+                    suggestions = regencies
+                        .Where(r => r.ToLower().Contains(query.ToLower()))
+                        .Select(r => new { text = r, value = r })
+                        .ToList<object>();
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    data = suggestions,
+                    query = query,
+                    type = type,
+                    count = suggestions.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error getting location suggestions: {ex.Message}");
+                return Json(new
+                {
+                    success = false,
+                    message = "Terjadi kesalahan saat mengambil saran lokasi"
+                });
+            }
+        }
+
+
+
+        #region Request Models untuk API baru
+
+        /// <summary>
+        /// Request model untuk update profile
+        /// </summary>
+        public class UpdateProfileRequest
+        {
+            public string? NamaLengkap { get; set; }
+            public string? Alamat { get; set; }
+            public string? NoTelepon { get; set; }
+            public string? Email { get; set; }
+        }
+
+        /// <summary>
+        /// Request model untuk validasi data individual
+        /// </summary>
+        public class IndividualValidationRequest
+        {
+            public string? IndividualName { get; set; }
+            public string? IndividualProvince { get; set; }
+            public string? IndividualRegency { get; set; }
+            public string? IndividualAddress { get; set; }
+        }
+
+        #endregion
     }
 
 

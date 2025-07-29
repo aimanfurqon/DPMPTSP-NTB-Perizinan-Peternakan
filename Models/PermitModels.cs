@@ -8,15 +8,12 @@ namespace PerizinanPeternakan.Models
 
         [Required(ErrorMessage = "Nomor permohonan harus diisi")]
         public string ApplicationNumber { get; set; } = string.Empty;
-
         public int UserId { get; set; }
         public virtual User User { get; set; }
 
-        [Required(ErrorMessage = "Nama perusahaan harus diisi")]
         [StringLength(200, ErrorMessage = "Nama perusahaan maksimal 200 karakter")]
         public string CompanyName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Alamat perusahaan harus diisi")]
         [StringLength(500, ErrorMessage = "Alamat perusahaan maksimal 500 karakter")]
         public string CompanyAddress { get; set; } = string.Empty;
 
@@ -105,53 +102,39 @@ namespace PerizinanPeternakan.Models
     public class PermitApprovalHistory
     {
         public int Id { get; set; }
-
         public int PermitApplicationId { get; set; }
         public virtual LivestockPermitApplication PermitApplication { get; set; }
-
         public int UserId { get; set; }
         public virtual User User { get; set; }
-
         public PermitStatus FromStatus { get; set; }
-
         public PermitStatus ToStatus { get; set; }
-
         [Required(ErrorMessage = "Aksi harus diisi")]
         [StringLength(50, ErrorMessage = "Aksi maksimal 50 karakter")]
         public string Action { get; set; } = string.Empty;
-
         [StringLength(1000, ErrorMessage = "Komentar maksimal 1000 karakter")]
         public string? Comments { get; set; }
-
         public DateTime ActionDate { get; set; } = DateTime.Now;
     }
 
     public class PermitDocument
     {
         public int Id { get; set; }
-
         public int PermitApplicationId { get; set; }
         public virtual LivestockPermitApplication PermitApplication { get; set; }
-
         [Required(ErrorMessage = "Nama dokumen harus diisi")]
         [StringLength(200, ErrorMessage = "Nama dokumen maksimal 200 karakter")]
         public string DocumentName { get; set; } = string.Empty;
-
         [Required(ErrorMessage = "Path file harus diisi")]
         [StringLength(500, ErrorMessage = "Path file maksimal 500 karakter")]
         public string FilePath { get; set; } = string.Empty;
-
         [Required(ErrorMessage = "Tipe dokumen harus diisi")]
         [StringLength(50, ErrorMessage = "Tipe dokumen maksimal 50 karakter")]
         public string DocumentType { get; set; } = string.Empty;
-
         public long FileSize { get; set; }
 
         [StringLength(10, ErrorMessage = "Ekstensi file maksimal 10 karakter")]
         public string FileExtension { get; set; } = string.Empty;
-
         public DateTime UploadDate { get; set; } = DateTime.Now;
-
         public int UploadedByUserId { get; set; }
         public virtual User UploadedByUser { get; set; }
 
@@ -167,10 +150,8 @@ namespace PerizinanPeternakan.Models
         [StringLength(500, ErrorMessage = "Keterangan dokumen maksimal 500 karakter")]
         public string? DocumentDescription { get; set; }
 
-        // Helper properties to check if this document has additional details
         public bool HasDocumentDetails => DocumentDate.HasValue || !string.IsNullOrEmpty(DocumentNumber);
 
-        // Helper property to format document details
         public string FormattedDocumentDetails
         {
             get
@@ -188,7 +169,6 @@ namespace PerizinanPeternakan.Models
         }
     }
 
-    // Updated Status Enum with new flow
     public enum PermitStatus
     {
         [Display(Name = "Draft")]
@@ -228,14 +208,8 @@ namespace PerizinanPeternakan.Models
         FinalRejected = 12
     }
 
-    // Updated Helper class
     public static class PermitStatusHelper
     {
-        /// <summary>
-        /// Mendapatkan CSS class untuk status badge
-        /// </summary>
-        /// <param name="status">Status permit</param>
-        /// <returns>CSS class name</returns>
         public static string GetStatusClass(PermitStatus status)
         {
             return status switch
@@ -255,11 +229,6 @@ namespace PerizinanPeternakan.Models
             };
         }
 
-        /// <summary>
-        /// Mendapatkan teks display untuk status
-        /// </summary>
-        /// <param name="status">Status permit</param>
-        /// <returns>Teks status</returns>
         public static string GetStatusText(PermitStatus status)
         {
             return status switch
@@ -279,11 +248,6 @@ namespace PerizinanPeternakan.Models
             };
         }
 
-        /// <summary>
-        /// Mendapatkan persentase progress berdasarkan status
-        /// </summary>
-        /// <param name="status">Status permit</param>
-        /// <returns>Persentase progress (0-100)</returns>
         public static int GetProgressPercentage(PermitStatus status)
         {
             return status switch
@@ -303,11 +267,6 @@ namespace PerizinanPeternakan.Models
             };
         }
 
-        /// <summary>
-        /// Mendapatkan teks progress berdasarkan status
-        /// </summary>
-        /// <param name="status">Status permit</param>
-        /// <returns>Teks progress</returns>
         public static string GetProgressText(PermitStatus status)
         {
             return status switch
@@ -327,11 +286,6 @@ namespace PerizinanPeternakan.Models
             };
         }
 
-        /// <summary>
-        /// Mendapatkan icon untuk status
-        /// </summary>
-        /// <param name="status">Status permit</param>
-        /// <returns>CSS class icon</returns>
         public static string GetStatusIcon(PermitStatus status)
         {
             return status switch
@@ -351,11 +305,6 @@ namespace PerizinanPeternakan.Models
             };
         }
 
-        /// <summary>
-        /// Mendapatkan daftar step progress dengan status completion
-        /// </summary>
-        /// <param name="currentStatus">Status saat ini</param>
-        /// <returns>List progress steps</returns>
         public static List<ProgressStep> GetProgressSteps(PermitStatus currentStatus)
         {
             var steps = new List<ProgressStep>
@@ -390,7 +339,6 @@ namespace PerizinanPeternakan.Models
                 }
             };
 
-            // Handle rejected status
             if (IsRejectedStatus(currentStatus))
             {
                 var rejectedStep = steps.FirstOrDefault(s => s.IsCurrent);
@@ -405,11 +353,6 @@ namespace PerizinanPeternakan.Models
             return steps;
         }
 
-        /// <summary>
-        /// Cek apakah status adalah status rejected
-        /// </summary>
-        /// <param name="status">Status permit</param>
-        /// <returns>True jika rejected</returns>
         public static bool IsRejectedStatus(PermitStatus status)
         {
             return status == PermitStatus.AdminRejected ||
@@ -417,11 +360,6 @@ namespace PerizinanPeternakan.Models
                    status == PermitStatus.KepalaDinasRejected;
         }
 
-        /// <summary>
-        /// Mendapatkan level approval berdasarkan status
-        /// </summary>
-        /// <param name="status">Status permit</param>
-        /// <returns>Level approval (1-4)</returns>
         public static int GetApprovalLevel(PermitStatus status)
         {
             return status switch
@@ -441,11 +379,6 @@ namespace PerizinanPeternakan.Models
             };
         }
 
-        /// <summary>
-        /// Mendapatkan estimasi waktu proses berdasarkan status
-        /// </summary>
-        /// <param name="status">Status permit</param>
-        /// <returns>Estimasi waktu dalam hari</returns>
         public static int GetEstimatedProcessingDays(PermitStatus status)
         {
             return status switch
@@ -461,11 +394,6 @@ namespace PerizinanPeternakan.Models
             };
         }
 
-        /// <summary>
-        /// Mendapatkan deskripsi status untuk user
-        /// </summary>
-        /// <param name="status">Status permit</param>
-        /// <returns>Deskripsi status</returns>
         public static string GetStatusDescription(PermitStatus status)
         {
             return status switch
@@ -485,11 +413,6 @@ namespace PerizinanPeternakan.Models
             };
         }
 
-        /// <summary>
-        /// Mendapatkan warna progress bar berdasarkan status
-        /// </summary>
-        /// <param name="status">Status permit</param>
-        /// <returns>CSS class untuk warna</returns>
         public static string GetProgressBarColor(PermitStatus status)
         {
             if (IsRejectedStatus(status))
@@ -512,9 +435,6 @@ namespace PerizinanPeternakan.Models
         }
     }
 
-    /// <summary>
-    /// Class untuk progress step
-    /// </summary>
     public class ProgressStep
     {
         public string Title { get; set; } = "";
