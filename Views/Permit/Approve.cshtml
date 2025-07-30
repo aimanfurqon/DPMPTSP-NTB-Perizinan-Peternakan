@@ -148,18 +148,53 @@
                     <i class="fas fa-file-alt"></i>
                     Dokumen Pendukung
                 </h3>
-                @if (Model.Documents.Count >= 7)
+
+                @{
+                    // ⭐ DEKLARASI DICTIONARY UNTUK DOKUMEN
+                    var requiredDocs = new Dictionary<string, string>
+                                {
+                                { "SURAT_PERMOHONAN", "Surat Permohonan" },
+                                { "REKOMENDASI_DINAS_PROV", "Rekomendasi Dinas Peternakan Provinsi NTB" },
+                                { "REKOMENDASI_DAERAH_TUJUAN", "Rekomendasi Pemasukan Ternak dari Daerah Tujuan" },
+                                { "SKKH_KABUPATEN_ASAL", "SKKH dari Kabupaten Asal" },
+                                { "SKKH_DINAS_PROVINSI", "SKKH dari Dinas Peternakan Provinsi NTB" },
+                                { "SURAT_JALAN_TERNAK", "Surat Keterangan Jalan Ternak/Rekomendasi Asal" },
+                                { "HASIL_PEMERIKSAAN_FISIK", "Hasil Pemeriksaan Fisik (Holding Ground)" }
+                                };
+
+                    var optionalDocs = new Dictionary<string, string>
+                                {
+                                { "DOKUMEN_OPSIONAL", "Dokumen Opsional" }
+                                };
+
+                    // PENGHITUNGAN DOKUMEN
+                    var requiredDocsCount = Model.Documents.Count(d => requiredDocs.ContainsKey(d.DocumentType));
+                    var optionalDocsCount = Model.Documents.Count(d => optionalDocs.ContainsKey(d.DocumentType));
+                    var totalDocsUploaded = requiredDocsCount + optionalDocsCount;
+                }
+
+                @if (requiredDocsCount >= 7)
                 {
                     <span class="document-status complete">
                         <i class="fas fa-check-circle"></i>
-                        Lengkap (@Model.Documents.Count/7)
+                        Lengkap (@requiredDocsCount/7 wajib
+                        @if (optionalDocsCount > 0)
+                        {
+                            <text> + @optionalDocsCount opsional</text>
+                        }
+                        )
                     </span>
                 }
                 else
                 {
                     <span class="document-status incomplete">
                         <i class="fas fa-exclamation-triangle"></i>
-                        Tidak Lengkap (@Model.Documents.Count/7)
+                        Tidak Lengkap (@requiredDocsCount/7 wajib
+                        @if (optionalDocsCount > 0)
+                        {
+                            <text> + @optionalDocsCount opsional</text>
+                        }
+                        )
                     </span>
                 }
             </div>
@@ -167,57 +202,112 @@
             <div class="documents-review">
                 @if (Model.Documents.Any())
                 {
-                    <div class="documents-grid">
-                        @foreach (var doc in Model.Documents)
-                        {
-                            <div class="document-card">
-                                <div class="document-header">
-                                    <div class="document-icon">
-                                        @switch (doc.FileExtension.ToLower())
-                                        {
-                                            case ".pdf":
-                                                <i class="fas fa-file-pdf text-danger"></i>
-                                                break;
-                                            case ".jpg":
-                                            case ".jpeg":
-                                            case ".png":
-                                                <i class="fas fa-file-image text-primary"></i>
-                                                break;
-                                            default:
-                                                <i class="fas fa-file text-secondary"></i>
-                                                break;
-                                        }
-                                    </div>
-                                    <div class="document-info">
-                                        <h4>@doc.DocumentDisplayName</h4>
-                                        <p class="document-meta">
-                                            <span class="file-size">@doc.FormattedFileSize</span>
-                                            <span class="upload-date">@doc.UploadDate.ToString("dd/MM/yyyy HH:mm")</span>
-                                        </p>
-                                    </div>
-                                </div>
+                   <!-- Section Documents-grid yang benar -->
+<div class="documents-grid">
+    @foreach (var doc in Model.Documents)
+    {
+        <div class="document-card @(optionalDocs.ContainsKey(doc.DocumentType) ? "optional-doc" : "required-doc")">
+            <div class="document-header">
+                <div class="document-icon">
+                    @switch (doc.FileExtension.ToLower())
+                    {
+                        case ".pdf":
+                            <i class="fas fa-file-pdf text-danger"></i>
+                            break;
+                        case ".jpg":
+                        case ".jpeg":
+                        case ".png":
+                            <i class="fas fa-file-image text-primary"></i>
+                            break;
+                        default:
+                            <i class="fas fa-file text-secondary"></i>
+                            break;
+                    }
+                </div>
+                <div class="document-info">
+                    <h4>@doc.DocumentDisplayName</h4>
 
-                                <div class="document-actions">
-                                    <a href="@Url.Action("DownloadDocument", "Permit", new { id = doc.Id })" 
-                                       class="btn btn-sm btn-outline-primary" 
-                                       target="_blank">
-                                        <i class="fas fa-download"></i>
-                                        Download
-                                    </a>
-                                    
-                                    @if (doc.FileExtension.ToLower() == ".pdf")
-                                    {
-                                        <button type="button" 
-                                                class="btn btn-sm btn-outline-secondary"
-                                                onclick="previewDocument('@doc.FilePath', '@doc.DocumentDisplayName')">
-                                            <i class="fas fa-eye"></i>
-                                            Preview
-                                        </button>
-                                    }
-                                </div>
-                            </div>
+                    <!-- Badge Tipe Dokumen -->
+                    <div class="document-badges">
+                        @if (optionalDocs.ContainsKey(doc.DocumentType))
+                        {
+                            <span class="doc-badge optional">Opsional</span>
+                        }
+                        else
+                        {
+                            <span class="doc-badge required">Wajib</span>
                         }
                     </div>
+
+                    <!-- Detail Dokumen -->
+                    @if (!string.IsNullOrEmpty(doc.DocumentNumber) || doc.DocumentDate.HasValue)
+                    {
+                        <div class="document-details">
+                            @if (doc.DocumentDate.HasValue)
+                            {
+                                <div class="detail-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>@doc.DocumentDate.Value.ToString("dd/MM/yyyy")</span>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(doc.DocumentNumber))
+                            {
+                                <div class="detail-item">
+                                    <i class="fas fa-hashtag"></i>
+                                    <span>@doc.DocumentNumber</span>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <p class="document-meta">
+                        <span class="file-size">@doc.FormattedFileSize</span>
+                        <span class="upload-date">@doc.UploadDate.ToString("dd/MM/yyyy HH:mm")</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="document-actions">
+                <a href="@Url.Action("DownloadDocument", "Permit", new { id = doc.Id })" 
+                   class="btn btn-sm btn-outline-primary" 
+                   target="_blank">
+                    <i class="fas fa-download"></i>
+                    Download
+                </a>
+
+                @if (doc.FileExtension.ToLower() == ".pdf")
+                {
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            onclick="previewDocument('@doc.FilePath', '@doc.DocumentDisplayName')">
+                        <i class="fas fa-eye"></i>
+                        Preview
+                    </button>
+                }
+                else if (doc.FileExtension.ToLower() == ".jpg" || doc.FileExtension.ToLower() == ".jpeg" || doc.FileExtension.ToLower() == ".png")
+                {
+                    <button type="button"
+                            class="btn btn-sm btn-outline-info"
+                            onclick="previewImage('@doc.FilePath', '@doc.DocumentDisplayName')">
+                        <i class="fas fa-image"></i>
+                        Preview
+                    </button>
+                }
+
+                @if (userRole == "Admin")
+                {
+                    <button type="button"
+                            class="btn btn-sm btn-outline-warning"
+                            onclick="editDocumentDetails(@doc.Id, '@doc.DocumentDisplayName')"
+                            title="Edit detail dokumen">
+                        <i class="fas fa-edit"></i>
+                        Edit
+                    </button>
+                }
+            </div>
+        </div>
+    }
+</div>
 
                     <!-- Document Requirements Checklist -->
                     <div class="document-checklist">
@@ -226,19 +316,7 @@
                             Checklist Dokumen Wajib
                         </h4>
                         
-                        @{
-                            var requiredDocs = new Dictionary<string, string>
-                            {
-                                { "SURAT_PERMOHONAN", "Surat Permohonan" },
-                                { "REKOMENDASI_DINAS_PROV", "Rekomendasi Dinas Peternakan Provinsi NTB" },
-                                { "REKOMENDASI_DAERAH_TUJUAN", "Rekomendasi Pemasukan Ternak dari Daerah Tujuan" },
-                                { "SKKH_KABUPATEN_ASAL", "SKKH dari Kabupaten Asal" },
-                                { "SKKH_DINAS_PROVINSI", "SKKH dari Dinas Peternakan Provinsi NTB" },
-                                { "SURAT_JALAN_TERNAK", "Surat Keterangan Jalan Ternak/Rekomendasi Asal" },
-                                { "HASIL_PEMERIKSAAN_FISIK", "Hasil Pemeriksaan Fisik (Holding Ground)" }
-                            };
-                        }
-
+                  
                         <div class="checklist-items">
                             @foreach (var requiredDoc in requiredDocs)
                             {
@@ -246,9 +324,26 @@
                                 <div class="checklist-item @(hasDoc ? "completed" : "missing")">
                                     <i class="fas @(hasDoc ? "fa-check-circle" : "fa-times-circle")"></i>
                                     <span class="checklist-text">@requiredDoc.Value</span>
+                                    <span class="doc-type-badge required">Wajib</span>
                                     @if (hasDoc)
                                     {
                                         var doc = Model.Documents.First(d => d.DocumentType == requiredDoc.Key);
+                                        <span class="checklist-meta">(@doc.FormattedFileSize)</span>
+                                    }
+                                </div>
+                            }
+
+                            <!-- ⭐ DOKUMEN OPSIONAL -->
+                            @foreach (var optionalDoc in optionalDocs)
+                            {
+                                var hasDoc = Model.Documents.Any(d => d.DocumentType == optionalDoc.Key);
+                                <div class="checklist-item @(hasDoc ? "completed" : "optional")">
+                                    <i class="fas @(hasDoc ? "fa-check-circle" : "fa-circle")"></i>
+                                    <span class="checklist-text">@optionalDoc.Value</span>
+                                    <span class="doc-type-badge optional">Opsional</span>
+                                    @if (hasDoc)
+                                    {
+                                        var doc = Model.Documents.First(d => d.DocumentType == optionalDoc.Key);
                                         <span class="checklist-meta">(@doc.FormattedFileSize)</span>
                                     }
                                 </div>
@@ -276,15 +371,21 @@
                 </h3>
             </div>
 
-            <form asp-action="Approve" method="post" class="approval-form" id="approvalForm">
-                <input type="hidden" asp-for="Id" />
-                <input type="hidden" asp-for="ApplicationNumber" />
+       <form asp-action="Approve" method="post" class="approval-form" id="approvalForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="ApplicationNumber" />
 
-                @if (userRole == "Admin" && Model.Documents.Count < 7)
+       
+                @if (userRole == "Admin" && requiredDocsCount < 7)
                 {
                     <div class="warning-message">
                         <i class="fas fa-exclamation-triangle"></i>
-                        <strong>Peringatan:</strong> Dokumen pendukung belum lengkap (@Model.Documents.Count/7). 
+                        <strong>Peringatan:</strong> Dokumen wajib belum lengkap (@requiredDocsCount/7).
+                        @if (optionalDocsCount > 0)
+                        {
+                            <text>Terdapat @optionalDocsCount dokumen opsional. </text>
+                        }
                         Permohonan tidak dapat disetujui sampai semua dokumen wajib diupload oleh pemohon.
                     </div>
                 }
@@ -315,11 +416,11 @@
 
                 <div class="action-buttons">
                     <div class="button-group">
-                        <button type="button" 
-                                class="btn btn-success btn-lg" 
-                                onclick="submitApproval('Approve')" 
+                        <button type="button"
+                                class="btn btn-success btn-lg"
+                                onclick="submitApproval('Approve')"
                                 id="approveBtn"
-                                @(userRole == "Admin" && Model.Documents.Count < 7 ? "disabled" : "")>
+                                @(userRole == "Admin" && requiredDocsCount < 7 ? "disabled" : "")>
                             <i class="fas fa-check"></i>
                             @if (userRole == "Admin")
                             {
@@ -420,6 +521,104 @@
     </div>
 </div>
 
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalTitle">
+                    <i class="fas fa-file-image text-primary"></i>
+                    Preview Gambar
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="image-preview-container">
+                    <div class="image-loading" id="imageLoader">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p>Memuat gambar...</p>
+                    </div>
+                    <img id="previewImage" src="" alt="Preview" class="img-fluid" style="display: none; max-height: 600px; border-radius: 8px;" />
+                    <div class="image-error" id="imageError" style="display: none;">
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                        <p>Gagal memuat gambar. Silakan download untuk melihat file.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-primary" onclick="downloadFromImagePreview()">
+                    <i class="fas fa-download"></i>
+                    Download
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ⭐ ADMIN: Edit Document Details Modal -->
+@if (userRole == "Admin")
+{
+    <div class="modal fade" id="editDocumentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-edit"></i>
+                        Edit Detail Dokumen
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editDocumentForm">
+                        <input type="hidden" id="editDocumentId" />
+
+                        <div class="mb-3">
+                            <label class="form-label">Nama Dokumen</label>
+                            <input type="text" id="editDocumentName" class="form-control" readonly />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editDocumentDate" class="form-label">
+                                <i class="fas fa-calendar"></i>
+                                Tanggal Dokumen
+                            </label>
+                            <input type="date" id="editDocumentDate" class="form-control" />
+                            <small class="form-text text-muted">Tanggal pengajuan dokumen</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editDocumentNumber" class="form-label">
+                                <i class="fas fa-hashtag"></i>
+                                Nomor Dokumen
+                            </label>
+                            <input type="text" id="editDocumentNumber" class="form-control" placeholder="Contoh: 001/SP/2025" />
+                            <small class="form-text text-muted">Nomor resmi dokumen</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editDocumentDescription" class="form-label">
+                                <i class="fas fa-comment"></i>
+                                Keterangan Dokumen
+                            </label>
+                            <textarea id="editDocumentDescription" class="form-control" rows="3" placeholder="Keterangan tambahan (opsional)"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" onclick="saveDocumentDetails()">
+                        <i class="fas fa-save"></i>
+                        Simpan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <!-- Confirmation Modal -->
 <div class="modal fade" id="confirmationModal" tabindex="-1">
     <div class="modal-dialog">
@@ -456,6 +655,156 @@
     <script>
         let selectedAction = '';
         let currentPreviewPath = '';
+         let currentImagePath = '';
+        let currentEditDocumentId = 0;
+
+        function previewImage(imagePath, imageName) {
+            currentImagePath = imagePath;
+            const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+
+            // Reset modal state
+            document.getElementById('imageModalTitle').innerHTML = `<i class="fas fa-file-image text-primary"></i> ${imageName}`;
+            document.getElementById('imageLoader').style.display = 'flex';
+            document.getElementById('previewImage').style.display = 'none';
+            document.getElementById('imageError').style.display = 'none';
+
+            // Load image
+            const img = document.getElementById('previewImage');
+            img.onload = function() {
+                document.getElementById('imageLoader').style.display = 'none';
+                img.style.display = 'block';
+            };
+
+            img.onerror = function() {
+                document.getElementById('imageLoader').style.display = 'none';
+                document.getElementById('imageError').style.display = 'block';
+            };
+
+            img.src = imagePath;
+            modal.show();
+        }
+
+        function downloadFromImagePreview() {
+            if (currentImagePath) {
+                window.open(currentImagePath, '_blank');
+            }
+        }
+
+         @if (userRole == "Admin")
+        {
+            <text>
+            function editDocumentDetails(documentId, documentName) {
+                currentEditDocumentId = documentId;
+                
+                // Reset form
+                document.getElementById('editDocumentId').value = documentId;
+                document.getElementById('editDocumentName').value = documentName;
+                document.getElementById('editDocumentDate').value = '';
+                document.getElementById('editDocumentNumber').value = '';
+                document.getElementById('editDocumentDescription').value = '';
+
+                // Load existing data
+                loadDocumentDetails(documentId);
+
+                
+                const modal = new bootstrap.Modal(document.getElementById('editDocumentModal'));
+                modal.show();
+            }
+
+            function loadDocumentDetails(documentId) {
+                // Find document in current model data
+                const documents = @Html.Raw(Json.Serialize(Model.Documents.Select(d => new { 
+                    Id = d.Id, 
+                    DocumentDate = d.DocumentDate?.ToString("yyyy-MM-dd"),
+                    DocumentNumber = d.DocumentNumber,
+                    DocumentDescription = d.DocumentDescription 
+                })));
+
+                const doc = documents.find(d => d.Id === documentId);
+                if (doc) {
+                    if (doc.DocumentDate) {
+                        document.getElementById('editDocumentDate').value = doc.DocumentDate;
+                    }
+                    if (doc.DocumentNumber) {
+                        document.getElementById('editDocumentNumber').value = doc.DocumentNumber;
+                    }
+                    if (doc.DocumentDescription) {
+                        document.getElementById('editDocumentDescription').value = doc.DocumentDescription;
+                    }
+                }
+            }
+
+            // ⭐ REPLACE function saveDocumentDetails() di script section dengan kode berikut:
+
+function saveDocumentDetails() {
+    const documentId = document.getElementById('editDocumentId').value;
+    const documentDate = document.getElementById('editDocumentDate').value;
+    const documentNumber = document.getElementById('editDocumentNumber').value;
+    const documentDescription = document.getElementById('editDocumentDescription').value;
+
+    // Validate
+    if (documentDate && new Date(documentDate) > new Date()) {
+        alert('Tanggal dokumen tidak boleh di masa depan');
+        return;
+    }
+
+    // Show loading
+    const saveBtn = document.querySelector('#editDocumentModal .btn-primary');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+    saveBtn.disabled = true;
+
+    // Get token
+    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+    // ⭐ FIX: Use the correct endpoint URL
+    fetch('/Permit/UpdateDocumentDetails', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'RequestVerificationToken': token
+        },
+        body: JSON.stringify({
+            DocumentId: parseInt(documentId),
+            DocumentDate: documentDate || null,
+            DocumentNumber: documentNumber || null,
+            DocumentDescription: documentDescription || null
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(`HTTP ${response.status}: ${text.substring(0, 100)}...`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            alert('Detail dokumen berhasil disimpan');
+            
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('editDocumentModal')).hide();
+            
+            // Reload page to show updated data
+            window.location.reload();
+        } else {
+            alert('Gagal menyimpan detail dokumen: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat menyimpan detail dokumen: ' + error.message);
+    })
+    .finally(() => {
+        // Restore button state
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    });
+}
+            </text>
+        }
 
         function submitApproval(action) {
             selectedAction = action;
@@ -471,13 +820,14 @@
             }
 
             // Check document completeness for admin approval
-            @if (userRole == "Admin")
-{
-    @:if (action === 'Approve' && @Model.Documents.Count < 7) {
-    @:    alert('Dokumen pendukung belum lengkap. Permohonan tidak dapat disetujui.');
-    @:    return;
-    @:}
-}
+                 // Check document completeness for admin approval
+        @if (userRole == "Admin")
+        {
+                @:if (action === 'Approve' && @requiredDocsCount < 7) {
+                @:    alert('Dokumen wajib belum lengkap. Permohonan tidak dapat disetujui.');
+                @:    return;
+                @:}
+        }
 
             // Show confirmation modal
             showConfirmationModal(action);
@@ -570,6 +920,17 @@
             modal.show();
         }
 
+        document.getElementById('documentPreviewModal').addEventListener('hidden.bs.modal', function() {
+            const iframe = document.getElementById('previewFrame');
+            iframe.src = 'about:blank';
+            currentPreviewPath = '';
+        });
+
+        document.getElementById('imagePreviewModal').addEventListener('hidden.bs.modal', function() {
+            document.getElementById('previewImage').src = '';
+            currentImagePath = '';
+        });
+
         function downloadFromPreview() {
             if (currentPreviewPath) {
                 window.open(currentPreviewPath, '_blank');
@@ -582,11 +943,5 @@
             this.style.height = (this.scrollHeight) + 'px';
         });
 
-        // Clean up when modals are closed
-        document.getElementById('documentPreviewModal').addEventListener('hidden.bs.modal', function() {
-            const iframe = document.getElementById('previewFrame');
-            iframe.src = 'about:blank';
-            currentPreviewPath = '';
-        });
     </script>
 }

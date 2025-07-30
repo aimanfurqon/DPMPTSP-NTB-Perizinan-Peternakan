@@ -1580,6 +1580,94 @@ namespace PerizinanPeternakan.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("Permit/UpdateDocumentDetails")]
+        public async Task<IActionResult> UpdateDocumentDetails([FromBody] EditDocumentDetailsRequest request)
+        {
+            try
+            {
+                // Validate request
+                if (request.DocumentId <= 0)
+                {
+                    return Json(new { success = false, message = "Document ID tidak valid" });
+                }
+
+                // Check authorization
+                var userId = GetCurrentUserId();
+                if (userId == null)
+                {
+                    return Json(new { success = false, message = "Session tidak valid" });
+                }
+
+                var userRole = HttpContext.Session.GetString("Role");
+                if (userRole != "Admin")
+                {
+                    return Json(new { success = false, message = "Tidak memiliki akses untuk mengedit dokumen" });
+                }
+
+                // Get document from database
+                var document = await _context.PermitDocuments
+                    .FirstOrDefaultAsync(d => d.Id == request.DocumentId);
+
+                if (document == null)
+                {
+                    return Json(new { success = false, message = "Dokumen tidak ditemukan" });
+                }
+
+                // Validate date if provided
+                if (request.DocumentDate.HasValue && request.DocumentDate.Value > DateTime.Today)
+                {
+                    return Json(new { success = false, message = "Tanggal dokumen tidak boleh di masa depan" });
+                }
+
+                // Validate document number format if provided
+                if (!string.IsNullOrEmpty(request.DocumentNumber) && !IsValidDocumentNumber(request.DocumentNumber))
+                {
+                    return Json(new { success = false, message = "Format nomor dokumen tidak valid" });
+                }
+
+                // Update document details
+                document.DocumentDate = request.DocumentDate;
+                document.DocumentNumber = request.DocumentNumber?.Trim();
+                document.DocumentDescription = request.DocumentDescription?.Trim();
+
+                // Save changes
+                await _context.SaveChangesAsync();
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Detail dokumen berhasil disimpan",
+                    data = new
+                    {
+                        documentId = document.Id,
+                        documentDate = document.DocumentDate?.ToString("yyyy-MM-dd"),
+                        documentNumber = document.DocumentNumber,
+                        documentDescription = document.DocumentDescription
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating document details: {ex.Message}");
+                return Json(new
+                {
+                    success = false,
+                    message = "Terjadi kesalahan server: " + ex.Message
+                });
+            }
+        }
+
+
+        // Request model untuk edit document details
+        public class EditDocumentDetailsRequest
+        {
+            public int DocumentId { get; set; }
+            public DateTime? DocumentDate { get; set; }
+            public string DocumentNumber { get; set; }
+            public string DocumentDescription { get; set; }
+        }
+
         [HttpGet]
         public async Task<IActionResult> ViewDocument(int id)
         {
@@ -3177,10 +3265,10 @@ namespace PerizinanPeternakan.Controllers
             ViewBag.PermitApplicationNumber = document.PermitApplication.ApplicationNumber;
             return View(model);
         }
-
         [HttpPost]
+        [Route("Permit/EditDocumentDetailsFromView")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditDocumentDetails(DocumentDetailsViewModel model)
+        public async Task<IActionResult> EditDocumentDetailsFromView(DocumentDetailsViewModel model)
         {
             var userId = GetCurrentUserId();
             if (userId == null) return RedirectToAction("Login", "Auth");
@@ -3194,7 +3282,7 @@ namespace PerizinanPeternakan.Controllers
 
             if (!ModelState.IsValid)
             {
-                return View(model);
+                return View("EditDocumentDetails", model);
             }
 
             try
@@ -3223,10 +3311,9 @@ namespace PerizinanPeternakan.Controllers
             {
                 Console.WriteLine($"Error updating document details: {ex.Message}");
                 ModelState.AddModelError("", "Terjadi kesalahan saat memperbarui detail dokumen");
-                return View(model);
+                return View("EditDocumentDetails", model);
             }
         }
-
         [HttpPost]
         public async Task<IActionResult> BulkUpdateDocumentDetails(BulkDocumentDetailsViewModel model)
         {
@@ -3676,6 +3763,8 @@ namespace PerizinanPeternakan.Controllers
                 });
             }
         }
+
+
 
 
 

@@ -4,8 +4,6 @@
     var userRole = Context.Session.GetString("Role");
 }
 
-
-
 <div class="permit-detail-container">
     <div class="detail-header">
         <div class="header-content">
@@ -230,7 +228,6 @@
                 </h3>
                 <!-- ⭐ UPDATE LOGIC PENGHITUNGAN -->
                 @{
-                    // ⭐ DEKLARASI DICTIONARY DI AWAL
                     var requiredDocs = new Dictionary<string, string>
                                 {
                                 { "SURAT_PERMOHONAN", "Surat Permohonan" },
@@ -247,7 +244,6 @@
                                 { "DOKUMEN_OPSIONAL", "Dokumen Opsional" }
                                 };
 
-                    // PENGHITUNGAN SETELAH DEKLARASI
                     var requiredDocsCount = Model.Documents.Count(d => requiredDocs.ContainsKey(d.DocumentType));
                     var optionalDocsCount = Model.Documents.Count(d => optionalDocs.ContainsKey(d.DocumentType));
                 }
