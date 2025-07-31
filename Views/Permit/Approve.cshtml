@@ -21,6 +21,14 @@
                 Kembali
             </a>
 
+            @if (userRole == "Admin")
+    {
+        <a href="@Url.Action("EnableEditMode", "Permit", new { id = Model.Id })" class="btn btn-warning">
+            <i class="fas fa-edit"></i>
+            Edit Data
+        </a>
+    }
+
             @if (userRole == "Verifikator" || userRole == "KepalaDinas")
             {
                 <a href="@Url.Action("ViewDocument", "Permit", new { id = Model.Id })" class="btn btn-info">
@@ -937,7 +945,6 @@ function saveDocumentDetails() {
             }
         }
 
-        // Auto-resize textarea
         document.getElementById('Comments').addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';

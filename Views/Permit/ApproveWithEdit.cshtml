@@ -1,0 +1,449 @@
+﻿@* File: Views/Permit/ApproveWithEdit.cshtml *@
+@model PerizinanPeternakan.ViewModels.PermitApprovalViewModel
+@{
+    ViewData["Title"] = "Edit & Review Permohonan";
+    var userRole = Context.Session.GetString("Role");
+}
+
+<div class="approval-container edit-mode">
+    <div class="approval-header">
+        <div class="header-content">
+            <h1 class="approval-title">
+                <i class="fas fa-edit"></i>
+                Edit & Review Permohonan
+            </h1>
+            <p class="approval-subtitle">Koreksi data dan proses permohonan izin pengeluaran ternak</p>
+        </div>
+
+        <div class="header-actions">
+            <a href="@Url.Action("Approve", "Permit", new { id = Model.Id })" class="btn btn-outline-secondary">
+                <i class="fas fa-eye"></i>
+                Mode Lihat
+            </a>
+            <a href="@Url.Action("Index", "Permit")" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left"></i>
+                Kembali
+            </a>
+        </div>
+    </div>
+
+    <div class="edit-notice">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            <strong>Mode Edit Admin:</strong> Anda dapat mengoreksi data yang salah sebelum memberikan persetujuan.
+            Semua perubahan akan dicatat dalam riwayat approval.
+        </div>
+    </div>
+
+    <!-- Form Edit -->
+    <form asp-action="ApproveWithEdits" method="post" class="edit-approval-form" id="editApprovalForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="ApplicationNumber" />
+        <input type="hidden" asp-for="IsEditingData" value="true" />
+
+        <div class="approval-content">
+            <!-- Section 1: Informasi Dasar -->
+            <div class="edit-section">
+                <div class="section-header">
+                    <h3>
+                        <i class="fas fa-building"></i>
+                        Informasi Perusahaan
+                        <span class="edit-badge">Dapat Diedit</span>
+                    </h3>
+                </div>
+
+                <div class="edit-grid">
+                    <div class="edit-item">
+                        <label asp-for="EditableCompanyName" class="form-label required">
+                            <i class="fas fa-building"></i>
+                            Nama Perusahaan
+                        </label>
+                        <input asp-for="EditableCompanyName" class="form-control editable-field"
+                               data-original="@Model.CompanyName"
+                               data-field="CompanyName" />
+                        <span asp-validation-for="EditableCompanyName" class="text-danger"></span>
+                        <small class="form-text text-muted">
+                            Original: <span class="original-value">@Model.CompanyName</span>
+                        </small>
+                    </div>
+
+                    <div class="edit-item">
+                        <label asp-for="EditableCompanyAddress" class="form-label">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Alamat Perusahaan
+                        </label>
+                        <textarea asp-for="EditableCompanyAddress" class="form-control editable-field"
+                                  rows="3"
+                                  data-original="@Model.EditableCompanyAddress"
+                                  data-field="CompanyAddress"></textarea>
+                        <span asp-validation-for="EditableCompanyAddress" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Detail Pengiriman -->
+            <div class="edit-section">
+                <div class="section-header">
+                    <h3>
+                        <i class="fas fa-shipping-fast"></i>
+                        Detail Pengiriman
+                        <span class="edit-badge">Dapat Diedit</span>
+                    </h3>
+                </div>
+
+                <div class="shipping-edit-grid">
+                    <div class="edit-item">
+                        <label asp-for="EditableOriginLocation" class="form-label required">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Lokasi Asal
+                        </label>
+                        <input asp-for="EditableOriginLocation" class="form-control editable-field"
+                               data-original="@Model.OriginLocation"
+                               data-field="OriginLocation" />
+                        <span asp-validation-for="EditableOriginLocation" class="text-danger"></span>
+                        <small class="form-text text-muted">
+                            Original: <span class="original-value">@Model.OriginLocation</span>
+                        </small>
+                    </div>
+
+                    <div class="edit-item">
+                        <label asp-for="EditableDestinationLocation" class="form-label required">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Lokasi Tujuan
+                        </label>
+                        <input asp-for="EditableDestinationLocation" class="form-control editable-field"
+                               data-original="@Model.DestinationLocation"
+                               data-field="DestinationLocation" />
+                        <span asp-validation-for="EditableDestinationLocation" class="text-danger"></span>
+                        <small class="form-text text-muted">
+                            Original: <span class="original-value">@Model.DestinationLocation</span>
+                        </small>
+                    </div>
+
+                    <div class="edit-item">
+                        <label asp-for="EditableDeparturePort" class="form-label">
+                            <i class="fas fa-ship"></i>
+                            Pelabuhan Keberangkatan
+                        </label>
+                        <input asp-for="EditableDeparturePort" class="form-control editable-field"
+                               data-original="@Model.EditableDeparturePort"
+                               data-field="DeparturePort" />
+                        <span asp-validation-for="EditableDeparturePort" class="text-danger"></span>
+                    </div>
+
+                    <div class="edit-item">
+                        <label asp-for="EditableArrivalPort" class="form-label">
+                            <i class="fas fa-anchor"></i>
+                            Pelabuhan Tiba
+                        </label>
+                        <input asp-for="EditableArrivalPort" class="form-control editable-field"
+                               data-original="@Model.EditableArrivalPort"
+                               data-field="ArrivalPort" />
+                        <span asp-validation-for="EditableArrivalPort" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Change Tracking -->
+                <div class="change-tracker" id="changeTracker" style="display: none;">
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle"></i> Perubahan Terdeteksi:</h6>
+                        <ul id="changesList"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Detail Ternak (Read-only) -->
+            <div class="review-section">
+                <div class="section-header">
+                    <h3>
+                        <i class="fas fa-paw"></i>
+                        Detail Ternak
+                        <span class="readonly-badge">Tidak Dapat Diedit</span>
+                    </h3>
+                </div>
+
+                <div class="livestock-review">
+                    <table class="livestock-table">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Jenis Ternak</th>
+                                <th>Jumlah</th>
+                                <th>Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.LivestockDetails.Count; i++)
+                            {
+                                <tr>
+                                    <td>@(i + 1)</td>
+                                    <td>@Model.LivestockDetails[i].LivestockType</td>
+                                    <td>@Model.LivestockDetails[i].Quantity ekor</td>
+                                    <td>@(Model.LivestockDetails[i].Description ?? "-")</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr class="total-row">
+                                <td colspan="2"><strong>Total</strong></td>
+                                <td><strong>@Model.LivestockDetails.Sum(l => l.Quantity) ekor</strong></td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Section 4: Dokumen Pendukung (Read-only) -->
+            <div class="review-section">
+                <div class="section-header">
+                    <h3>
+                        <i class="fas fa-file-alt"></i>
+                        Dokumen Pendukung
+                        <span class="readonly-badge">Tidak Dapat Diedit</span>
+                    </h3>
+                    <span class="document-count">@Model.Documents.Count dokumen</span>
+                </div>
+
+                <div class="documents-summary">
+                    @foreach (var doc in Model.Documents.Take(5))
+                    {
+                        <div class="document-item">
+                            <i class="fas fa-file-@(doc.FileExtension == ".pdf" ? "pdf text-danger" : "image text-primary")"></i>
+                            <span>@doc.DocumentName</span>
+                        </div>
+                    }
+                    @if (Model.Documents.Count > 5)
+                    {
+                        <div class="document-item">
+                            <i class="fas fa-ellipsis-h"></i>
+                            <span>... dan @(Model.Documents.Count - 5) dokumen lainnya</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Section 5: Form Approval dengan Edit -->
+            <div class="approval-form-section">
+                <div class="section-header">
+                    <h3>
+                        <i class="fas fa-clipboard-check"></i>
+                        Review & Persetujuan
+                    </h3>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Comments" class="form-label">
+                        <i class="fas fa-comment"></i>
+                        Komentar Admin
+                    </label>
+                    <textarea asp-for="Comments" class="form-control" rows="4"
+                              placeholder="Berikan komentar hasil review dan perubahan yang dilakukan..."></textarea>
+                    <span asp-validation-for="Comments" class="text-danger"></span>
+                    <small class="form-text text-muted">
+                        Komentar akan otomatis mencatat perubahan data yang Anda lakukan
+                    </small>
+                </div>
+
+                <div class="action-buttons">
+                    <div class="button-group">
+                        <button type="button"
+                                class="btn btn-success btn-lg"
+                                onclick="submitEditApproval('Approve')"
+                                id="approveBtn">
+                            <i class="fas fa-check"></i>
+                            Simpan Perubahan & Setujui
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-danger btn-lg"
+                                onclick="submitEditApproval('Reject')"
+                                id="rejectBtn">
+                            <i class="fas fa-times"></i>
+                            Tolak Permohonan
+                        </button>
+                    </div>
+
+                    <div class="action-info">
+                        <div class="info-item approve-info">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Perubahan data akan disimpan dan dicatat dalam riwayat approval</span>
+                        </div>
+                    </div>
+                </div>
+
+                <input type="hidden" name="Action" id="actionInput" />
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <link rel="stylesheet" href="~/css/permit/edit-approve.css" />
+    <script>
+                let hasChanges = false;
+                let originalValues = {};
+
+                $(document).ready(function() {
+                    // Store original values
+                    $('.editable-field').each(function() {
+                        const field = $(this).data('field');
+                        const original = $(this).data('original');
+                        originalValues[field] = original;
+                    });
+
+                    // Track changes
+                    $('.editable-field').on('input', function() {
+                        trackChanges();
+                    });
+
+                    // Auto-resize textareas
+                    $('textarea.editable-field').on('input', function() {
+                        this.style.height = 'auto';
+                        this.style.height = (this.scrollHeight) + 'px';
+                    });
+                });
+
+                function trackChanges() {
+                    const changes = [];
+                    hasChanges = false;
+
+                    $('.editable-field').each(function() {
+                        const field = $(this).data('field');
+                        const original = originalValues[field] || '';
+                        const current = $(this).val() || '';
+
+                        if (original !== current) {
+                            hasChanges = true;
+                            changes.push({
+                                field: field,
+                                original: original,
+                                current: current,
+                                label: $(this).prev('label').text().replace('*', '').trim()
+                            });
+
+                            // Add visual indicator
+                            $(this).addClass('field-changed');
+                        } else {
+                            $(this).removeClass('field-changed');
+                        }
+                    });
+
+                    // Update change tracker
+                    if (changes.length > 0) {
+                        $('#changeTracker').show();
+                        const changesList = $('#changesList');
+                        changesList.empty();
+
+                        changes.forEach(change => {
+                            changesList.append(`
+                                <li>
+                                    <strong>${change.label}:</strong>
+                                    '<span class="text-muted">${change.original}</span>'
+                                    → '<span class="text-success">${change.current}</span>'
+                                </li>
+                            `);
+                        });
+                    } else {
+                        $('#changeTracker').hide();
+                    }
+                }
+
+                function submitEditApproval(action) {
+                    // Validate required fields for approval
+                    if (action === 'Approve') {
+                        let hasValidationErrors = false;
+
+                        $('.form-label.required').each(function() {
+                            const input = $(this).next('input, textarea');
+                            if (!input.val().trim()) {
+                                input.addClass('is-invalid');
+                                hasValidationErrors = true;
+                            } else {
+                                input.removeClass('is-invalid');
+                            }
+                        });
+
+                        if (hasValidationErrors) {
+                            alert('Mohon lengkapi semua field yang wajib diisi sebelum menyetujui');
+                            return;
+                        }
+                    }
+        // Confirm if there are changes
+                   if (hasChanges && action === 'Approve') {
+                       if (!confirm('Anda telah melakukan perubahan data. Apakah yakin ingin menyimpan perubahan dan menyetujui permohonan?')) {
+                           return;
+                       }
+                   } else if (action === 'Reject') {
+                       const comments = $('#Comments').val().trim();
+                       if (!comments) {
+                           alert('Komentar wajib diisi untuk penolakan permohonan');
+                           $('#Comments').focus();
+                           return;
+                       }
+
+                       if (!confirm('Apakah yakin ingin menolak permohonan ini?')) {
+                           return;
+                       }
+                   }
+
+                   // Set action and submit
+                   $('#actionInput').val(action);
+
+                   // Show loading
+                   if (action === 'Approve') {
+                       $('#approveBtn').html('<i class="fas fa-spinner fa-spin"></i> Memproses...');
+                       $('#approveBtn').prop('disabled', true);
+                   } else {
+                       $('#rejectBtn').html('<i class="fas fa-spinner fa-spin"></i> Memproses...');
+                       $('#rejectBtn').prop('disabled', true);
+                   }
+
+                   $('#editApprovalForm').submit();
+               }
+
+               // Warn user about unsaved changes when leaving page
+               window.addEventListener('beforeunload', function(e) {
+                   if (hasChanges) {
+                       e.preventDefault();
+                       e.returnValue = 'Anda memiliki perubahan yang belum disimpan. Yakin ingin meninggalkan halaman?';
+                   }
+               });
+
+               // Real-time validation
+               $('.editable-field').on('blur', function() {
+                   validateField($(this));
+               });
+
+               function validateField($field) {
+                   const value = $field.val().trim();
+                   const fieldName = $field.data('field');
+
+                   // Remove previous validation
+                   $field.removeClass('is-invalid is-valid');
+                   $field.siblings('.invalid-feedback').remove();
+
+                   // Basic validation
+                   if ($field.prev('label').hasClass('required') && !value) {
+                       $field.addClass('is-invalid');
+                       $field.after('<div class="invalid-feedback">Field ini wajib diisi</div>');
+                       return false;
+                   }
+
+                   // Specific validations
+                   if (fieldName === 'CompanyName' && value && value.length < 3) {
+                       $field.addClass('is-invalid');
+                       $field.after('<div class="invalid-feedback">Nama perusahaan minimal 3 karakter</div>');
+                       return false;
+                   }
+
+                   if (value) {
+                       $field.addClass('is-valid');
+                   }
+
+                   return true;
+               }
+    </script>
+}

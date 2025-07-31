@@ -3793,7 +3793,333 @@ namespace PerizinanPeternakan.Controllers
         }
 
         #endregion
+
+
+        // File: Controllers/PermitController.cs
+        // Tambahkan method berikut ke dalam PermitController class
+
+        #region Admin Edit Functionality
+
+        /// <summary>
+        /// Enable editing mode for admin
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> EnableEditMode(int id)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return RedirectToAction("Login", "Auth");
+
+            var userRole = HttpContext.Session.GetString("Role");
+            if (userRole != "Admin")
+            {
+                TempData["ErrorMessage"] = "Hanya Admin yang dapat mengedit data permohonan";
+                return RedirectToAction("Approve", new { id });
+            }
+
+            var permit = await _context.PermitApplications
+                .Include(p => p.User)
+                .Include(p => p.LivestockDetails)
+                .Include(p => p.Documents)
+                    .ThenInclude(d => d.UploadedByUser)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (permit == null)
+            {
+                TempData["ErrorMessage"] = "Permohonan tidak ditemukan";
+                return RedirectToAction("Index");
+            }
+
+            if (!CanUserApprove(userRole, permit.Status))
+            {
+                TempData["ErrorMessage"] = "Permohonan tidak dapat diedit pada tahap ini";
+                return RedirectToAction("Approve", new { id });
+            }
+
+            var model = new PermitApprovalViewModel
+            {
+                Id = permit.Id,
+                ApplicationNumber = permit.ApplicationNumber,
+                CompanyName = permit.CompanyName,
+                ApplicantName = permit.User.NamaLengkap,
+                CurrentStatus = permit.Status,
+                SubmissionDate = permit.SubmissionDate,
+                OriginLocation = permit.OriginLocation,
+                DestinationLocation = permit.DestinationLocation,
+
+                // ⭐ Populate editable fields
+                EditableCompanyName = permit.CompanyName,
+                EditableCompanyAddress = permit.CompanyAddress,
+                EditableOriginLocation = permit.OriginLocation,
+                EditableDestinationLocation = permit.DestinationLocation,
+                EditableDeparturePort = permit.DeparturePort,
+                EditableArrivalPort = permit.ArrivalPort,
+                IsEditingData = true,
+
+                LivestockDetails = permit.LivestockDetails.Select(d => new LivestockDetailViewModel
+                {
+                    LivestockType = d.LivestockType,
+                    Quantity = d.Quantity,
+                    Description = d.Description
+                }).ToList(),
+
+                Documents = permit.Documents.Select(d => new DocumentViewModel
+                {
+                    Id = d.Id,
+                    DocumentName = d.DocumentName,
+                    DocumentType = d.DocumentType,
+                    FilePath = d.FilePath,
+                    FileSize = d.FileSize,
+                    FileExtension = d.FileExtension,
+                    UploadDate = d.UploadDate,
+                    UploadedBy = d.UploadedByUser.NamaLengkap,
+                    DocumentDate = d.DocumentDate,
+                    DocumentNumber = d.DocumentNumber,
+                    DocumentDescription = d.DocumentDescription
+                }).OrderBy(d => d.DocumentType).ToList()
+            };
+
+            return View("ApproveWithEdit", model);
+        }
+
+        /// <summary>
+        /// Save admin edits and process approval
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ApproveWithEdits(PermitApprovalViewModel model)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return RedirectToAction("Login", "Auth");
+
+            var userRole = HttpContext.Session.GetString("Role");
+            if (userRole != "Admin")
+            {
+                TempData["ErrorMessage"] = "Hanya Admin yang dapat mengedit dan menyetujui permohonan";
+                return RedirectToAction("Index");
+            }
+
+            if (string.IsNullOrEmpty(model.Action) || (model.Action != "Approve" && model.Action != "Reject"))
+            {
+                ModelState.AddModelError("Action", "Pilih aksi yang akan dilakukan");
+                return View("ApproveWithEdit", model);
+            }
+
+            try
+            {
+                var permit = await _context.PermitApplications
+                    .Include(p => p.User)
+                    .Include(p => p.LivestockDetails)
+                    .Include(p => p.Documents)
+                    .FirstOrDefaultAsync(p => p.Id == model.Id);
+
+                if (permit == null)
+                {
+                    TempData["ErrorMessage"] = "Permohonan tidak ditemukan";
+                    return RedirectToAction("Index");
+                }
+
+                if (!CanUserApprove(userRole, permit.Status))
+                {
+                    TempData["ErrorMessage"] = "Permohonan tidak dapat diproses pada tahap ini";
+                    return RedirectToAction("Detail", new { id = model.Id });
+                }
+
+                // ⭐ Apply admin edits if data was changed
+                var changedFields = new List<string>();
+                var originalData = new Dictionary<string, string>();
+
+                if (model.IsEditingData && model.Action == "Approve")
+                {
+                    // Track original values
+                    originalData["CompanyName"] = permit.CompanyName;
+                    originalData["CompanyAddress"] = permit.CompanyAddress ?? "";
+                    originalData["OriginLocation"] = permit.OriginLocation ?? "";
+                    originalData["DestinationLocation"] = permit.DestinationLocation ?? "";
+                    originalData["DeparturePort"] = permit.DeparturePort ?? "";
+                    originalData["ArrivalPort"] = permit.ArrivalPort ?? "";
+
+                    // Apply changes and track what was modified
+                    if (!string.IsNullOrEmpty(model.EditableCompanyName) &&
+                        permit.CompanyName != model.EditableCompanyName.Trim())
+                    {
+                        permit.CompanyName = model.EditableCompanyName.Trim();
+                        changedFields.Add($"Nama Perusahaan: '{originalData["CompanyName"]}' → '{permit.CompanyName}'");
+                    }
+
+                    if (!string.IsNullOrEmpty(model.EditableCompanyAddress) &&
+                        permit.CompanyAddress != model.EditableCompanyAddress.Trim())
+                    {
+                        permit.CompanyAddress = model.EditableCompanyAddress.Trim();
+                        changedFields.Add($"Alamat Perusahaan: '{originalData["CompanyAddress"]}' → '{permit.CompanyAddress}'");
+                    }
+
+                    if (!string.IsNullOrEmpty(model.EditableOriginLocation) &&
+                        permit.OriginLocation != model.EditableOriginLocation.Trim())
+                    {
+                        permit.OriginLocation = model.EditableOriginLocation.Trim();
+                        changedFields.Add($"Lokasi Asal: '{originalData["OriginLocation"]}' → '{permit.OriginLocation}'");
+                    }
+
+                    if (!string.IsNullOrEmpty(model.EditableDestinationLocation) &&
+                        permit.DestinationLocation != model.EditableDestinationLocation.Trim())
+                    {
+                        permit.DestinationLocation = model.EditableDestinationLocation.Trim();
+                        changedFields.Add($"Lokasi Tujuan: '{originalData["DestinationLocation"]}' → '{permit.DestinationLocation}'");
+                    }
+
+                    if (!string.IsNullOrEmpty(model.EditableDeparturePort) &&
+                        permit.DeparturePort != model.EditableDeparturePort.Trim())
+                    {
+                        permit.DeparturePort = model.EditableDeparturePort.Trim();
+                        changedFields.Add($"Pelabuhan Keberangkatan: '{originalData["DeparturePort"]}' → '{permit.DeparturePort}'");
+                    }
+
+                    if (!string.IsNullOrEmpty(model.EditableArrivalPort) &&
+                        permit.ArrivalPort != model.EditableArrivalPort.Trim())
+                    {
+                        permit.ArrivalPort = model.EditableArrivalPort.Trim();
+                        changedFields.Add($"Pelabuhan Tiba: '{originalData["ArrivalPort"]}' → '{permit.ArrivalPort}'");
+                    }
+                }
+
+                // Validate documents for admin approval
+                if (userRole == "Admin" && model.Action == "Approve" && permit.Documents.Count < 7)
+                {
+                    TempData["ErrorMessage"] = "Dokumen pendukung belum lengkap. Permohonan tidak dapat disetujui.";
+                    return View("ApproveWithEdit", model);
+                }
+
+                // Continue with normal approval process
+                var fromStatus = permit.Status;
+                PermitStatus toStatus = PermitStatus.AdminApproved;
+                string actionText = "Disetujui Admin";
+
+                if (model.Action == "Approve")
+                {
+                    permit.AdminId = userId.Value;
+                    permit.AdminApprovalDate = DateTime.Now;
+                    permit.CurrentApprovalLevel = 2;
+                    permit.Status = toStatus;
+
+                    // Generate PDF document after admin approve
+                    await GeneratePermitDocument(permit);
+                }
+                else // Reject
+                {
+                    toStatus = PermitStatus.AdminRejected;
+                    actionText = "Ditolak Admin";
+                    permit.Status = toStatus;
+                    permit.RejectionReason = model.Comments;
+                }
+
+                // Create enhanced comments with change tracking
+                var enhancedComments = model.Comments ?? "";
+                if (changedFields.Any())
+                {
+                    enhancedComments += $"\n\n📝 PERUBAHAN DATA OLEH ADMIN:\n{string.Join("\n", changedFields)}";
+                }
+
+                // Add approval history
+                var history = new PermitApprovalHistory
+                {
+                    PermitApplicationId = permit.Id,
+                    UserId = userId.Value,
+                    FromStatus = fromStatus,
+                    ToStatus = toStatus,
+                    Action = actionText,
+                    Comments = enhancedComments,
+                    ActionDate = DateTime.Now
+                };
+
+                _context.PermitApprovalHistories.Add(history);
+                await _context.SaveChangesAsync();
+
+                var successMessage = $"Permohonan {permit.ApplicationNumber} berhasil {actionText.ToLower()}";
+                if (changedFields.Any())
+                {
+                    successMessage += $" dengan {changedFields.Count} perubahan data";
+                }
+
+                TempData["SuccessMessage"] = successMessage;
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in ApproveWithEdits: {ex.Message}");
+                ModelState.AddModelError("", "Terjadi kesalahan saat memproses approval. Silakan coba lagi.");
+                return View("ApproveWithEdit", model);
+            }
+        }
+
+        /// <summary>
+        /// API endpoint for validating admin edits
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> ValidateAdminEdits([FromBody] AdminEditValidationRequest request)
+        {
+            try
+            {
+                var errors = new List<string>();
+                var warnings = new List<string>();
+
+                // Validate required fields
+                if (string.IsNullOrWhiteSpace(request.CompanyName))
+                    errors.Add("Nama perusahaan harus diisi");
+
+                if (string.IsNullOrWhiteSpace(request.OriginLocation))
+                    errors.Add("Lokasi asal harus diisi");
+
+                if (string.IsNullOrWhiteSpace(request.DestinationLocation))
+                    errors.Add("Lokasi tujuan harus diisi");
+
+                // Validate data quality
+                if (!string.IsNullOrEmpty(request.CompanyName) && request.CompanyName.Length < 3)
+                    warnings.Add("Nama perusahaan terlalu pendek");
+
+                // Check for potential duplicates
+                var existingPermit = await _context.PermitApplications
+                    .FirstOrDefaultAsync(p => p.CompanyName == request.CompanyName && p.Id != request.PermitId);
+
+                if (existingPermit != null)
+                    warnings.Add($"Sudah ada permohonan dengan nama perusahaan yang sama: {existingPermit.ApplicationNumber}");
+
+                return Json(new
+                {
+                    success = true,
+                    isValid = errors.Count == 0,
+                    errors = errors,
+                    warnings = warnings
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = $"Terjadi kesalahan validasi: {ex.Message}"
+                });
+            }
+        }
+
+        #endregion
+
+        #region Request Models for Admin Edit
+
+        public class AdminEditValidationRequest
+        {
+            public int PermitId { get; set; }
+            public string CompanyName { get; set; }
+            public string CompanyAddress { get; set; }
+            public string OriginLocation { get; set; }
+            public string DestinationLocation { get; set; }
+            public string DeparturePort { get; set; }
+            public string ArrivalPort { get; set; }
+        }
+
+        #endregion
+
     }
+
 
 
 }

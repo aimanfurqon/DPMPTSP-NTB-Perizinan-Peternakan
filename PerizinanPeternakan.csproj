@@ -41,6 +41,7 @@
 	  <Content Remove="wwwroot\css\permit-index.css" />
 	  <Content Remove="wwwroot\css\permit\approve.css" />
 	  <Content Remove="wwwroot\css\permit\create.css" />
+	  <Content Remove="wwwroot\css\permit\edit-approve.css" />
 	  <Content Remove="wwwroot\images\dpmptsp-logo.png" />
 	  <Content Remove="wwwroot\js\accessibility-widget.js" />
 	  <Content Remove="wwwroot\js\multi-step-form.js" />

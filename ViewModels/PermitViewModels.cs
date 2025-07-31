@@ -372,6 +372,31 @@ namespace PerizinanPeternakan.ViewModels
         public int DocumentsWithDetailsCount => Documents.Count(d => d.HasDocumentDetails);
 
         public string DocumentCompletionStatus => HasAllRequiredDocumentsWithDetails ? "Lengkap" : "Perlu Review";
+
+        // ⭐ NEW: Editable fields for Admin
+        [Display(Name = "Nama Perusahaan")]
+        public string EditableCompanyName { get; set; }
+
+        [Display(Name = "Alamat Perusahaan")]
+        public string EditableCompanyAddress { get; set; }
+
+        [Display(Name = "Lokasi Asal")]
+        public string EditableOriginLocation { get; set; }
+
+        [Display(Name = "Lokasi Tujuan")]
+        public string EditableDestinationLocation { get; set; }
+
+        [Display(Name = "Pelabuhan Keberangkatan")]
+        public string EditableDeparturePort { get; set; }
+
+        [Display(Name = "Pelabuhan Tiba")]
+        public string EditableArrivalPort { get; set; }
+
+        // Flag to indicate if admin is editing data
+        public bool IsEditingData { get; set; }
+
+        // Track what fields were changed
+        public List<string> ChangedFields { get; set; } = new();
     }
 
     public class PermitListViewModel
@@ -780,5 +805,12 @@ namespace PerizinanPeternakan.ViewModels
         public string Summary => Success
             ? $"Berhasil upload {UploadedCount} dokumen"
             : $"Gagal upload: {Message}";
+    }
+
+    public class EditableLivestockDetailViewModel : LivestockDetailViewModel
+    {
+        public int? Id { get; set; } // For existing livestock details
+        public bool IsMarkedForDeletion { get; set; }
+        public bool IsNewEntry { get; set; }
     }
 }
