@@ -82,7 +82,10 @@
                 </div>
             </div>
 
-            <!-- Section 2: Detail Pengiriman -->
+            @* File: Views/Permit/ApproveWithEdit.cshtml *@
+            @* Add these sections after the existing shipping section *@
+
+            <!-- Section 2: Detail Pengiriman dengan Dropdown Enhanced -->
             <div class="edit-section">
                 <div class="section-header">
                     <h3>
@@ -92,109 +95,262 @@
                     </h3>
                 </div>
 
-                <div class="shipping-edit-grid">
-                    <div class="edit-item">
-                        <label asp-for="EditableOriginLocation" class="form-label required">
-                            <i class="fas fa-map-marker-alt"></i>
-                            Lokasi Asal
-                        </label>
-                        <input asp-for="EditableOriginLocation" class="form-control editable-field"
-                               data-original="@Model.OriginLocation"
-                               data-field="OriginLocation" />
-                        <span asp-validation-for="EditableOriginLocation" class="text-danger"></span>
-                        <small class="form-text text-muted">
-                            Original: <span class="original-value">@Model.OriginLocation</span>
-                        </small>
+                <div class="shipping-edit-container">
+                    <!-- Origin Section -->
+                    <div class="location-edit-group">
+                        <h5><i class="fas fa-map-marker-alt text-success"></i> Asal Ternak</h5>
+                        <div class="location-edit-grid">
+                            <div class="edit-item">
+                                <label class="form-label required">Provinsi Asal</label>
+                                <select id="editOriginProvinceSelect" class="form-control editable-location"
+                                        data-field="OriginProvince">
+                                    <option value="">Pilih Provinsi</option>
+                                </select>
+                                <input asp-for="EditableOriginProvinceId" type="hidden" />
+                            </div>
+
+                            <div class="edit-item">
+                                <label class="form-label required">Kabupaten/Kota Asal</label>
+                                <select id="editOriginRegencySelect" class="form-control editable-location"
+                                        data-field="OriginRegency" disabled>
+                                    <option value="">Pilih Kabupaten/Kota</option>
+                                </select>
+                                <input asp-for="EditableOriginRegencyId" type="hidden" />
+                                <input asp-for="EditableOriginLocation" type="hidden" />
+                            </div>
+
+                            <div class="edit-item">
+                                <label class="form-label required">Pelabuhan Keberangkatan</label>
+                                <select id="editDeparturePortSelect" class="form-control editable-location"
+                                        data-field="DeparturePort" disabled>
+                                    <option value="">Pilih pelabuhan keberangkatan</option>
+                                </select>
+                                <input asp-for="EditableDeparturePort" type="hidden" />
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="edit-item">
-                        <label asp-for="EditableDestinationLocation" class="form-label required">
-                            <i class="fas fa-map-marker-alt"></i>
-                            Lokasi Tujuan
-                        </label>
-                        <input asp-for="EditableDestinationLocation" class="form-control editable-field"
-                               data-original="@Model.DestinationLocation"
-                               data-field="DestinationLocation" />
-                        <span asp-validation-for="EditableDestinationLocation" class="text-danger"></span>
-                        <small class="form-text text-muted">
-                            Original: <span class="original-value">@Model.DestinationLocation</span>
-                        </small>
+                    <!-- Destination Section -->
+                    <div class="location-edit-group">
+                        <h5><i class="fas fa-map-marker-alt text-danger"></i> Tujuan Pengiriman</h5>
+                        <div class="location-edit-grid">
+                            <div class="edit-item">
+                                <label class="form-label required">Provinsi Tujuan</label>
+                                <select id="editDestinationProvinceSelect" class="form-control editable-location"
+                                        data-field="DestinationProvince">
+                                    <option value="">Pilih Provinsi</option>
+                                </select>
+                                <input asp-for="EditableDestinationProvinceId" type="hidden" />
+                            </div>
+
+                            <div class="edit-item">
+                                <label class="form-label required">Kabupaten/Kota Tujuan</label>
+                                <select id="editDestinationRegencySelect" class="form-control editable-location"
+                                        data-field="DestinationRegency" disabled>
+                                    <option value="">Pilih Kabupaten/Kota</option>
+                                </select>
+                                <input asp-for="EditableDestinationRegencyId" type="hidden" />
+                                <input asp-for="EditableDestinationLocation" type="hidden" />
+                            </div>
+
+                            <div class="edit-item">
+                                <label class="form-label required">Pelabuhan Tujuan</label>
+                                <select id="editArrivalPortSelect" class="form-control editable-location"
+                                        data-field="ArrivalPort" disabled>
+                                    <option value="">Pilih pelabuhan tujuan</option>
+                                </select>
+                                <input asp-for="EditableArrivalPort" type="hidden" />
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="edit-item">
-                        <label asp-for="EditableDeparturePort" class="form-label">
-                            <i class="fas fa-ship"></i>
-                            Pelabuhan Keberangkatan
-                        </label>
-                        <input asp-for="EditableDeparturePort" class="form-control editable-field"
-                               data-original="@Model.EditableDeparturePort"
-                               data-field="DeparturePort" />
-                        <span asp-validation-for="EditableDeparturePort" class="text-danger"></span>
-                    </div>
-
-                    <div class="edit-item">
-                        <label asp-for="EditableArrivalPort" class="form-label">
-                            <i class="fas fa-anchor"></i>
-                            Pelabuhan Tiba
-                        </label>
-                        <input asp-for="EditableArrivalPort" class="form-control editable-field"
-                               data-original="@Model.EditableArrivalPort"
-                               data-field="ArrivalPort" />
-                        <span asp-validation-for="EditableArrivalPort" class="text-danger"></span>
-                    </div>
-                </div>
-
-                <!-- Change Tracking -->
-                <div class="change-tracker" id="changeTracker" style="display: none;">
-                    <div class="alert alert-warning">
-                        <h6><i class="fas fa-exclamation-triangle"></i> Perubahan Terdeteksi:</h6>
-                        <ul id="changesList"></ul>
+                    <!-- Route Summary -->
+                    <div class="shipping-summary" id="editShippingSummary" style="display: none;">
+                        <div class="summary-card">
+                            <div class="summary-header">
+                                <i class="fas fa-route"></i>
+                                <span>Ringkasan Rute Pengiriman (Setelah Edit)</span>
+                            </div>
+                            <div class="summary-content">
+                                <div class="route-info">
+                                    <div class="route-point origin">
+                                        <div class="point-icon">
+                                            <i class="fas fa-circle text-success"></i>
+                                        </div>
+                                        <div class="point-details">
+                                            <div class="point-label">Asal</div>
+                                            <div class="point-location" id="editSummaryOrigin">-</div>
+                                            <div class="point-port" id="editSummaryDeparturePort">-</div>
+                                        </div>
+                                    </div>
+                                    <div class="route-arrow">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </div>
+                                    <div class="route-point destination">
+                                        <div class="point-icon">
+                                            <i class="fas fa-circle text-danger"></i>
+                                        </div>
+                                        <div class="point-details">
+                                            <div class="point-label">Tujuan</div>
+                                            <div class="point-location" id="editSummaryDestination">-</div>
+                                            <div class="point-port" id="editSummaryArrivalPort">-</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Section 3: Detail Ternak (Read-only) -->
-            <div class="review-section">
+            <!-- Section 3: Detail Ternak (Editable) -->
+            <div class="edit-section">
                 <div class="section-header">
                     <h3>
                         <i class="fas fa-paw"></i>
                         Detail Ternak
-                        <span class="readonly-badge">Tidak Dapat Diedit</span>
+                        <span class="edit-badge">Dapat Diedit</span>
                     </h3>
                 </div>
 
-                <div class="livestock-review">
-                    <table class="livestock-table">
-                        <thead>
-                            <tr>
-                                <th>No.</th>
-                                <th>Jenis Ternak</th>
-                                <th>Jumlah</th>
-                                <th>Keterangan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @for (int i = 0; i < Model.LivestockDetails.Count; i++)
-                            {
-                                <tr>
-                                    <td>@(i + 1)</td>
-                                    <td>@Model.LivestockDetails[i].LivestockType</td>
-                                    <td>@Model.LivestockDetails[i].Quantity ekor</td>
-                                    <td>@(Model.LivestockDetails[i].Description ?? "-")</td>
-                                </tr>
-                            }
-                        </tbody>
-                        <tfoot>
-                            <tr class="total-row">
-                                <td colspan="2"><strong>Total</strong></td>
-                                <td><strong>@Model.LivestockDetails.Sum(l => l.Quantity) ekor</strong></td>
-                                <td></td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                <div class="livestock-edit-container">
+                    <!-- Quota Information Panel -->
+                    <div class="quota-info-panel" id="editQuotaInfoPanel" style="display: none;">
+                        <div class="panel-header">
+                            <i class="fas fa-chart-pie"></i>
+                            <span>Informasi Kuota Ternak 2025</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="editRefreshQuotaBtn">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <div class="panel-content" id="editQuotaInfoContent">
+                            <!-- Quota info will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Livestock Items Container -->
+                    <div class="livestock-container" id="editLivestockContainer">
+                        @for (int i = 0; i < Math.Max(Model.EditableLivestockDetails?.Count ?? 0, 1); i++)
+                        {
+                            var livestock = Model.EditableLivestockDetails?.ElementAtOrDefault(i) ?? new EditableLivestockDetailViewModel { Index = i };
+                            <div class="livestock-item editable" data-index="@i">
+                                <div class="livestock-header">
+                                    <h4>Ternak #<span class="livestock-number">@(i + 1)</span></h4>
+                                    @if (i > 0)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-livestock"
+                                                title="Hapus item ini">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    }
+                                </div>
+
+                                <div class="livestock-form">
+                                    <!-- Hidden fields -->
+                                    <input type="hidden" name="EditableLivestockDetails[@i].Id" value="@livestock.Id" />
+                                    <input type="hidden" name="EditableLivestockDetails[@i].Index" value="@i" />
+                                    <input type="hidden" name="EditableLivestockDetails[@i].IsMarkedForDeletion" value="false" />
+                                    <input type="hidden" name="EditableLivestockDetails[@i].IsNewEntry" value="@livestock.IsNewEntry.ToString().ToLower()" />
+
+                                    <div class="form-group">
+                                        <label class="form-label required">
+                                            <i class="fas fa-paw"></i>
+                                            Jenis Ternak
+                                            <span class="quota-indicator" data-index="@i" style="display: none;">
+                                                <i class="fas fa-info-circle text-primary"></i>
+                                                <span class="quota-text">Loading...</span>
+                                            </span>
+                                        </label>
+                                        <select name="EditableLivestockDetails[@i].LivestockType"
+                                                class="form-control livestock-type editable-field"
+                                                data-index="@i"
+                                                data-original="@livestock.LivestockType"
+                                                required>
+                                            <option value="">Pilih Jenis Ternak</option>
+                                            <option value="Sapi Potong" @@(livestock.LivestockType == "Sapi Potong" ? "selected" : "")>Sapi Potong</option>
+                                            <option value="Kerbau Potong" @@(livestock.LivestockType == "Kerbau Potong" ? "selected" : "")>Kerbau Potong</option>
+                                            <option value="Kuda Pedaging" @@(livestock.LivestockType == "Kuda Pedaging" ? "selected" : "")>Kuda Pedaging</option>
+                                            <option value="Kambing" @@(livestock.LivestockType == "Kambing" ? "selected" : "")>Kambing</option>
+                                            <option value="Domba" @@(livestock.LivestockType == "Domba" ? "selected" : "")>Domba</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label required">
+                                            <i class="fas fa-calculator"></i>
+                                            Jumlah (ekor)
+                                            <span class="quota-limit" data-index="@i" style="display: none;">
+                                                <small class="text-muted">Maks: <span class="max-quota">-</span> ekor</small>
+                                            </span>
+                                        </label>
+                                        <input type="number"
+                                               name="EditableLivestockDetails[@i].Quantity"
+                                               class="form-control livestock-quantity editable-field"
+                                               data-index="@i"
+                                               data-original="@livestock.Quantity"
+                                               min="1"
+                                               value="@livestock.Quantity"
+                                               placeholder="Masukkan jumlah ternak"
+                                               required />
+                                        <div class="quantity-feedback" data-index="@i" style="display: none;">
+                                            <small class="feedback-text">-</small>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            <i class="fas fa-comment"></i>
+                                            Keterangan
+                                        </label>
+                                        <textarea name="EditableLivestockDetails[@i].Description"
+                                              class="form-control editable-field"
+                                              rows="2"
+                                              data-original="@livestock.Description"
+                                              placeholder="Keterangan tambahan (opsional)">@livestock.Description</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Livestock Actions -->
+                    <div class="livestock-actions">
+                        <button type="button" class="btn btn-outline-primary" id="editAddLivestock">
+                            <i class="fas fa-plus"></i>
+                            Tambah Jenis Ternak
+                        </button>
+
+                        <div class="livestock-summary">
+                            <div class="summary-item">
+                                <span class="label">Total Jenis</span>
+                                <span class="value" id="editTotalTypes">@(Model.EditableLivestockDetails?.Count ?? 1)</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Total Ekor</span>
+                                <span class="value" id="editTotalQuantity">@(Model.EditableLivestockDetails?.Sum(l => l.Quantity) ?? 0)</span>
+                            </div>
+                            <div class="summary-item quota-usage" style="display: none;">
+                                <span class="label">Status Kuota</span>
+                                <span class="value" id="editQuotaStatus">
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    Dalam Batas
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quota Validation Summary -->
+                    <div class="quota-validation-summary" id="editQuotaValidationSummary" style="display: none;">
+                        <div class="validation-header">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Validasi Kuota</span>
+                        </div>
+                        <div class="validation-content" id="editValidationContent">
+                            <!-- Validation results will be shown here -->
+                        </div>
+                    </div>
                 </div>
             </div>
-
             <!-- Section 4: Dokumen Pendukung (Read-only) -->
             <div class="review-section">
                 <div class="section-header">
@@ -445,5 +601,822 @@
 
                    return true;
                }
+    </script>
+    <script>
+            // ===============================================
+            // ENHANCED JAVASCRIPT FOR EDIT MODE
+            // ===============================================
+
+            let editLivestockIndex = @(Model.EditableLivestockDetails?.Count ?? 1);
+            let editQuotaCache = {};
+            let editOriginProvinceCode = '';
+            let isLoadingEditOriginPorts = false;
+            let isLoadingEditDestinationPorts = false;
+
+            $(document).ready(function() {
+                // Initialize edit mode functionality
+                initializeEditModeComponents();
+                setupEditLocationHandlers();
+                setupEditLivestockHandlers();
+                loadEditProvinces();
+
+                // Set initial values if available
+                setInitialEditValues();
+            });
+
+            // ===============================================
+            // INITIALIZATION FUNCTIONS
+            // ===============================================
+
+                function initializeEditModeComponents() {
+            // Initialize Select2 for location dropdowns
+            $('#editOriginProvinceSelect, #editOriginRegencySelect, #editDestinationProvinceSelect, #editDestinationRegencySelect').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Pilih dari daftar',
+                allowClear: true
+            });
+
+            // ⭐ UPDATED: Initialize port search
+            initializeEditPortSearch();
+
+            console.log('Edit mode components initialized with port search');
+        }
+
+            function setInitialEditValues() {
+                // Set initial province values if available
+                const originProvinceId = '@Model.EditableOriginProvinceId';
+                const destinationProvinceId = '@Model.EditableDestinationProvinceId';
+
+                if (originProvinceId) {
+                    setTimeout(() => {
+                        $('#editOriginProvinceSelect').val(originProvinceId).trigger('change');
+                    }, 1000);
+                }
+
+                if (destinationProvinceId) {
+                    setTimeout(() => {
+                        $('#editDestinationProvinceSelect').val(destinationProvinceId).trigger('change');
+                    }, 1000);
+                }
+            }
+
+            // ===============================================
+            // LOCATION EDIT HANDLERS
+            // ===============================================
+
+        function setupEditLocationHandlers() {
+                // Origin Province Change
+                $('#editOriginProvinceSelect').on('change', function() {
+                    const provinceId = $(this).val();
+                    editOriginProvinceCode = provinceId;
+
+                    console.log('Edit origin province changed to:', provinceId);
+
+                    if (provinceId) {
+                        loadEditRegencies(provinceId, '#editOriginRegencySelect');
+
+                        // ⭐ UPDATED: Load ports using existing controller
+                        loadEditPortsByProvince(provinceId, '#editDeparturePortSelect', 'Pilih pelabuhan keberangkatan', true);
+
+                        // Load quota info
+                        loadEditQuotaInfo(provinceId);
+                        refreshAllEditQuotaValidations();
+                    } else {
+                        $('#editOriginRegencySelect').html('<option value="">Pilih Kabupaten/Kota</option>').prop('disabled', true);
+
+                        // ⭐ UPDATED: Reset port dropdown
+                        resetPortDropdown('#editDeparturePortSelect', 'Pilih provinsi asal terlebih dahulu');
+                        $('#EditableDeparturePort').val('');
+
+                        hideEditQuotaInfo();
+                    }
+
+                    updateEditLocation();
+                });
+
+                // Destination Province Change
+                $('#editDestinationProvinceSelect').on('change', function() {
+                    const provinceId = $(this).val();
+                    console.log('Edit destination province changed to:', provinceId);
+
+                    if (provinceId) {
+                        loadEditRegencies(provinceId, '#editDestinationRegencySelect');
+
+                        // ⭐ UPDATED: Load ports using existing controller
+                        loadEditPortsByProvince(provinceId, '#editArrivalPortSelect', 'Pilih pelabuhan tujuan', false);
+                    } else {
+                        $('#editDestinationRegencySelect').html('<option value="">Pilih Kabupaten/Kota</option>').prop('disabled', true);
+
+                        // ⭐ UPDATED: Reset port dropdown
+                        resetPortDropdown('#editArrivalPortSelect', 'Pilih provinsi tujuan terlebih dahulu');
+                        $('#EditableArrivalPort').val('');
+                    }
+
+                    updateEditLocation();
+                });
+
+                // Origin and Destination Regency Changes
+                $('#editOriginRegencySelect, #editDestinationRegencySelect').on('change', function() {
+                    updateEditLocation();
+                });
+
+                // ⭐ UPDATED: Setup port handlers
+                setupEditPortHandlers();
+            }
+
+                function resetPortDropdown(selector, placeholder) {
+            const $dropdown = $(selector);
+
+            // Destroy existing Select2
+            if ($dropdown.hasClass('select2-hidden-accessible')) {
+                $dropdown.select2('destroy');
+            }
+
+            // Reset dropdown
+            $dropdown.empty()
+                .append(`<option value="">${placeholder}</option>`)
+                .prop('disabled', true);
+
+            // Reinitialize Select2
+            $dropdown.select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: placeholder,
+                allowClear: true
+            });
+        }
+            function loadEditProvinces() {
+                console.log('Loading provinces for edit mode...');
+                $.get('/Location/GetProvinces', function(response) {
+                    const provinces = response.data || response;
+                    if (Array.isArray(provinces)) {
+                        const options = provinces.map(province =>
+                            `<option value="${province.code}">${province.name}</option>`
+                        );
+                        $('#editOriginProvinceSelect, #editDestinationProvinceSelect').append(options.join(''));
+                        console.log('Edit provinces loaded successfully');
+
+                        // Set initial values after loading
+                        setInitialEditValues();
+                    }
+                }).fail(function(xhr, status, error) {
+                    console.error('Failed to load edit provinces:', error);
+                    showNotification('error', 'Gagal memuat data provinsi untuk edit.');
+                });
+            }
+
+            function loadEditRegencies(provinceId, targetSelect) {
+                const $target = $(targetSelect);
+                console.log('Loading edit regencies for province:', provinceId, 'target:', targetSelect);
+
+                $target.html('<option value="">Memuat...</option>').prop('disabled', true);
+
+                $.get('/Location/GetRegencies', { provinceId: provinceId }, function(response) {
+                    const regencies = response.data || response;
+                    let options = '<option value="">Pilih Kabupaten/Kota</option>';
+                    if (Array.isArray(regencies)) {
+                        options += regencies.map(regency =>
+                            `<option value="${regency.code}">${regency.name}</option>`
+                        ).join('');
+                    }
+                    $target.html(options).prop('disabled', false).trigger('change');
+                    console.log('Edit regencies loaded for:', targetSelect);
+                }).fail(function(xhr, status, error) {
+                    console.error('Failed to load edit regencies:', error);
+                    $target.html('<option value="">Gagal memuat</option>').prop('disabled', true);
+                });
+            }
+
+            function loadEditPortsByProvince(provinceCode, targetSelect, placeholderText, isOrigin = true) {
+        const $target = $(targetSelect);
+        const loadingVar = isOrigin ? 'isLoadingEditOriginPorts' : 'isLoadingEditDestinationPorts';
+
+        console.log('Loading edit ports for province:', provinceCode, 'target:', targetSelect);
+
+        if (window[loadingVar]) {
+            console.log('Already loading edit ports for', targetSelect);
+            return;
+        }
+
+        window[loadingVar] = true;
+
+        // Reset and show loading
+        $target.empty()
+            .append(`<option value="">⏳ Memuat pelabuhan...</option>`)
+            .prop('disabled', true);
+
+        if (!provinceCode) {
+            $target.empty()
+                .append(`<option value="">${placeholderText}</option>`)
+                .prop('disabled', true);
+            window[loadingVar] = false;
+            return;
+        }
+            $.get('/Port/GetByProvince', { provinceCode: provinceCode })
+                .done(function(response) {
+                    console.log('Edit ports response for', provinceCode, ':', response);
+
+                    // ⭐ UPDATED: Handle response structure from existing controller
+                    const ports = response.results || [];
+
+                    $target.empty().append(`<option value="">${placeholderText}</option>`);
+
+                    if (Array.isArray(ports) && ports.length > 0) {
+                        ports.forEach(port => {
+                            // ⭐ UPDATED: Use port.name for value and port.text for display
+                            $target.append(`<option value="${port.name}">${port.text}</option>`);
+                        });
+                        $target.prop('disabled', false);
+                        console.log(`✅ ${ports.length} edit ports loaded for ${targetSelect}`);
+
+                        showNotification('success', `${ports.length} pelabuhan tersedia untuk dipilih`);
+                    } else {
+                        $target.append('<option value="">❌ Tidak ada pelabuhan tersedia</option>');
+                        $target.prop('disabled', true);
+                        showNotification('warning', 'Tidak ada pelabuhan tersedia untuk provinsi ini');
+                    }
+
+                    $target.trigger('change');
+                })
+                .fail(function(xhr, status, error) {
+                    console.error('Failed to load edit ports:', error);
+                    $target.empty()
+                        .append('<option value="">❌ Gagal memuat pelabuhan</option>')
+                        .prop('disabled', true);
+
+                    showNotification('error', 'Gagal memuat data pelabuhan. Silakan coba lagi.');
+                })
+                .always(function() {
+                    window[loadingVar] = false;
+                });
+        }
+
+            function initializeEditPortSearch() {
+            // Initialize Select2 with search functionality
+            $('#editDeparturePortSelect, #editArrivalPortSelect').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Ketik untuk mencari pelabuhan...',
+                allowClear: true,
+                minimumInputLength: 2,
+                ajax: {
+                    url: '/Port/Search',
+                    dataType: 'json',
+                    delay: 300,
+                    data: function (params) {
+                        return {
+                            term: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.results || []
+                        };
+                    },
+                    cache: true
+                }
+            });
+        }
+
+            function updateEditLocation() {
+                const originProvinceName = $('#editOriginProvinceSelect option:selected').text();
+                const originRegencyName = $('#editOriginRegencySelect option:selected').text();
+                const destProvinceName = $('#editDestinationProvinceSelect option:selected').text();
+                const destRegencyName = $('#editDestinationRegencySelect option:selected').text();
+
+                if ($('#editOriginProvinceSelect').val() && $('#editOriginRegencySelect').val() &&
+                    originProvinceName !== "Pilih Provinsi" && originRegencyName !== "Pilih Kabupaten/Kota") {
+                    const originLocation = `${originRegencyName}, ${originProvinceName}`;
+                    $('#EditableOriginLocation').val(originLocation);
+                } else {
+                    $('#EditableOriginLocation').val('');
+                }
+
+                if ($('#editDestinationProvinceSelect').val() && $('#editDestinationRegencySelect').val() &&
+                    destProvinceName !== "Pilih Provinsi" && destRegencyName !== "Pilih Kabupaten/Kota") {
+                    const destLocation = `${destRegencyName}, ${destProvinceName}`;
+                    $('#EditableDestinationLocation').val(destLocation);
+                } else {
+                    $('#EditableDestinationLocation').val('');
+                }
+
+                updateEditShippingSummary();
+                trackChanges(); // Update change tracking
+            }
+
+        function setupEditPortHandlers() {
+                // Departure port selection
+                $('#editDeparturePortSelect').on('change', function() {
+                    const selectedPort = $(this).val();
+                    const selectedText = $(this).find('option:selected').text();
+
+                    console.log('Edit departure port selected:', selectedPort, selectedText);
+
+                    // ⭐ UPDATED: Store the port name directly
+                    $('#EditableDeparturePort').val(selectedPort);
+                    updateEditShippingSummary();
+                    trackChanges();
+                });
+
+                // Arrival port selection
+                $('#editArrivalPortSelect').on('change', function() {
+                    const selectedPort = $(this).val();
+                    const selectedText = $(this).find('option:selected').text();
+
+                    console.log('Edit arrival port selected:', selectedPort, selectedText);
+
+                    // ⭐ UPDATED: Store the port name directly
+                    $('#EditableArrivalPort').val(selectedPort);
+                    updateEditShippingSummary();
+                    trackChanges();
+                });
+            }
+
+
+                function updateEditShippingSummary() {
+            const originLocation = $('#EditableOriginLocation').val();
+            const destinationLocation = $('#EditableDestinationLocation').val();
+            const departurePort = $('#EditableDeparturePort').val();
+            const arrivalPort = $('#EditableArrivalPort').val();
+
+            // ⭐ UPDATED: Better port name display
+            const departurePortDisplay = departurePort || '-';
+            const arrivalPortDisplay = arrivalPort || '-';
+
+            $('#editSummaryOrigin').text(originLocation || '-');
+            $('#editSummaryDestination').text(destinationLocation || '-');
+            $('#editSummaryDeparturePort').text(departurePortDisplay);
+            $('#editSummaryArrivalPort').text(arrivalPortDisplay);
+
+            if (originLocation && destinationLocation && departurePort && arrivalPort) {
+                $('#editShippingSummary').slideDown();
+            } else {
+                $('#editShippingSummary').slideUp();
+            }
+        }
+            // ===============================================
+            // LIVESTOCK EDIT HANDLERS
+            // ===============================================
+
+            function setupEditLivestockHandlers() {
+                // Livestock type change
+                $(document).on('change', '.livestock-type', function() {
+                    const index = $(this).data('index');
+                    const selectedType = $(this).val();
+
+                    if (selectedType && editOriginProvinceCode) {
+                        validateEditQuotaForType(selectedType, index);
+                    } else {
+                        hideEditQuotaIndicator(index);
+                    }
+
+                    updateEditSummary();
+                });
+
+                // Livestock quantity change
+                $(document).on('input change', '.livestock-quantity', function() {
+                    const index = $(this).data('index');
+                    const quantity = parseInt($(this).val()) || 0;
+                    const livestockType = $(`.livestock-type[data-index="${index}"]`).val();
+
+                    if (livestockType && editOriginProvinceCode && quantity > 0) {
+                        validateEditQuantityRealtime(livestockType, editOriginProvinceCode, quantity, index);
+                    }
+
+                    updateEditSummary();
+                });
+
+                // Add livestock button
+                $('#editAddLivestock').on('click', function() {
+                    addEditLivestockItem();
+                });
+
+                // Remove livestock button
+                $(document).on('click', '.remove-livestock', function() {
+                    const $item = $(this).closest('.livestock-item');
+                    const index = $item.data('index');
+
+                    // Mark for deletion instead of immediate removal
+                    $item.find('input[name$=".IsMarkedForDeletion"]').val('true');
+                    $item.hide();
+
+                    updateEditLivestockNumbers();
+                    updateEditSummary();
+                    updateEditQuotaValidationSummary();
+                });
+
+                // Refresh quota button
+                $('#editRefreshQuotaBtn').on('click', function() {
+                    if (editOriginProvinceCode) {
+                        editQuotaCache = {};
+                        loadEditQuotaInfo(editOriginProvinceCode);
+                        refreshAllEditQuotaValidations();
+                    }
+                });
+            }
+
+            function addEditLivestockItem() {
+                const template = `
+                    <div class="livestock-item editable" data-index="${editLivestockIndex}">
+                        <div class="livestock-header">
+                            <h4>Ternak #<span class="livestock-number">${editLivestockIndex + 1}</span></h4>
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-livestock">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        <div class="livestock-form">
+                            <input type="hidden" name="EditableLivestockDetails[${editLivestockIndex}].Id" value="" />
+                            <input type="hidden" name="EditableLivestockDetails[${editLivestockIndex}].Index" value="${editLivestockIndex}" />
+                            <input type="hidden" name="EditableLivestockDetails[${editLivestockIndex}].IsMarkedForDeletion" value="false" />
+                            <input type="hidden" name="EditableLivestockDetails[${editLivestockIndex}].IsNewEntry" value="true" />
+
+                            <div class="form-group">
+                                <label class="form-label required">
+                                    <i class="fas fa-paw"></i>
+                                    Jenis Ternak
+                                    <span class="quota-indicator" data-index="${editLivestockIndex}" style="display: none;">
+                                        <i class="fas fa-info-circle text-primary"></i>
+                                        <span class="quota-text">Loading...</span>
+                                    </span>
+                                </label>
+                                <select name="EditableLivestockDetails[${editLivestockIndex}].LivestockType"
+                                        class="form-control livestock-type editable-field"
+                                        data-index="${editLivestockIndex}"
+                                        data-original=""
+                                        required>
+        <option value="">Pilih Jenis Ternak</option>
+                                   <option value="Sapi Potong">Sapi Potong</option>
+                                   <option value="Kerbau Potong">Kerbau Potong</option>
+                                   <option value="Kuda Pedaging">Kuda Pedaging</option>
+                                   <option value="Kambing">Kambing</option>
+                                   <option value="Domba">Domba</option>
+                               </select>
+                           </div>
+
+                           <div class="form-group">
+                               <label class="form-label required">
+                                   <i class="fas fa-calculator"></i>
+                                   Jumlah (ekor)
+                                   <span class="quota-limit" data-index="${editLivestockIndex}" style="display: none;">
+                                       <small class="text-muted">Maks: <span class="max-quota">-</span> ekor</small>
+                                   </span>
+                               </label>
+                               <input type="number"
+                                      name="EditableLivestockDetails[${editLivestockIndex}].Quantity"
+                                      class="form-control livestock-quantity editable-field"
+                                      data-index="${editLivestockIndex}"
+                                      data-original="0"
+                                      min="1"
+                                      value=""
+                                      placeholder="Masukkan jumlah ternak"
+                                      required />
+                               <div class="quantity-feedback" data-index="${editLivestockIndex}" style="display: none;">
+                                   <small class="feedback-text">-</small>
+                               </div>
+                           </div>
+
+                           <div class="form-group">
+                               <label class="form-label">
+                                   <i class="fas fa-comment"></i>
+                                   Keterangan
+                               </label>
+                               <textarea name="EditableLivestockDetails[${editLivestockIndex}].Description"
+                                         class="form-control editable-field"
+                                         rows="2"
+                                         data-original=""
+                                         placeholder="Keterangan tambahan (opsional)"></textarea>
+                           </div>
+                       </div>
+                   </div>
+               `;
+
+               $('#editLivestockContainer').append(template);
+               editLivestockIndex++;
+               updateEditLivestockNumbers();
+               updateEditSummary();
+           }
+
+           function updateEditLivestockNumbers() {
+               $('.livestock-item.editable:visible').each(function(index) {
+                   $(this).find('.livestock-number').text(index + 1);
+               });
+           }
+
+           function updateEditSummary() {
+               const totalTypes = $('.livestock-item.editable:visible').length;
+               let totalQuantity = 0;
+
+               $('.livestock-item.editable:visible .livestock-quantity').each(function() {
+                   totalQuantity += parseInt($(this).val()) || 0;
+               });
+
+               $('#editTotalTypes').text(totalTypes);
+               $('#editTotalQuantity').text(totalQuantity.toLocaleString());
+           }
+
+           // ===============================================
+           // QUOTA MANAGEMENT FOR EDIT MODE
+           // ===============================================
+
+           function loadEditQuotaInfo(provinceCode) {
+               console.log('Loading edit quota info for province:', provinceCode);
+
+               $('#editQuotaInfoPanel').show();
+               $('#editQuotaInfoContent').html('<div class="text-center"><div class="quota-loading"></div> Memuat informasi kuota...</div>');
+
+               $.get('/Quota/GetQuotasByProvince', { provinceCode: provinceCode })
+                   .done(function(response) {
+                       if (response.success && response.data.length > 0) {
+                           displayEditQuotaInfo(response.data);
+                       } else {
+                           $('#editQuotaInfoContent').html('<div class="alert alert-warning">Tidak ada data kuota untuk provinsi ini.</div>');
+                       }
+                   })
+                   .fail(function() {
+                       $('#editQuotaInfoContent').html('<div class="alert alert-danger">Gagal memuat data kuota.</div>');
+                   });
+           }
+
+           function displayEditQuotaInfo(quotas) {
+               let html = '<div class="row">';
+
+               quotas.forEach(quota => {
+                   const usagePercentage = quota.usagePercentage;
+                   const progressColor = usagePercentage < 50 ? '#28a745' :
+                                        usagePercentage < 80 ? '#ffc107' : '#dc3545';
+                   const iconColor = usagePercentage < 50 ? 'background: #28a745' :
+                                    usagePercentage < 80 ? 'background: #ffc107' : 'background: #dc3545';
+
+                   html += `
+                       <div class="col-md-6 col-lg-4">
+                           <div class="quota-card">
+                               <div class="quota-info">
+                                   <div class="quota-icon" style="${iconColor}">
+                                       <i class="fas fa-paw"></i>
+                                   </div>
+                                   <div class="quota-details">
+                                       <h6>${quota.livestockType}</h6>
+                                       <p>Tersedia: ${quota.remainingQuota.toLocaleString()} ekor</p>
+                                   </div>
+                               </div>
+                               <div class="quota-stats">
+                                   <p class="quota-number" style="color: ${progressColor}">${quota.remainingQuota.toLocaleString()}</p>
+                                   <p class="quota-label">dari ${quota.totalQuota.toLocaleString()}</p>
+                                   <div class="quota-progress">
+                                       <div class="quota-progress-bar" style="width: ${usagePercentage}%; background: ${progressColor}"></div>
+                                   </div>
+                               </div>
+                           </div>
+                       </div>
+                   `;
+               });
+
+               html += '</div>';
+               $('#editQuotaInfoContent').html(html);
+
+               // Cache quota data
+               quotas.forEach(quota => {
+                   editQuotaCache[quota.livestockType] = quota;
+               });
+           }
+
+           function hideEditQuotaInfo() {
+               $('#editQuotaInfoPanel').hide();
+               editQuotaCache = {};
+           }
+
+           function validateEditQuotaForType(livestockType, index) {
+               const quota = editQuotaCache[livestockType];
+               const $quantityInput = $(`.livestock-quantity[data-index="${index}"]`);
+               const $quotaIndicator = $(`.quota-indicator[data-index="${index}"]`);
+               const $quotaLimit = $(`.quota-limit[data-index="${index}"]`);
+
+               if (quota) {
+                   $quotaIndicator.show().find('.quota-text').text(`Kuota: ${quota.remainingQuota.toLocaleString()} ekor`);
+                   $quotaLimit.show().find('.max-quota').text(quota.remainingQuota.toLocaleString());
+                   $quantityInput.attr('max', quota.remainingQuota);
+
+                   const currentQuantity = parseInt($quantityInput.val()) || 0;
+                   if (currentQuantity > 0) {
+                       validateEditQuantityRealtime(livestockType, editOriginProvinceCode, currentQuantity, index);
+                   }
+               } else {
+                   loadEditQuotaForType(livestockType, index);
+               }
+           }
+
+           function loadEditQuotaForType(livestockType, index) {
+               $.get('/Quota/GetQuota', {
+                   livestockType: livestockType,
+                   provinceCode: editOriginProvinceCode
+               })
+               .done(function(response) {
+                   const $quantityInput = $(`.livestock-quantity[data-index="${index}"]`);
+                   const $quotaIndicator = $(`.quota-indicator[data-index="${index}"]`);
+                   const $quotaLimit = $(`.quota-limit[data-index="${index}"]`);
+
+                   if (response.isValid && response.availableQuota > 0) {
+                       $quotaIndicator.show().find('.quota-text').text(`Kuota: ${response.availableQuota.toLocaleString()} ekor`);
+                       $quotaLimit.show().find('.max-quota').text(response.availableQuota.toLocaleString());
+                       $quantityInput.attr('max', response.availableQuota);
+
+                       editQuotaCache[livestockType] = {
+                           livestockType: livestockType,
+                           remainingQuota: response.availableQuota,
+                           totalQuota: response.totalQuota,
+                           usedQuota: response.usedQuota
+                       };
+                   } else {
+                       $quotaIndicator.show().find('.quota-text').text('Kuota habis').parent().addClass('text-danger');
+                       $quantityInput.attr('max', 0);
+                       showEditQuantityFeedback(index, 'error', 'Kuota untuk jenis ternak ini sudah habis');
+                   }
+               })
+               .fail(function() {
+                   showEditQuantityFeedback(index, 'error', 'Gagal memuat data kuota');
+               });
+           }
+
+           function validateEditQuantityRealtime(livestockType, provinceCode, quantity, index) {
+               const validationData = {
+                   livestockType: livestockType,
+                   provinceCode: provinceCode,
+                   requestedQuantity: quantity
+               };
+
+               $.ajax({
+                   url: '/Quota/ValidateQuota',
+                   method: 'POST',
+                   contentType: 'application/json',
+                   data: JSON.stringify(validationData),
+                   success: function(response) {
+                       const $quantityInput = $(`.livestock-quantity[data-index="${index}"]`);
+
+                       if (response.isValid) {
+                           $quantityInput.removeClass('error').addClass('success');
+                           showEditQuantityFeedback(index, 'success', response.message);
+                       } else {
+                           $quantityInput.removeClass('success').addClass('error');
+                           showEditQuantityFeedback(index, 'error', response.message);
+                       }
+
+                       updateEditQuotaValidationSummary();
+                   },
+                   error: function() {
+                       showEditQuantityFeedback(index, 'error', 'Gagal validasi kuota');
+                   }
+               });
+           }
+
+           function showEditQuantityFeedback(index, type, message) {
+               const $feedback = $(`.quantity-feedback[data-index="${index}"]`);
+               $feedback.show().find('.feedback-text')
+                   .removeClass('success warning error')
+                   .addClass(type)
+                   .text(message);
+           }
+
+           function hideEditQuotaIndicator(index) {
+               $(`.quota-indicator[data-index="${index}"]`).hide();
+               $(`.quota-limit[data-index="${index}"]`).hide();
+               $(`.quantity-feedback[data-index="${index}"]`).hide();
+           }
+
+           function updateEditQuotaValidationSummary() {
+               const hasErrors = $('.livestock-quantity.error').length > 0;
+               const hasSuccess = $('.livestock-quantity.success').length > 0;
+
+               if (hasSuccess || hasErrors) {
+                   $('#editQuotaValidationSummary').show();
+                   $('.quota-usage').show();
+
+                   if (hasErrors) {
+                       $('#editQuotaStatus').html('<i class="fas fa-exclamation-triangle text-warning"></i> Ada Masalah');
+                   } else {
+                       $('#editQuotaStatus').html('<i class="fas fa-check-circle text-success"></i> Dalam Batas');
+                   }
+               } else {
+                   $('#editQuotaValidationSummary').hide();
+                   $('.quota-usage').hide();
+               }
+           }
+
+           function refreshAllEditQuotaValidations() {
+               $('.livestock-type').each(function() {
+                   const index = $(this).data('index');
+                   const selectedType = $(this).val();
+                   if (selectedType) {
+                       validateEditQuotaForType(selectedType, index);
+                   }
+               });
+           }
+
+           // ===============================================
+           // ENHANCED FORM SUBMISSION
+           // ===============================================
+
+           function submitEditApproval(action) {
+               // Enhanced validation for edit mode
+               if (action === 'Approve') {
+                   let hasValidationErrors = false;
+
+                   // Validate required fields for approval
+                   $('.form-label.required').each(function() {
+                       const input = $(this).next('input, textarea, select');
+                       if (!input.val() || input.val().trim() === '') {
+                           input.addClass('is-invalid');
+                           hasValidationErrors = true;
+                       } else {
+                           input.removeClass('is-invalid');
+                       }
+                   });
+
+                   // Validate quota errors
+                   const hasQuotaErrors = $('.livestock-quantity.error').length > 0;
+                   if (hasQuotaErrors) {
+                       alert('Masih ada masalah dengan kuota ternak. Silakan periksa kembali jumlah yang diminta.');
+                       return;
+                   }
+
+                   // Validate livestock details
+                   const validLivestock = $('.livestock-item.editable:visible').filter(function() {
+                       const type = $(this).find('.livestock-type').val();
+                       const quantity = parseInt($(this).find('.livestock-quantity').val()) || 0;
+                       return type && quantity > 0;
+                   }).length;
+
+                   if (validLivestock === 0) {
+                       alert('Minimal harus ada satu detail ternak yang valid');
+                       return;
+                   }
+
+                   if (hasValidationErrors) {
+                       alert('Mohon lengkapi semua field yang wajib diisi sebelum menyetujui');
+                       return;
+                   }
+               }
+
+               // Confirm if there are changes
+               if (hasChanges && action === 'Approve') {
+                   if (!confirm('Anda telah melakukan perubahan data. Apakah yakin ingin menyimpan perubahan dan menyetujui permohonan?')) {
+                       return;
+                   }
+               } else if (action === 'Reject') {
+                   const comments = $('#Comments').val().trim();
+                   if (!comments) {
+                       alert('Komentar wajib diisi untuk penolakan permohonan');
+                       $('#Comments').focus();
+                       return;
+                   }
+
+                   if (!confirm('Apakah yakin ingin menolak permohonan ini?')) {
+                       return;
+                   }
+               }
+
+               // Set action and submit
+               $('#actionInput').val(action);
+
+               // Show loading
+               if (action === 'Approve') {
+                   $('#approveBtn').html('<i class="fas fa-spinner fa-spin"></i> Memproses...');
+                   $('#approveBtn').prop('disabled', true);
+               } else {
+                   $('#rejectBtn').html('<i class="fas fa-spinner fa-spin"></i> Memproses...');
+                   $('#rejectBtn').prop('disabled', true);
+               }
+
+               $('#editApprovalForm').submit();
+           }
+
+           // ===============================================
+           // UTILITY FUNCTIONS
+           // ===============================================
+
+           function showNotification(type, message) {
+               console.log(`${type.toUpperCase()}: ${message}`);
+
+               const alertClass = type === 'error' ? 'danger' : type === 'success' ? 'success' : 'warning';
+               const notification = $(`
+                   <div class="alert alert-${alertClass} alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; max-width: 350px;">
+                       <i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+                       ${message}
+                       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                   </div>
+               `);
+
+               $('body').append(notification);
+
+               setTimeout(() => {
+                   notification.alert('close');
+               }, 4000);
+           }
+
+           // Override the existing functions if they exist
+           window.submitEditApproval = submitEditApproval;
+
+           // Initialize edit mode summary
+           updateEditSummary();
     </script>
 }

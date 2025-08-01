@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using PerizinanPeternakan.Data;
 using PerizinanPeternakan.Models;
+using PerizinanPeternakan.Service;
 using PerizinanPeternakan.Services;
 using PerizinanPeternakan.ViewModels;
 using System.Text;
@@ -14,12 +15,16 @@ namespace PerizinanPeternakan.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IPdfGeneratorService _pdfGenerator;
         private readonly IWebHostEnvironment _environment;
+        private readonly IApplicationNumberService _applicationNumberService;
+        private readonly IDocumentService _documentService;
 
-        public PermitController(ApplicationDbContext context, IPdfGeneratorService pdfGenerator, IWebHostEnvironment environment)
+        public PermitController(ApplicationDbContext context, IPdfGeneratorService pdfGenerator, IWebHostEnvironment environment, IApplicationNumberService applicationNumberService, IDocumentService documentService)
         {
             _context = context;
             _pdfGenerator = pdfGenerator;
             _environment = environment;
+            _applicationNumberService = applicationNumberService;
+            _documentService = documentService;
         }
 
         public async Task<IActionResult> AdminHistory(
@@ -756,16 +761,22 @@ namespace PerizinanPeternakan.Controllers
                     ModelState.AddModelError("", "Minimal harus ada satu detail ternak yang valid");
                 }
 
-                // Validate required documents
-                if (!ValidateAllDocumentsUploaded(model))
+                var documentValidation = _documentService.ValidateAllRequiredDocuments(model);
+                if (!documentValidation.IsValid)
                 {
-                    ModelState.AddModelError("", "Semua dokumen wajib harus diupload");
+                    foreach (var error in documentValidation.Errors)
+                    {
+                        ModelState.AddModelError("", error);
+                    }
                 }
 
-                // Validate document details
-                if (!ValidateDocumentDetails(model))
+                var detailsValidation = _documentService.ValidateDocumentDetails(model);
+                if (!detailsValidation.IsValid)
                 {
-                    ModelState.AddModelError("", "Detail dokumen (tanggal dan nomor) harus diisi dengan benar");
+                    foreach (var error in detailsValidation.Errors)
+                    {
+                        ModelState.AddModelError("", error);
+                    }
                 }
 
                 // ===============================================
@@ -803,7 +814,8 @@ namespace PerizinanPeternakan.Controllers
                     return View(model);
                 }
 
-                var applicationNumber = await GenerateApplicationNumber();
+                //var applicationNumber = await GenerateApplicationNumber();
+                var applicationNumber = await _applicationNumberService.GenerateApplicationNumberAsync();
 
                 Console.WriteLine($"✅ Creating permit application - Number: {applicationNumber}");
 
@@ -847,8 +859,7 @@ namespace PerizinanPeternakan.Controllers
 
                 Console.WriteLine($"✅ Permit application saved with ID: {permitApplication.Id}");
 
-                // Upload supporting documents
-                var uploadResult = await UploadSupportingDocuments(permitApplication.Id, model, userId.Value);
+                var uploadResult = await _documentService.UploadSupportingDocumentsAsync(permitApplication.Id, model, userId.Value);
 
                 if (!uploadResult.Success)
                 {
@@ -911,133 +922,7 @@ namespace PerizinanPeternakan.Controllers
             }
         }
 
-        private async Task<(bool Success, string ErrorMessage, int UploadedCount)> UploadSupportingDocuments(int permitId, PermitApplicationViewModel model, int userId)
-        {
-            var uploadedFiles = new List<string>(); 
-
-            try
-            {
-                Console.WriteLine($"🚀 Starting document upload process for permit ID: {permitId}");
-
-                var documentsToUpload = new[]
-                {
-            (File: model.SuratPermohonan, Type: "SURAT_PERMOHONAN", Name: "Surat Permohonan",
-             Date: model.SuratPermohonanTanggal, Number: model.SuratPermohonanNomor),
-
-            (File: model.RekomendasiDinasProv, Type: "REKOMENDASI_DINAS_PROV", Name: "Rekomendasi Dinas Peternakan Provinsi NTB",
-             Date: model.RekomendasiDinasProvTanggal, Number: model.RekomendasiDinasProvNomor),
-
-            (File: model.RekomendasiDaerahTujuan, Type: "REKOMENDASI_DAERAH_TUJUAN", Name: "Rekomendasi Pemasukan Ternak dari Daerah Tujuan",
-             Date: model.RekomendasiDaerahTujuanTanggal, Number: model.RekomendasiDaerahTujuanNomor),
-
-            (File: model.SKKHKabupatenAsal, Type: "SKKH_KABUPATEN_ASAL", Name: "SKKH dari Kabupaten Asal",
-             Date: (DateTime?)null, Number: (string?)null),
-
-            (File: model.SKKHDinasProvinsi, Type: "SKKH_DINAS_PROVINSI", Name: "SKKH dari Dinas Peternakan Provinsi NTB",
-             Date: (DateTime?)null, Number: (string?)null),
-
-            (File: model.SuratJalanTernak, Type: "SURAT_JALAN_TERNAK", Name: "Surat Keterangan Jalan Ternak/Rekomendasi Asal",
-             Date: (DateTime?)null, Number: (string?)null),
-
-            (File: model.HasilPemeriksaanFisik, Type: "HASIL_PEMERIKSAAN_FISIK", Name: "Hasil Pemeriksaan Fisik (Holding Ground)",
-             Date: (DateTime?)null, Number: (string?)null),
-                (File: model.DokumenOpsional, Type: "DOKUMEN_OPSIONAL", Name: model.DokumenOpsionalNama ?? "Dokumen Opsional",
-     Date: model.DokumenOpsionalTanggal, Number: model.DokumenOpsionalNomor)
-
-        };
-
-                // Create upload directory if it doesn't exist
-                var uploadsPath = Path.Combine(_environment.WebRootPath, "documents", "supporting");
-                if (!Directory.Exists(uploadsPath))
-                {
-                    Directory.CreateDirectory(uploadsPath);
-                }
-
-                int uploadedCount = 0;
-                var uploadedDocuments = new List<PermitDocument>();
-
-                // Process each document
-                foreach (var (file, type, name, date, number) in documentsToUpload)
-                {
-                    if (file != null && file.Length > 0)
-                    {
-
-                        // Validate file
-                        if (!IsValidFile(file))
-                        {
-                            CleanupUploadedFiles(uploadedFiles);
-                            return (false, $"File {name} tidak valid atau tidak memenuhi persyaratan", uploadedCount);
-                        }
-
-                        // Generate unique filename
-                        var fileExtension = Path.GetExtension(file.FileName);
-                        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                        var uniqueFileName = $"{permitId}_{type}_{timestamp}_{Guid.NewGuid().ToString("N")[..8]}{fileExtension}";
-                        var filePath = Path.Combine(uploadsPath, uniqueFileName);
-
-                        // Save file to disk
-                        try
-                        {
-                            using (var stream = new FileStream(filePath, FileMode.Create))
-                            {
-                                await file.CopyToAsync(stream);
-                            }
-                            uploadedFiles.Add(filePath); 
-                        }
-                        catch (Exception fileEx)
-                        {
-                            CleanupUploadedFiles(uploadedFiles);
-                            return (false, $"Gagal menyimpan file {name}: {fileEx.Message}", uploadedCount);
-                        }
-
-                        var document = new PermitDocument
-                        {
-                            PermitApplicationId = permitId,
-                            DocumentName = name,
-                            FilePath = filePath,
-                            DocumentType = type,
-                            FileSize = file.Length,
-                            FileExtension = fileExtension,
-                            UploadedByUserId = userId,
-                            UploadDate = DateTime.Now,
-
-                            DocumentDate = date,
-                            DocumentNumber = number,
-                            DocumentDescription = GenerateDocumentDescription(name, number, date)
-                        };
-
-                        uploadedDocuments.Add(document);
-                        uploadedCount++;
-                    }
-                    else
-                    {
-                    }
-                }
-
-                if (!uploadedDocuments.Any())
-                {
-                    return (false, "Tidak ada dokumen yang berhasil diupload", 0);
-                }
-
-                try
-                {
-                    _context.PermitDocuments.AddRange(uploadedDocuments);
-                    await _context.SaveChangesAsync();
-
-                    return (true, string.Empty, uploadedCount);
-                }
-                catch (Exception dbEx)
-                {
-                    CleanupUploadedFiles(uploadedFiles);
-                    return (false, $"Gagal menyimpan informasi dokumen ke database: {dbEx.Message}", 0);
-                }
-            }
-            catch (Exception ex)
-            {
-                CleanupUploadedFiles(uploadedFiles);
-                return (false, $"Terjadi kesalahan saat upload dokumen: {ex.Message}", 0);
-            }
-        }
+      
         private string SanitizeFileName(string fileName)
         {
             if (string.IsNullOrWhiteSpace(fileName)) return "unknown";
@@ -1529,17 +1414,14 @@ namespace PerizinanPeternakan.Controllers
             var userId = GetCurrentUserId();
             if (userId == null) return RedirectToAction("Login", "Auth");
 
-            var document = await _context.PermitDocuments
-                .Include(d => d.PermitApplication)
-                .FirstOrDefaultAsync(d => d.Id == id);
+            var userRole = HttpContext.Session.GetString("Role");
+            var document = await _documentService.GetDocumentWithAuthorizationAsync(id, userId.Value, userRole);
 
             if (document == null)
             {
-                TempData["ErrorMessage"] = "Dokumen tidak ditemukan";
+                TempData["ErrorMessage"] = "Dokumen tidak ditemukan atau Anda tidak memiliki akses";
                 return NotFound();
             }
-
-            var userRole = HttpContext.Session.GetString("Role");
 
             bool canDownload = false;
             if (userRole == "User" && document.PermitApplication.UserId == userId.Value)
@@ -2042,78 +1924,6 @@ namespace PerizinanPeternakan.Controllers
             return int.TryParse(userIdStr, out var userId) ? userId : null;
         }
 
-        private async Task<string> GenerateApplicationNumber()
-        {
-            var year = DateTime.Now.Year;
-            var month = DateTime.Now.Month;
-
-            // Gunakan transaction untuk memastikan atomicity
-            using var transaction = await _context.Database.BeginTransactionAsync();
-
-            try
-            {
-                // Lock table untuk mencegah race condition
-                await _context.Database.ExecuteSqlRawAsync("SELECT 1 FROM PermitApplications WITH (TABLOCKX)");
-
-                // Ambil nomor terakhir dengan pattern yang benar untuk bulan/tahun ini
-                var prefix = $"%/03-260/DPM&PTSP/{year}";
-
-                var lastApplication = await _context.PermitApplications
-                    .Where(p => p.ApplicationNumber.EndsWith($"/03-260/DPM&PTSP/{year}") &&
-                               p.SubmissionDate.Year == year &&
-                               p.SubmissionDate.Month == month)
-                    .OrderByDescending(p => p.ApplicationNumber)
-                    .FirstOrDefaultAsync();
-
-                int nextNumber = 1;
-
-                if (lastApplication != null)
-                {
-                    // Extract nomor urut dari ApplicationNumber (format: XXX/03-260/DPM&PTSP/YYYY)
-                    var numberPart = lastApplication.ApplicationNumber.Split('/')[0];
-                    if (int.TryParse(numberPart, out int currentNumber))
-                    {
-                        nextNumber = currentNumber + 1;
-                    }
-                }
-
-                // Generate nomor dengan retry mechanism
-                string applicationNumber;
-                int maxRetries = 10;
-                int retryCount = 0;
-
-                do
-                {
-                    applicationNumber = $"{nextNumber.ToString().PadLeft(3, '0')}/03-260/DPM&PTSP/{year}";
-
-                    // Check apakah sudah ada
-                    var exists = await _context.PermitApplications
-                        .AnyAsync(p => p.ApplicationNumber == applicationNumber);
-
-                    if (!exists)
-                    {
-                        break; // Nomor unik ditemukan
-                    }
-
-                    nextNumber++;
-                    retryCount++;
-
-                    if (retryCount >= maxRetries)
-                    {
-                        throw new InvalidOperationException("Tidak dapat menggenerate nomor aplikasi unik setelah beberapa percobaan");
-                    }
-
-                } while (true);
-
-                await transaction.CommitAsync();
-                return applicationNumber;
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
-        }
         private bool CanUserApprove(string userRole, PermitStatus status)
         {
             return userRole switch
@@ -2908,126 +2718,7 @@ namespace PerizinanPeternakan.Controllers
 
         #region Document Details Helper Methods (ADD TO CONTROLLER)
 
-        /// <summary>
-        /// Validates document details for specific document types
-        /// </summary>
-        /// <param name="model">The permit application view model</param>
-        /// <returns>True if validation passes, false otherwise</returns>
-        private bool ValidateDocumentDetails(PermitApplicationViewModel model)
-        {
-            var errors = new List<string>();
-
-            try
-            {
-                // Validate Surat Permohonan details
-                if (model.SuratPermohonan != null && model.SuratPermohonan.Length > 0)
-                {
-                    if (!model.SuratPermohonanTanggal.HasValue)
-                    {
-                        errors.Add("Tanggal pengajuan Surat Permohonan harus diisi");
-                    }
-                    else if (model.SuratPermohonanTanggal.Value > DateTime.Today)
-                    {
-                        errors.Add("Tanggal pengajuan Surat Permohonan tidak boleh di masa depan");
-                    }
-
-                    if (string.IsNullOrWhiteSpace(model.SuratPermohonanNomor))
-                    {
-                        errors.Add("Nomor dokumen Surat Permohonan harus diisi");
-                    }
-                    else if (!IsValidDocumentNumber(model.SuratPermohonanNomor))
-                    {
-                        errors.Add("Format nomor dokumen Surat Permohonan tidak valid");
-                    }
-                }
-
-                // Validate Rekomendasi Dinas Provinsi details
-                if (model.RekomendasiDinasProv != null && model.RekomendasiDinasProv.Length > 0)
-                {
-                    if (!model.RekomendasiDinasProvTanggal.HasValue)
-                    {
-                        errors.Add("Tanggal pengajuan Rekomendasi Dinas Provinsi harus diisi");
-                    }
-                    else if (model.RekomendasiDinasProvTanggal.Value > DateTime.Today)
-                    {
-                        errors.Add("Tanggal pengajuan Rekomendasi Dinas Provinsi tidak boleh di masa depan");
-                    }
-
-                    if (string.IsNullOrWhiteSpace(model.RekomendasiDinasProvNomor))
-                    {
-                        errors.Add("Nomor dokumen Rekomendasi Dinas Provinsi harus diisi");
-                    }
-                    else if (!IsValidDocumentNumber(model.RekomendasiDinasProvNomor))
-                    {
-                        errors.Add("Format nomor dokumen Rekomendasi Dinas Provinsi tidak valid");
-                    }
-                }
-
-                // Validate Rekomendasi Daerah Tujuan details
-                if (model.RekomendasiDaerahTujuan != null && model.RekomendasiDaerahTujuan.Length > 0)
-                {
-                    if (!model.RekomendasiDaerahTujuanTanggal.HasValue)
-                    {
-                        errors.Add("Tanggal pengajuan Rekomendasi Daerah Tujuan harus diisi");
-                    }
-                    else if (model.RekomendasiDaerahTujuanTanggal.Value > DateTime.Today)
-                    {
-                        errors.Add("Tanggal pengajuan Rekomendasi Daerah Tujuan tidak boleh di masa depan");
-                    }
-
-                    if (string.IsNullOrWhiteSpace(model.RekomendasiDaerahTujuanNomor))
-                    {
-                        errors.Add("Nomor dokumen Rekomendasi Daerah Tujuan harus diisi");
-                    }
-                    else if (!IsValidDocumentNumber(model.RekomendasiDaerahTujuanNomor))
-                    {
-                        errors.Add("Format nomor dokumen Rekomendasi Daerah Tujuan tidak valid");
-                    }
-                }
-
-                // Validate Dokumen Opsional details (jika ada)
-                if (model.DokumenOpsional != null && model.DokumenOpsional.Length > 0)
-                {
-                    // Validasi tanggal (opsional tapi jika diisi harus valid)
-                    if (model.DokumenOpsionalTanggal.HasValue && model.DokumenOpsionalTanggal.Value > DateTime.Today)
-                    {
-                        errors.Add("Tanggal dokumen opsional tidak boleh di masa depan");
-                    }
-
-                    // Validasi nomor dokumen (opsional tapi jika diisi harus valid format)
-                    if (!string.IsNullOrWhiteSpace(model.DokumenOpsionalNomor) &&
-                        !IsValidDocumentNumber(model.DokumenOpsionalNomor))
-                    {
-                        errors.Add("Format nomor dokumen opsional tidak valid");
-                    }
-
-                    // Validasi nama dokumen (wajib jika upload dokumen)
-                    if (string.IsNullOrWhiteSpace(model.DokumenOpsionalNama))
-                    {
-                        errors.Add("Nama dokumen opsional harus diisi jika mengupload dokumen");
-                    }
-                }
-
-                // Add errors to ModelState
-                foreach (var error in errors)
-                {
-                    ModelState.AddModelError("", error);
-                    Console.WriteLine($"❌ Validation error: {error}");
-                }
-
-                bool isValid = !errors.Any();
-                Console.WriteLine($"📋 Document details validation result: {(isValid ? "PASSED" : "FAILED")}");
-
-                return isValid;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"❌ Error in ValidateDocumentDetails: {ex.Message}");
-                ModelState.AddModelError("", "Terjadi kesalahan saat validasi dokumen");
-                return false;
-            }
-        }
-
+        
         /// <summary>
         /// Validates document number format
         /// </summary>
@@ -3108,55 +2799,6 @@ namespace PerizinanPeternakan.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ Error during cleanup: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Validates all required documents are uploaded
-        /// </summary>
-        /// <param name="model">The permit application view model</param>
-        /// <returns>True if all required documents are present, false otherwise</returns>
-        private bool ValidateAllDocumentsUploaded(PermitApplicationViewModel model)
-        {
-            try
-            {
-                var requiredDocuments = new Dictionary<string, IFormFile?>
-        {
-            { "Surat Permohonan", model.SuratPermohonan },
-            { "Rekomendasi Dinas Provinsi", model.RekomendasiDinasProv },
-            { "Rekomendasi Daerah Tujuan", model.RekomendasiDaerahTujuan },
-            { "SKKH Kabupaten Asal", model.SKKHKabupatenAsal },
-            { "SKKH Dinas Provinsi", model.SKKHDinasProvinsi },
-            { "Surat Jalan Ternak", model.SuratJalanTernak },
-            { "Hasil Pemeriksaan Fisik", model.HasilPemeriksaanFisik }
-        };
-
-                var missingDocuments = new List<string>();
-
-                foreach (var doc in requiredDocuments)
-                {
-                    if (doc.Value == null || doc.Value.Length == 0)
-                    {
-                        missingDocuments.Add(doc.Key);
-                    }
-                }
-
-                if (missingDocuments.Any())
-                {
-                    var errorMessage = $"Dokumen berikut belum diupload: {string.Join(", ", missingDocuments)}";
-                    ModelState.AddModelError("", errorMessage);
-                    Console.WriteLine($"❌ Missing documents: {string.Join(", ", missingDocuments)}");
-                    return false;
-                }
-
-                Console.WriteLine("✅ All required documents are uploaded");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"❌ Error validating documents: {ex.Message}");
-                ModelState.AddModelError("", "Terjadi kesalahan saat validasi dokumen");
-                return false;
             }
         }
 
@@ -3796,12 +3438,12 @@ namespace PerizinanPeternakan.Controllers
 
 
         // File: Controllers/PermitController.cs
-        // Tambahkan method berikut ke dalam PermitController class
+        // Update method EnableEditMode dan ApproveWithEdits
 
-        #region Admin Edit Functionality
+        #region Enhanced Admin Edit Functionality
 
         /// <summary>
-        /// Enable editing mode for admin
+        /// Enable editing mode for admin with full location and livestock edit support
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> EnableEditMode(int id)
@@ -3853,7 +3495,26 @@ namespace PerizinanPeternakan.Controllers
                 EditableDestinationLocation = permit.DestinationLocation,
                 EditableDeparturePort = permit.DeparturePort,
                 EditableArrivalPort = permit.ArrivalPort,
+
+                // ⭐ NEW: Populate location IDs (will be parsed from location strings)
+                EditableOriginProvinceId = ExtractProvinceFromLocation(permit.OriginLocation),
+                EditableOriginRegencyId = ExtractRegencyFromLocation(permit.OriginLocation),
+                EditableDestinationProvinceId = ExtractProvinceFromLocation(permit.DestinationLocation),
+                EditableDestinationRegencyId = ExtractRegencyFromLocation(permit.DestinationLocation),
+
                 IsEditingData = true,
+
+                // ⭐ NEW: Convert to editable livestock details
+                EditableLivestockDetails = permit.LivestockDetails.Select((d, index) => new EditableLivestockDetailViewModel
+                {
+                    Id = d.Id,
+                    Index = index,
+                    LivestockType = d.LivestockType,
+                    Quantity = d.Quantity,
+                    Description = d.Description,
+                    IsMarkedForDeletion = false,
+                    IsNewEntry = false
+                }).ToList(),
 
                 LivestockDetails = permit.LivestockDetails.Select(d => new LivestockDetailViewModel
                 {
@@ -3878,11 +3539,21 @@ namespace PerizinanPeternakan.Controllers
                 }).OrderBy(d => d.DocumentType).ToList()
             };
 
+            // Ensure at least one livestock entry for the form
+            if (!model.EditableLivestockDetails.Any())
+            {
+                model.EditableLivestockDetails.Add(new EditableLivestockDetailViewModel
+                {
+                    Index = 0,
+                    IsNewEntry = true
+                });
+            }
+
             return View("ApproveWithEdit", model);
         }
 
         /// <summary>
-        /// Save admin edits and process approval
+        /// Save admin edits including livestock details and process approval
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -3930,56 +3601,12 @@ namespace PerizinanPeternakan.Controllers
 
                 if (model.IsEditingData && model.Action == "Approve")
                 {
-                    // Track original values
-                    originalData["CompanyName"] = permit.CompanyName;
-                    originalData["CompanyAddress"] = permit.CompanyAddress ?? "";
-                    originalData["OriginLocation"] = permit.OriginLocation ?? "";
-                    originalData["DestinationLocation"] = permit.DestinationLocation ?? "";
-                    originalData["DeparturePort"] = permit.DeparturePort ?? "";
-                    originalData["ArrivalPort"] = permit.ArrivalPort ?? "";
+                    // Apply basic field changes (same as before)
+                    changedFields.AddRange(await ApplyBasicFieldChanges(permit, model, originalData));
 
-                    // Apply changes and track what was modified
-                    if (!string.IsNullOrEmpty(model.EditableCompanyName) &&
-                        permit.CompanyName != model.EditableCompanyName.Trim())
-                    {
-                        permit.CompanyName = model.EditableCompanyName.Trim();
-                        changedFields.Add($"Nama Perusahaan: '{originalData["CompanyName"]}' → '{permit.CompanyName}'");
-                    }
-
-                    if (!string.IsNullOrEmpty(model.EditableCompanyAddress) &&
-                        permit.CompanyAddress != model.EditableCompanyAddress.Trim())
-                    {
-                        permit.CompanyAddress = model.EditableCompanyAddress.Trim();
-                        changedFields.Add($"Alamat Perusahaan: '{originalData["CompanyAddress"]}' → '{permit.CompanyAddress}'");
-                    }
-
-                    if (!string.IsNullOrEmpty(model.EditableOriginLocation) &&
-                        permit.OriginLocation != model.EditableOriginLocation.Trim())
-                    {
-                        permit.OriginLocation = model.EditableOriginLocation.Trim();
-                        changedFields.Add($"Lokasi Asal: '{originalData["OriginLocation"]}' → '{permit.OriginLocation}'");
-                    }
-
-                    if (!string.IsNullOrEmpty(model.EditableDestinationLocation) &&
-                        permit.DestinationLocation != model.EditableDestinationLocation.Trim())
-                    {
-                        permit.DestinationLocation = model.EditableDestinationLocation.Trim();
-                        changedFields.Add($"Lokasi Tujuan: '{originalData["DestinationLocation"]}' → '{permit.DestinationLocation}'");
-                    }
-
-                    if (!string.IsNullOrEmpty(model.EditableDeparturePort) &&
-                        permit.DeparturePort != model.EditableDeparturePort.Trim())
-                    {
-                        permit.DeparturePort = model.EditableDeparturePort.Trim();
-                        changedFields.Add($"Pelabuhan Keberangkatan: '{originalData["DeparturePort"]}' → '{permit.DeparturePort}'");
-                    }
-
-                    if (!string.IsNullOrEmpty(model.EditableArrivalPort) &&
-                        permit.ArrivalPort != model.EditableArrivalPort.Trim())
-                    {
-                        permit.ArrivalPort = model.EditableArrivalPort.Trim();
-                        changedFields.Add($"Pelabuhan Tiba: '{originalData["ArrivalPort"]}' → '{permit.ArrivalPort}'");
-                    }
+                    // ⭐ NEW: Apply livestock changes
+                    var livestockChanges = await ApplyLivestockChanges(permit, model);
+                    changedFields.AddRange(livestockChanges);
                 }
 
                 // Validate documents for admin approval
@@ -4051,18 +3678,190 @@ namespace PerizinanPeternakan.Controllers
             }
         }
 
+        #endregion
+
+        #region Helper Methods for Admin Edit
+
         /// <summary>
-        /// API endpoint for validating admin edits
+        /// Apply basic field changes (company, location, ports)
+        /// </summary>
+        
+        /// <summary>
+        /// Apply livestock detail changes
+        /// </summary>
+        private async Task<List<string>> ApplyLivestockChanges(LivestockPermitApplication permit, PermitApprovalViewModel model)
+        {
+            var changedFields = new List<string>();
+
+            if (model.EditableLivestockDetails == null || !model.EditableLivestockDetails.Any())
+            {
+                return changedFields;
+            }
+
+            // Get current livestock details
+            var currentLivestock = permit.LivestockDetails.ToList();
+            var originalCount = currentLivestock.Count;
+            var originalSummary = string.Join(", ", currentLivestock.Select(l => $"{l.LivestockType}: {l.Quantity} ekor"));
+
+            // Remove existing livestock details to replace with edited ones
+            _context.LivestockDetails.RemoveRange(currentLivestock);
+
+            // Add updated livestock details
+            var validLivestockDetails = model.EditableLivestockDetails
+                .Where(d => !d.IsMarkedForDeletion &&
+                           !string.IsNullOrEmpty(d.LivestockType) &&
+                           d.Quantity > 0)
+                .ToList();
+
+            foreach (var editableLivestock in validLivestockDetails)
+            {
+                permit.LivestockDetails.Add(new LivestockDetail
+                {
+                    LivestockType = editableLivestock.LivestockType.Trim(),
+                    Quantity = editableLivestock.Quantity,
+                    Description = editableLivestock.Description?.Trim()
+                });
+            }
+
+            // Track changes
+            var newCount = validLivestockDetails.Count;
+            var newSummary = string.Join(", ", validLivestockDetails.Select(l => $"{l.LivestockType}: {l.Quantity} ekor"));
+            var totalOriginal = currentLivestock.Sum(l => l.Quantity);
+            var totalNew = validLivestockDetails.Sum(l => l.Quantity);
+
+            if (newCount != originalCount || newSummary != originalSummary)
+            {
+                changedFields.Add($"Detail Ternak: '{originalSummary}' → '{newSummary}'");
+                changedFields.Add($"Total Ternak: {totalOriginal} ekor → {totalNew} ekor");
+            }
+
+            return changedFields;
+        }
+
+        /// <summary>
+        /// Extract province code from location string (helper method)
+        /// </summary>
+        private string ExtractProvinceFromLocation(string location)
+        {
+            if (string.IsNullOrEmpty(location)) return "";
+
+            // Simple extraction - in real implementation, you might want to use a lookup table
+            var parts = location.Split(',');
+            if (parts.Length >= 2)
+            {
+                var province = parts.Last().Trim();
+                // Return a default code or lookup from your province data
+                return GetProvinceCodeByName(province);
+            }
+
+            return "";
+        }
+
+        /// <summary>
+        /// Extract regency code from location string (helper method)
+        /// </summary>
+        private string ExtractRegencyFromLocation(string location)
+        {
+            if (string.IsNullOrEmpty(location)) return "";
+
+            var parts = location.Split(',');
+            if (parts.Length >= 1)
+            {
+                var regency = parts[0].Trim();
+                // Return a default code or lookup from your regency data
+                return GetRegencyCodeByName(regency);
+            }
+
+            return "";
+        }
+
+        /// <summary>
+        /// Get province code by name (implement based on your data structure)
+        /// </summary>
+        private string GetProvinceCodeByName(string provinceName)
+        {
+            // Implement lookup logic based on your province data structure
+            // This is a placeholder - replace with actual implementation
+            var provinceMap = new Dictionary<string, string>
+    {
+        { "Nusa Tenggara Barat", "52" },
+        { "Nusa Tenggara Timur", "53" },
+        { "Bali", "51" },
+        // Add more mappings as needed
+    };
+
+            return provinceMap.ContainsKey(provinceName) ? provinceMap[provinceName] : "";
+        }
+
+        /// <summary>
+        /// Get regency code by name (implement based on your data structure)
+        /// </summary>
+        private string GetRegencyCodeByName(string regencyName)
+        {
+            // Implement lookup logic based on your regency data structure
+            // This is a placeholder - replace with actual implementation
+            return "";
+        }
+
+        #endregion
+        // File: Controllers/PermitController.cs
+        // Tambahkan API endpoints untuk mendukung edit mode
+
+        #region API Endpoints for Edit Mode
+
+        /// <summary>
+        /// API untuk mendapatkan data lokasi lengkap berdasarkan string lokasi
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> ParseLocationString(string locationString)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(locationString))
+                {
+                    return Json(new { success = false, message = "Location string is empty" });
+                }
+
+                // Parse format: "Kabupaten, Provinsi"
+                var parts = locationString.Split(',');
+                if (parts.Length >= 2)
+                {
+                    var regencyName = parts[0].Trim();
+                    var provinceName = parts[1].Trim();
+
+                    // You would implement actual lookup here
+                    var result = new
+                    {
+                        success = true,
+                        provinceCode = GetProvinceCodeByName(provinceName),
+                        provinceName = provinceName,
+                        regencyCode = GetRegencyCodeByName(regencyName),
+                        regencyName = regencyName
+                    };
+
+                    return Json(result);
+                }
+
+                return Json(new { success = false, message = "Invalid location format" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// API untuk validasi edit data sebelum submit
         /// </summary>
         [HttpPost]
-        public async Task<IActionResult> ValidateAdminEdits([FromBody] AdminEditValidationRequest request)
+        public async Task<IActionResult> ValidateEditData([FromBody] EditValidationRequest request)
         {
             try
             {
                 var errors = new List<string>();
                 var warnings = new List<string>();
 
-                // Validate required fields
+                // Validate basic fields
                 if (string.IsNullOrWhiteSpace(request.CompanyName))
                     errors.Add("Nama perusahaan harus diisi");
 
@@ -4072,16 +3871,38 @@ namespace PerizinanPeternakan.Controllers
                 if (string.IsNullOrWhiteSpace(request.DestinationLocation))
                     errors.Add("Lokasi tujuan harus diisi");
 
-                // Validate data quality
-                if (!string.IsNullOrEmpty(request.CompanyName) && request.CompanyName.Length < 3)
-                    warnings.Add("Nama perusahaan terlalu pendek");
+                // Validate livestock details
+                if (request.LivestockDetails == null || !request.LivestockDetails.Any())
+                {
+                    errors.Add("Minimal harus ada satu detail ternak");
+                }
+                else
+                {
+                    var validLivestock = request.LivestockDetails.Where(l =>
+                        !string.IsNullOrEmpty(l.LivestockType) && l.Quantity > 0).ToList();
 
-                // Check for potential duplicates
-                var existingPermit = await _context.PermitApplications
-                    .FirstOrDefaultAsync(p => p.CompanyName == request.CompanyName && p.Id != request.PermitId);
+                    if (!validLivestock.Any())
+                    {
+                        errors.Add("Minimal harus ada satu detail ternak yang valid");
+                    }
 
-                if (existingPermit != null)
-                    warnings.Add($"Sudah ada permohonan dengan nama perusahaan yang sama: {existingPermit.ApplicationNumber}");
+                    // Validate quota if origin province is provided
+                    if (!string.IsNullOrEmpty(request.OriginProvinceCode))
+                    {
+                        foreach (var livestock in validLivestock)
+                        {
+                            var quotaValidation = await ValidateQuotaForEdit(
+                                livestock.LivestockType,
+                                request.OriginProvinceCode,
+                                livestock.Quantity);
+
+                            if (!quotaValidation.IsValid)
+                            {
+                                errors.Add($"{livestock.LivestockType}: {quotaValidation.Message}");
+                            }
+                        }
+                    }
+                }
 
                 return Json(new
                 {
@@ -4101,11 +3922,282 @@ namespace PerizinanPeternakan.Controllers
             }
         }
 
+        /// <summary>
+        /// Helper method untuk validasi kuota dalam edit mode
+        /// </summary>
+        private async Task<(bool IsValid, string Message)> ValidateQuotaForEdit(string livestockType, string provinceCode, int quantity)
+        {
+            try
+            {
+                // Implement your quota validation logic here
+                // This is a placeholder implementation
+
+                // In real implementation, you would:
+                // 1. Get quota data from database
+                // 2. Check available quota
+                // 3. Return validation result
+
+                return (true, "Kuota tersedia");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Error validating quota: {ex.Message}");
+            }
+        }
+
         #endregion
 
-        #region Request Models for Admin Edit
+        // File: Controllers/PermitController.cs
+        // Hapus bagian PortController yang sementara dan update helper methods
 
-        public class AdminEditValidationRequest
+        #region Updated Helper Methods for Port Integration
+
+        /// <summary>
+        /// Get province code from port name using existing Port database
+        /// </summary>
+        private async Task<string> GetProvinceCodeFromPortName(string portName)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(portName)) return "";
+
+                var port = await _context.Ports
+                    .Where(p => p.Name == portName && p.IsActive)
+                    .FirstOrDefaultAsync();
+
+                return port?.ProvinceCode ?? "";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting province code from port: {ex.Message}");
+                return "";
+            }
+        }
+
+        /// <summary>
+        /// Validate port selection based on origin/destination province
+        /// </summary>
+        private async Task<(bool IsValid, string Message)> ValidatePortSelection(string portName, string expectedProvinceCode)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(portName))
+                    return (true, ""); // Allow empty port selection
+
+                var port = await _context.Ports
+                    .Where(p => p.Name == portName && p.IsActive)
+                    .FirstOrDefaultAsync();
+
+                if (port == null)
+                {
+                    return (false, $"Pelabuhan '{portName}' tidak ditemukan atau tidak aktif");
+                }
+
+                if (!string.IsNullOrEmpty(expectedProvinceCode) && port.ProvinceCode != expectedProvinceCode)
+                {
+                    return (false, $"Pelabuhan '{portName}' tidak sesuai dengan provinsi yang dipilih");
+                }
+
+                return (true, $"Pelabuhan '{portName}' valid");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Error validating port: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Enhanced field validation including port validation
+        /// </summary>
+        private async Task<List<string>> ApplyBasicFieldChanges(LivestockPermitApplication permit, PermitApprovalViewModel model, Dictionary<string, string> originalData)
+        {
+            var changedFields = new List<string>();
+
+            // Track original values
+            originalData["CompanyName"] = permit.CompanyName;
+            originalData["CompanyAddress"] = permit.CompanyAddress ?? "";
+            originalData["OriginLocation"] = permit.OriginLocation ?? "";
+            originalData["DestinationLocation"] = permit.DestinationLocation ?? "";
+            originalData["DeparturePort"] = permit.DeparturePort ?? "";
+            originalData["ArrivalPort"] = permit.ArrivalPort ?? "";
+
+            // Apply basic field changes (same as before)
+            if (!string.IsNullOrEmpty(model.EditableCompanyName) &&
+                permit.CompanyName != model.EditableCompanyName.Trim())
+            {
+                permit.CompanyName = model.EditableCompanyName.Trim();
+                changedFields.Add($"Nama Perusahaan: '{originalData["CompanyName"]}' → '{permit.CompanyName}'");
+            }
+
+            if (!string.IsNullOrEmpty(model.EditableCompanyAddress) &&
+                permit.CompanyAddress != model.EditableCompanyAddress.Trim())
+            {
+                permit.CompanyAddress = model.EditableCompanyAddress.Trim();
+                changedFields.Add($"Alamat Perusahaan: '{originalData["CompanyAddress"]}' → '{permit.CompanyAddress}'");
+            }
+
+            if (!string.IsNullOrEmpty(model.EditableOriginLocation) &&
+                permit.OriginLocation != model.EditableOriginLocation.Trim())
+            {
+                permit.OriginLocation = model.EditableOriginLocation.Trim();
+                changedFields.Add($"Lokasi Asal: '{originalData["OriginLocation"]}' → '{permit.OriginLocation}'");
+            }
+
+            if (!string.IsNullOrEmpty(model.EditableDestinationLocation) &&
+                permit.DestinationLocation != model.EditableDestinationLocation.Trim())
+            {
+                permit.DestinationLocation = model.EditableDestinationLocation.Trim();
+                changedFields.Add($"Lokasi Tujuan: '{originalData["DestinationLocation"]}' → '{permit.DestinationLocation}'");
+            }
+
+            // ⭐ UPDATED: Enhanced port validation and updates
+            if (!string.IsNullOrEmpty(model.EditableDeparturePort) &&
+                permit.DeparturePort != model.EditableDeparturePort.Trim())
+            {
+                var portValidation = await ValidatePortSelection(
+                    model.EditableDeparturePort.Trim(),
+                    ExtractProvinceCodeFromLocation(model.EditableOriginLocation)
+                );
+
+                if (!portValidation.IsValid)
+                {
+                    throw new InvalidOperationException($"Pelabuhan keberangkatan tidak valid: {portValidation.Message}");
+                }
+
+                permit.DeparturePort = model.EditableDeparturePort.Trim();
+                changedFields.Add($"Pelabuhan Keberangkatan: '{originalData["DeparturePort"]}' → '{permit.DeparturePort}'");
+            }
+
+            if (!string.IsNullOrEmpty(model.EditableArrivalPort) &&
+                permit.ArrivalPort != model.EditableArrivalPort.Trim())
+            {
+                var portValidation = await ValidatePortSelection(
+                    model.EditableArrivalPort.Trim(),
+                    ExtractProvinceCodeFromLocation(model.EditableDestinationLocation)
+                );
+
+                if (!portValidation.IsValid)
+                {
+                    throw new InvalidOperationException($"Pelabuhan tujuan tidak valid: {portValidation.Message}");
+                }
+
+                permit.ArrivalPort = model.EditableArrivalPort.Trim();
+                changedFields.Add($"Pelabuhan Tiba: '{originalData["ArrivalPort"]}' → '{permit.ArrivalPort}'");
+            }
+
+            return changedFields;
+        }
+
+        /// <summary>
+        /// Extract province code from location string with better logic
+        /// </summary>
+        private string ExtractProvinceCodeFromLocation(string location)
+        {
+            if (string.IsNullOrEmpty(location)) return "";
+
+            // Enhanced province mapping
+            var provinceMapping = new Dictionary<string, string>
+    {
+        { "Nusa Tenggara Barat", "52" },
+        { "NTB", "52" },
+        { "Nusa Tenggara Timur", "53" },
+        { "NTT", "53" },
+        { "Bali", "51" },
+        { "Jawa Timur", "35" },
+        { "Jatim", "35" },
+        { "Jawa Tengah", "33" },
+        { "Jateng", "33" },
+        { "Jawa Barat", "32" },
+        { "Jabar", "32" },
+        { "DKI Jakarta", "31" },
+        { "Jakarta", "31" },
+        { "Sulawesi Selatan", "73" },
+        { "Sulsel", "73" },
+        { "Kalimantan Timur", "64" },
+        { "Kaltim", "64" },
+        { "Kalimantan Selatan", "63" },
+        { "Kalsel", "63" },
+        { "Sumatera Utara", "12" },
+        { "Sumut", "12" },
+        { "Lampung", "18" }
+    };
+
+            var parts = location.Split(',');
+            if (parts.Length >= 2)
+            {
+                var province = parts.Last().Trim();
+
+                // Try exact match first
+                if (provinceMapping.ContainsKey(province))
+                {
+                    return provinceMapping[province];
+                }
+
+                // Try partial match
+                foreach (var mapping in provinceMapping)
+                {
+                    if (province.Contains(mapping.Key) || mapping.Key.Contains(province))
+                    {
+                        return mapping.Value;
+                    }
+                }
+            }
+
+            return "52"; // Default to NTB
+        }
+
+        /// <summary>
+        /// API endpoint untuk mendapatkan port suggestions saat editing
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetPortSuggestions(string provinceCode, string term = "")
+        {
+            try
+            {
+                var query = _context.Ports
+                    .Where(p => p.IsActive);
+
+                // Filter by province if provided
+                if (!string.IsNullOrEmpty(provinceCode))
+                {
+                    query = query.Where(p => p.ProvinceCode == provinceCode);
+                }
+
+                // Filter by search term if provided
+                if (!string.IsNullOrEmpty(term))
+                {
+                    query = query.Where(p =>
+                        p.Name.Contains(term) ||
+                        p.City.Contains(term));
+                }
+
+                var ports = await query
+                    .OrderBy(p => p.Name)
+                    .Take(20)
+                    .Select(p => new
+                    {
+                        id = p.Name,
+                        text = $"{p.Name} ({p.City})",
+                        city = p.City,
+                        province = p.Province,
+                        type = p.Type
+                    })
+                    .ToListAsync();
+
+                return Json(new { results = ports });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting port suggestions: {ex.Message}");
+                return Json(new { results = new List<object>() });
+            }
+        }
+
+        #endregion
+
+        #region Request Models for Edit Validation
+
+        public class EditValidationRequest
         {
             public int PermitId { get; set; }
             public string CompanyName { get; set; }
@@ -4114,6 +4206,15 @@ namespace PerizinanPeternakan.Controllers
             public string DestinationLocation { get; set; }
             public string DeparturePort { get; set; }
             public string ArrivalPort { get; set; }
+            public string OriginProvinceCode { get; set; }
+            public List<EditLivestockRequest> LivestockDetails { get; set; } = new();
+        }
+
+        public class EditLivestockRequest
+        {
+            public string LivestockType { get; set; }
+            public int Quantity { get; set; }
+            public string Description { get; set; }
         }
 
         #endregion

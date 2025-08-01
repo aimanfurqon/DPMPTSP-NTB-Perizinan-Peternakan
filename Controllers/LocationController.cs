@@ -28,6 +28,7 @@ namespace PerizinanPeternakan.Controllers
                     var jsonString = await response.Content.ReadAsStringAsync();  
                     return Content(jsonString, "application/json");
                 }
+
             }
             catch (HttpRequestException e)
             {

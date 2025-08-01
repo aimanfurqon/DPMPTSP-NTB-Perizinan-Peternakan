@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using PerizinanPeternakan.Data;
+using PerizinanPeternakan.Service;
 using PerizinanPeternakan.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,6 +28,8 @@ builder.Services.AddSession(options =>
 // Register services
 builder.Services.AddScoped<IPdfGeneratorService, PdfGeneratorService>();
 builder.Services.AddTransient<IEmailSender, MailKitEmailSender>();
+builder.Services.AddScoped<IApplicationNumberService, ApplicationNumberService>();
+builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 
 // Add file upload services

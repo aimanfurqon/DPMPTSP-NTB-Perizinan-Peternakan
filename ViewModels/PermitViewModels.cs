@@ -6,9 +6,6 @@ namespace PerizinanPeternakan.ViewModels
 {
     public class PermitApplicationViewModel
     {
-
-
-        // Dokumen Opsional
         [Display(Name = "Dokumen Opsional")]
         public IFormFile? DokumenOpsional { get; set; }
 
@@ -23,7 +20,7 @@ namespace PerizinanPeternakan.ViewModels
         public string? DokumenOpsionalNama { get; set; }
 
         [Display(Name = "Tipe Pemohon")]
-        public string ApplicantType { get; set; } = "Company"; // Set default value
+        public string ApplicantType { get; set; } = "Company"; 
 
         [Display(Name = "Provinsi Asal")]
         public int? OriginProvinceId { get; set; }
@@ -45,22 +42,18 @@ namespace PerizinanPeternakan.ViewModels
         [Display(Name = "Tujuan Pengiriman")]
         public string DestinationLocation { get; set; } = string.Empty;
 
-        // REMOVE [Required] - validation will be handled conditionally in controller
         [StringLength(200, ErrorMessage = "Nama perusahaan maksimal 200 karakter")]
         [Display(Name = "Nama Perusahaan")]
         public string CompanyName { get; set; } = string.Empty;
 
-        // REMOVE [Required] - validation will be handled conditionally in controller  
         [StringLength(500, ErrorMessage = "Alamat perusahaan maksimal 500 karakter")]
         [Display(Name = "Alamat Perusahaan")]
         public string CompanyAddress { get; set; } = string.Empty;
 
-        // REMOVE [Required] - validation will be handled conditionally in controller
         [StringLength(100, ErrorMessage = "Pelabuhan asal maksimal 100 karakter")]
         [Display(Name = "Pelabuhan Asal")]
         public string DeparturePort { get; set; } = string.Empty;
 
-        // REMOVE [Required] - validation will be handled conditionally in controller
         [StringLength(100, ErrorMessage = "Pelabuhan bongkar maksimal 100 karakter")]
         [Display(Name = "Pelabuhan Bongkar")]
         public string ArrivalPort { get; set; } = string.Empty;
@@ -68,7 +61,6 @@ namespace PerizinanPeternakan.ViewModels
         [Display(Name = "Detail Ternak")]
         public List<LivestockDetailViewModel> LivestockDetails { get; set; } = new List<LivestockDetailViewModel>();
 
-        // Document upload properties (unchanged)
         [Display(Name = "Surat Permohonan")]
         public IFormFile? SuratPermohonan { get; set; }
 
@@ -90,7 +82,6 @@ namespace PerizinanPeternakan.ViewModels
         [Display(Name = "Hasil Pemeriksaan Fisik (Holding Ground)")]
         public IFormFile? HasilPemeriksaanFisik { get; set; }
 
-        // Document details properties (unchanged)
         [Display(Name = "Tanggal Pengajuan Surat Permohonan")]
         [DataType(DataType.Date)]
         public DateTime? SuratPermohonanTanggal { get; set; }
@@ -115,7 +106,6 @@ namespace PerizinanPeternakan.ViewModels
         [StringLength(50, ErrorMessage = "Nomor dokumen maksimal 50 karakter")]
         public string? RekomendasiDaerahTujuanNomor { get; set; }
 
-        // Address component properties (unchanged)
         [Display(Name = "Nama Jalan / Dusun")]
         [StringLength(200)]
         public string? AddressStreet { get; set; }
@@ -150,7 +140,6 @@ namespace PerizinanPeternakan.ViewModels
         [StringLength(100)]
         public string? AddressDistrict { get; set; }
 
-        // Individual applicant properties (unchanged)
         [Display(Name = "Nama Lengkap")]
         [StringLength(200, ErrorMessage = "Nama lengkap maksimal 200 karakter")]
         public string? IndividualName { get; set; }
@@ -165,7 +154,6 @@ namespace PerizinanPeternakan.ViewModels
         [StringLength(500, ErrorMessage = "Alamat lengkap maksimal 500 karakter")]
         public string? IndividualAddress { get; set; }
 
-        // Helper methods (unchanged)
         public string GetApplicantName()
         {
             return ApplicantType == "Individual"
@@ -357,7 +345,6 @@ namespace PerizinanPeternakan.ViewModels
         [Display(Name = "Dokumen Pendukung")]
         public List<DocumentViewModel> Documents { get; set; } = new List<DocumentViewModel>();
 
-        // NEW: Helper properties for document details validation
         public bool HasAllRequiredDocumentsWithDetails
         {
             get
@@ -373,7 +360,6 @@ namespace PerizinanPeternakan.ViewModels
 
         public string DocumentCompletionStatus => HasAllRequiredDocumentsWithDetails ? "Lengkap" : "Perlu Review";
 
-        // ⭐ NEW: Editable fields for Admin
         [Display(Name = "Nama Perusahaan")]
         public string EditableCompanyName { get; set; }
 
@@ -392,10 +378,21 @@ namespace PerizinanPeternakan.ViewModels
         [Display(Name = "Pelabuhan Tiba")]
         public string EditableArrivalPort { get; set; }
 
-        // Flag to indicate if admin is editing data
-        public bool IsEditingData { get; set; }
+        [Display(Name = "Provinsi Asal")]
+        public string EditableOriginProvinceId { get; set; }
 
-        // Track what fields were changed
+        [Display(Name = "Kabupaten/Kota Asal")]
+        public string EditableOriginRegencyId { get; set; }
+
+        [Display(Name = "Provinsi Tujuan")]
+        public string EditableDestinationProvinceId { get; set; }
+
+        [Display(Name = "Kabupaten/Kota Tujuan")]
+        public string EditableDestinationRegencyId { get; set; }
+
+        public List<EditableLivestockDetailViewModel> EditableLivestockDetails { get; set; } = new();
+
+        public bool IsEditingData { get; set; }
         public List<string> ChangedFields { get; set; } = new();
     }
 
@@ -807,9 +804,21 @@ namespace PerizinanPeternakan.ViewModels
             : $"Gagal upload: {Message}";
     }
 
-    public class EditableLivestockDetailViewModel : LivestockDetailViewModel
+
+    public class EditableLivestockDetailViewModel
     {
         public int? Id { get; set; } // For existing livestock details
+        public int Index { get; set; } // For form binding
+
+        [Display(Name = "Jenis Ternak")]
+        public string LivestockType { get; set; }
+
+        [Display(Name = "Jumlah")]
+        public int Quantity { get; set; }
+
+        [Display(Name = "Keterangan")]
+        public string Description { get; set; }
+
         public bool IsMarkedForDeletion { get; set; }
         public bool IsNewEntry { get; set; }
     }
