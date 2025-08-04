@@ -99,6 +99,7 @@
                     <!-- Origin Section -->
                     <div class="location-edit-group">
                         <h5><i class="fas fa-map-marker-alt text-success"></i> Asal Ternak</h5>
+                        
                         <div class="location-edit-grid">
                             <div class="edit-item">
                                 <label class="form-label required">Provinsi Asal</label>
@@ -133,6 +134,7 @@
                     <!-- Destination Section -->
                     <div class="location-edit-group">
                         <h5><i class="fas fa-map-marker-alt text-danger"></i> Tujuan Pengiriman</h5>
+                        
                         <div class="location-edit-grid">
                             <div class="edit-item">
                                 <label class="form-label required">Provinsi Tujuan</label>
@@ -648,17 +650,14 @@
                 const originProvinceId = '@Model.EditableOriginProvinceId';
                 const destinationProvinceId = '@Model.EditableDestinationProvinceId';
 
-                if (originProvinceId) {
-                    setTimeout(() => {
+                setTimeout(() => {
+                    if (originProvinceId) {
                         $('#editOriginProvinceSelect').val(originProvinceId).trigger('change');
-                    }, 1000);
-                }
-
-                if (destinationProvinceId) {
-                    setTimeout(() => {
+                    }
+                    if (destinationProvinceId) {
                         $('#editDestinationProvinceSelect').val(destinationProvinceId).trigger('change');
-                    }, 1000);
-                }
+                    }
+                }, 1000);
             }
 
             // ===============================================
@@ -759,6 +758,9 @@
 
                         // Set initial values after loading
                         setInitialEditValues();
+                    } else {
+                        console.error('Invalid provinces response format:', response);
+                        showNotification('error', 'Format data provinsi tidak valid.');
                     }
                 }).fail(function(xhr, status, error) {
                     console.error('Failed to load edit provinces:', error);

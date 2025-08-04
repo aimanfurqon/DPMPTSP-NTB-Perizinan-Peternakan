@@ -30,6 +30,8 @@ builder.Services.AddScoped<IPdfGeneratorService, PdfGeneratorService>();
 builder.Services.AddTransient<IEmailSender, MailKitEmailSender>();
 builder.Services.AddScoped<IApplicationNumberService, ApplicationNumberService>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
+builder.Services.AddScoped<IApprovalService, ApprovalService>();
+
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 
 // Add file upload services

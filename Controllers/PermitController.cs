@@ -17,14 +17,23 @@ namespace PerizinanPeternakan.Controllers
         private readonly IWebHostEnvironment _environment;
         private readonly IApplicationNumberService _applicationNumberService;
         private readonly IDocumentService _documentService;
+        private readonly IApprovalService _approvalService;
 
-        public PermitController(ApplicationDbContext context, IPdfGeneratorService pdfGenerator, IWebHostEnvironment environment, IApplicationNumberService applicationNumberService, IDocumentService documentService)
+        public PermitController (
+            ApplicationDbContext context, 
+            IPdfGeneratorService pdfGenerator, 
+            IWebHostEnvironment environment, 
+            IApplicationNumberService applicationNumberService, 
+            IDocumentService documentService,
+            IApprovalService approvalService
+            )
         {
             _context = context;
             _pdfGenerator = pdfGenerator;
             _environment = environment;
             _applicationNumberService = applicationNumberService;
             _documentService = documentService;
+            _approvalService = approvalService;
         }
 
         public async Task<IActionResult> AdminHistory(
@@ -417,7 +426,6 @@ namespace PerizinanPeternakan.Controllers
                 return Json(new { success = false, message = "Terjadi kesalahan saat menambahkan history" });
             }
         }
-
         public async Task<IActionResult> AdminStatistics()
         {
             var userId = GetCurrentUserId();
@@ -428,34 +436,56 @@ namespace PerizinanPeternakan.Controllers
 
             try
             {
-                var currentMonth = DateTime.Now.Month;
-                var currentYear = DateTime.Now.Year;
+                var stats = await _approvalService.GetApprovalStatisticsAsync(userId.Value, userRole);
 
-                var stats = new
+                return Json(new
                 {
-                    totalReviewed = await _context.PermitApplications.CountAsync(p => p.AdminId == userId.Value),
-                    totalApproved = await _context.PermitApplications.CountAsync(p =>
-                        p.AdminId == userId.Value &&
-                        (p.Status == PermitStatus.AdminApproved ||
-                         p.Status == PermitStatus.VerifikatorApproved ||
-                         p.Status == PermitStatus.FinalApproved)),
-                    totalRejected = await _context.PermitApplications.CountAsync(p =>
-                        p.AdminId == userId.Value && p.Status == PermitStatus.AdminRejected),
-                    thisMonthReviewed = await _context.PermitApplications.CountAsync(p =>
-                        p.AdminId == userId.Value &&
-                        p.AdminApprovalDate.HasValue &&
-                        p.AdminApprovalDate.Value.Month == currentMonth &&
-                        p.AdminApprovalDate.Value.Year == currentYear)
-                };
-
-                return Json(stats);
+                    totalReviewed = stats.TotalReviewed,
+                    totalApproved = stats.TotalApproved,
+                    totalRejected = stats.TotalRejected,
+                    thisMonthReviewed = stats.ThisMonthReviewed,
+                    averageProcessingDays = stats.AverageProcessingDays,
+                    approvalRate = stats.ApprovalRate
+                });
             }
             catch (Exception)
             {
                 return Json(new { error = "Failed to load statistics" });
             }
         }
+        // NEW - API endpoint untuk approval timeline:
+        [HttpGet]
+        public async Task<IActionResult> GetApprovalTimeline(int permitId)
+        {
+            try
+            {
+                var timeline = await _approvalService.GetApprovalTimelineAsync(permitId);
 
+                return Json(new
+                {
+                    success = true,
+                    data = timeline.Select(t => new
+                    {
+                        date = t.Date.ToString("yyyy-MM-dd HH:mm"),
+                        action = t.Action,
+                        actor = t.Actor,
+                        actorRole = t.ActorRole,
+                        comments = t.Comments,
+                        timeAgo = t.TimeAgo,
+                        isApproval = t.IsApproval,
+                        isRejection = t.IsRejection
+                    })
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
         public async Task<IActionResult> Index()
         {
             var userId = GetCurrentUserId();
@@ -1300,35 +1330,9 @@ namespace PerizinanPeternakan.Controllers
 
                 try
                 {
-                    var supportingPath = Path.Combine(_environment.WebRootPath, "documents", "supporting");
-                    var results = new List<string>();
+                    var cleanedCount = await _documentService.CleanupOrphanedFilesAsync();
 
-                    if (Directory.Exists(supportingPath))
-                    {
-                        var files = Directory.GetFiles(supportingPath);
-                        var dbDocuments = await _context.PermitDocuments.Select(d => d.FilePath).ToListAsync();
-
-                        foreach (var file in files)
-                        {
-                            var relativePath = "/" + Path.GetRelativePath(_environment.WebRootPath, file).Replace("\\", "/");
-
-                            if (!dbDocuments.Contains(relativePath))
-                            {
-                                try
-                                {
-                                    System.IO.File.Delete(file);
-                                    results.Add($"🗑️ Deleted orphaned file: {Path.GetFileName(file)}");
-                                }
-                                catch (Exception ex)
-                                {
-                                    results.Add($"❌ Failed to delete {Path.GetFileName(file)}: {ex.Message}");
-                                }
-                            }
-                        }
-                    }
-
-                    TempData["SuccessMessage"] = $"Cleanup completed. {results.Count} operations performed.";
-                    ViewBag.CleanupResults = results;
+                    TempData["SuccessMessage"] = $"Cleanup completed. {cleanedCount} files removed.";
                     return View("TestUpload");
                 }
                 catch (Exception ex)
@@ -1340,9 +1344,8 @@ namespace PerizinanPeternakan.Controllers
 
             return NotFound();
         }
-
         #endregion
-        
+
         [HttpGet]
         public async Task<IActionResult> Approve(int id)
         {
@@ -1450,7 +1453,7 @@ namespace PerizinanPeternakan.Controllers
             try
             {
                 var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
-                var contentType = GetContentType(document.FileExtension);
+                var contentType = _documentService.GetContentType(document.FileExtension);
                 var fileName = $"{document.DocumentName}{document.FileExtension}";
 
                 return File(fileBytes, contentType, fileName);
@@ -1466,82 +1469,49 @@ namespace PerizinanPeternakan.Controllers
         [Route("Permit/UpdateDocumentDetails")]
         public async Task<IActionResult> UpdateDocumentDetails([FromBody] EditDocumentDetailsRequest request)
         {
-            try
+            var userId = GetCurrentUserId();
+            if (userId == null)
             {
-                // Validate request
-                if (request.DocumentId <= 0)
-                {
-                    return Json(new { success = false, message = "Document ID tidak valid" });
-                }
+                return Json(new { success = false, message = "Session tidak valid" });
+            }
 
-                // Check authorization
-                var userId = GetCurrentUserId();
-                if (userId == null)
-                {
-                    return Json(new { success = false, message = "Session tidak valid" });
-                }
+            var userRole = HttpContext.Session.GetString("Role");
+            if (userRole != "Admin")
+            {
+                return Json(new { success = false, message = "Tidak memiliki akses untuk mengedit dokumen" });
+            }
 
-                var userRole = HttpContext.Session.GetString("Role");
-                if (userRole != "Admin")
-                {
-                    return Json(new { success = false, message = "Tidak memiliki akses untuk mengedit dokumen" });
-                }
+            var result = await _documentService.UpdateDocumentDetailsAsync(
+                request.DocumentId,
+                request.DocumentDate,
+                request.DocumentNumber,
+                request.DocumentDescription
+            );
 
-                // Get document from database
-                var document = await _context.PermitDocuments
-                    .FirstOrDefaultAsync(d => d.Id == request.DocumentId);
-
-                if (document == null)
-                {
-                    return Json(new { success = false, message = "Dokumen tidak ditemukan" });
-                }
-
-                // Validate date if provided
-                if (request.DocumentDate.HasValue && request.DocumentDate.Value > DateTime.Today)
-                {
-                    return Json(new { success = false, message = "Tanggal dokumen tidak boleh di masa depan" });
-                }
-
-                // Validate document number format if provided
-                if (!string.IsNullOrEmpty(request.DocumentNumber) && !IsValidDocumentNumber(request.DocumentNumber))
-                {
-                    return Json(new { success = false, message = "Format nomor dokumen tidak valid" });
-                }
-
-                // Update document details
-                document.DocumentDate = request.DocumentDate;
-                document.DocumentNumber = request.DocumentNumber?.Trim();
-                document.DocumentDescription = request.DocumentDescription?.Trim();
-
-                // Save changes
-                await _context.SaveChangesAsync();
-
+            if (result.Success)
+            {
                 return Json(new
                 {
                     success = true,
                     message = "Detail dokumen berhasil disimpan",
                     data = new
                     {
-                        documentId = document.Id,
-                        documentDate = document.DocumentDate?.ToString("yyyy-MM-dd"),
-                        documentNumber = document.DocumentNumber,
-                        documentDescription = document.DocumentDescription
+                        documentId = result.UpdatedDocument.Id,
+                        documentDate = result.UpdatedDocument.DocumentDate?.ToString("yyyy-MM-dd"),
+                        documentNumber = result.UpdatedDocument.DocumentNumber,
+                        documentDescription = result.UpdatedDocument.DocumentDescription
                     }
                 });
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine($"Error updating document details: {ex.Message}");
                 return Json(new
                 {
                     success = false,
-                    message = "Terjadi kesalahan server: " + ex.Message
+                    message = result.ErrorMessage
                 });
             }
         }
-
-
-        // Request model untuk edit document details
         public class EditDocumentDetailsRequest
         {
             public int DocumentId { get; set; }
@@ -1717,8 +1687,6 @@ namespace PerizinanPeternakan.Controllers
                 return StatusCode(500, "Error loading document");
             }
         }
-
-        // POST: Permit/Approve - Proses approval
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Approve(PermitApprovalViewModel model)
@@ -1741,107 +1709,23 @@ namespace PerizinanPeternakan.Controllers
 
             try
             {
-                var permit = await _context.PermitApplications
-                    .Include(p => p.User)
-                    .Include(p => p.LivestockDetails)
-                    .Include(p => p.Documents)
-                    .FirstOrDefaultAsync(p => p.Id == model.Id);
+                var result = await _approvalService.ProcessApprovalAsync(
+                    model.Id,
+                    model.Action,
+                    model.Comments,
+                    userId.Value,
+                    userRole);
 
-                if (permit == null)
+                if (result.Success)
                 {
-                    TempData["ErrorMessage"] = "Permohonan tidak ditemukan";
+                    TempData["SuccessMessage"] = $"Permohonan {result.PermitApplicationNumber} berhasil {result.ActionText.ToLower()}";
                     return RedirectToAction("Index");
                 }
-
-                if (!CanUserApprove(userRole, permit.Status))
+                else
                 {
-                    TempData["ErrorMessage"] = "Permohonan tidak dapat diproses pada tahap ini";
-                    return RedirectToAction("Detail", new { id = model.Id });
+                    ModelState.AddModelError("", result.ErrorMessage);
+                    return View(model);
                 }
-
-                // Validate documents for admin approval
-                if (userRole == "Admin" && model.Action == "Approve" && permit.Documents.Count < 7)
-                {
-                    TempData["ErrorMessage"] = "Dokumen pendukung belum lengkap. Permohonan tidak dapat disetujui.";
-                    return RedirectToAction("Approve", new { id = model.Id });
-                }
-
-                var fromStatus = permit.Status;
-                PermitStatus toStatus;
-                string actionText;
-
-                if (model.Action == "Approve")
-                {
-                    if (userRole == "Admin")
-                    {
-                        toStatus = PermitStatus.AdminApproved;
-                        actionText = "Disetujui Admin";
-                        permit.AdminId = userId.Value;
-                        permit.AdminApprovalDate = DateTime.Now;
-                        permit.CurrentApprovalLevel = 2;
-
-                        // Generate PDF document setelah admin approve
-                        await GeneratePermitDocument(permit);
-                    }
-                    else if (userRole == "Verifikator")
-                    {
-                        toStatus = PermitStatus.VerifikatorApproved;
-                        actionText = "Disetujui Verifikator";
-                        permit.VerifikatorId = userId.Value;
-                        permit.VerificationDate = DateTime.Now;
-                        permit.CurrentApprovalLevel = 3;
-                    }
-                    else // KepalaDinas
-                    {
-                        toStatus = PermitStatus.FinalApproved;
-                        actionText = "Disetujui Kepala Dinas";
-                        permit.KepalaDinasId = userId.Value;
-                        permit.FinalApprovalDate = DateTime.Now;
-                        permit.ValidFrom = DateTime.Now;
-                        permit.ValidUntil = DateTime.Now.AddMonths(6); // Valid 6 bulan
-                        permit.CurrentApprovalLevel = 4;
-                    }
-                }
-                else // Reject
-                {
-                    if (userRole == "Admin")
-                    {
-                        toStatus = PermitStatus.AdminRejected;
-                        actionText = "Ditolak Admin";
-                    }
-                    else if (userRole == "Verifikator")
-                    {
-                        toStatus = PermitStatus.VerifikatorRejected;
-                        actionText = "Ditolak Verifikator";
-                    }
-                    else // KepalaDinas
-                    {
-                        toStatus = PermitStatus.KepalaDinasRejected;
-                        actionText = "Ditolak Kepala Dinas";
-                    }
-
-                    permit.RejectionReason = model.Comments;
-                }
-
-                permit.Status = toStatus;
-
-                // Add approval history
-                var history = new PermitApprovalHistory
-                {
-                    PermitApplicationId = permit.Id,
-                    UserId = userId.Value,
-                    FromStatus = fromStatus,
-                    ToStatus = toStatus,
-                    Action = actionText,
-                    Comments = model.Comments,
-                    ActionDate = DateTime.Now
-                };
-
-                _context.PermitApprovalHistories.Add(history);
-                await _context.SaveChangesAsync();
-
-                TempData["SuccessMessage"] = $"Permohonan {permit.ApplicationNumber} berhasil {actionText.ToLower()}";
-                return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
@@ -1849,8 +1733,6 @@ namespace PerizinanPeternakan.Controllers
                 return View(model);
             }
         }
-
-        
         public async Task<IActionResult> Download(int id)
         {
             var userId = GetCurrentUserId();
@@ -1924,17 +1806,11 @@ namespace PerizinanPeternakan.Controllers
             return int.TryParse(userIdStr, out var userId) ? userId : null;
         }
 
+        // Keep as wrapper untuk backward compatibility:
         private bool CanUserApprove(string userRole, PermitStatus status)
         {
-            return userRole switch
-            {
-                "Admin" => status == PermitStatus.Submitted || status == PermitStatus.UnderAdminReview,
-                "Verifikator" => status == PermitStatus.AdminApproved || status == PermitStatus.UnderVerifikatorReview,
-                "KepalaDinas" => status == PermitStatus.VerifikatorApproved || status == PermitStatus.PendingKepalaDinas,
-                _ => false
-            };
+            return _approvalService.CanUserApprove(userRole, status);
         }
-
         private async Task GeneratePermitDocument(LivestockPermitApplication permit)
         {
             try
@@ -1978,22 +1854,6 @@ namespace PerizinanPeternakan.Controllers
                 // Log error
                 Console.WriteLine($"Error regenerating document: {ex.Message}");
             }
-        }
-
-
-        // Method untuk mendapatkan content type berdasarkan ekstensi file
-        private string GetContentType(string fileExtension)
-        {
-            return fileExtension.ToLower() switch
-            {
-                ".pdf" => "application/pdf",
-                ".jpg" or ".jpeg" => "image/jpeg",
-                ".png" => "image/png",
-                ".gif" => "image/gif",
-                ".doc" => "application/msword",
-                ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                _ => "application/octet-stream"
-            };
         }
 
         #endregion
@@ -2266,9 +2126,6 @@ namespace PerizinanPeternakan.Controllers
             }
         }
 
-        /// <summary>
-        /// Bulk approve permits (for admin operations)
-        /// </summary>
         [HttpPost]
         public async Task<IActionResult> BulkApprove([FromBody] BulkActionRequest request)
         {
@@ -2280,41 +2137,19 @@ namespace PerizinanPeternakan.Controllers
 
             try
             {
-                var permits = await _context.PermitApplications
-                    .Where(p => request.PermitIds.Contains(p.Id))
-                    .ToListAsync();
-
-                var successCount = 0;
-                var errors = new List<string>();
-
-                foreach (var permit in permits)
-                {
-                    if (CanUserApprove(userRole, permit.Status))
-                    {
-                        var result = await ProcessApproval(permit, "Approve", request.Comments, userId.Value, userRole);
-                        if (result.Success)
-                        {
-                            successCount++;
-                        }
-                        else
-                        {
-                            errors.Add($"{permit.ApplicationNumber}: {result.ErrorMessage}");
-                        }
-                    }
-                    else
-                    {
-                        errors.Add($"{permit.ApplicationNumber}: Tidak dapat diproses pada tahap ini");
-                    }
-                }
-
-                await _context.SaveChangesAsync();
+                var result = await _approvalService.ProcessBulkApprovalAsync(
+                    request.PermitIds,
+                    "Approve",
+                    request.Comments,
+                    userId.Value,
+                    userRole);
 
                 return Json(new
                 {
-                    success = true,
-                    message = $"{successCount} permohonan berhasil disetujui",
-                    successCount = successCount,
-                    errors = errors
+                    success = result.Success,
+                    message = result.Message,
+                    successCount = result.SuccessCount,
+                    errors = result.FailedPermits.Select(f => $"{f.PermitNumber}: {f.ErrorMessage}").ToList()
                 });
             }
             catch (Exception ex)
@@ -2327,9 +2162,6 @@ namespace PerizinanPeternakan.Controllers
             }
         }
 
-        /// <summary>
-        /// Bulk reject permits (for admin operations)
-        /// </summary>
         [HttpPost]
         public async Task<IActionResult> BulkReject([FromBody] BulkActionRequest request)
         {
@@ -2341,41 +2173,19 @@ namespace PerizinanPeternakan.Controllers
 
             try
             {
-                var permits = await _context.PermitApplications
-                    .Where(p => request.PermitIds.Contains(p.Id))
-                    .ToListAsync();
-
-                var successCount = 0;
-                var errors = new List<string>();
-
-                foreach (var permit in permits)
-                {
-                    if (CanUserApprove(userRole, permit.Status))
-                    {
-                        var result = await ProcessApproval(permit, "Reject", request.Comments, userId.Value, userRole);
-                        if (result.Success)
-                        {
-                            successCount++;
-                        }
-                        else
-                        {
-                            errors.Add($"{permit.ApplicationNumber}: {result.ErrorMessage}");
-                        }
-                    }
-                    else
-                    {
-                        errors.Add($"{permit.ApplicationNumber}: Tidak dapat diproses pada tahap ini");
-                    }
-                }
-
-                await _context.SaveChangesAsync();
+                var result = await _approvalService.ProcessBulkApprovalAsync(
+                    request.PermitIds,
+                    "Reject",
+                    request.Comments,
+                    userId.Value,
+                    userRole);
 
                 return Json(new
                 {
-                    success = true,
-                    message = $"{successCount} permohonan berhasil ditolak",
-                    successCount = successCount,
-                    errors = errors
+                    success = result.Success,
+                    message = result.Message,
+                    successCount = result.SuccessCount,
+                    errors = result.FailedPermits.Select(f => $"{f.PermitNumber}: {f.ErrorMessage}").ToList()
                 });
             }
             catch (Exception ex)
@@ -2779,94 +2589,6 @@ namespace PerizinanPeternakan.Controllers
             }
         }
 
-        /// <summary>
-        /// Cleans up uploaded files if there's an error during processing
-        /// </summary>
-        /// <param name="filePaths">List of file paths to clean up</param>
-        private void CleanupUploadedFiles(List<string> filePaths)
-        {
-            try
-            {
-                foreach (var filePath in filePaths)
-                {
-                    if (System.IO.File.Exists(filePath))
-                    {
-                        System.IO.File.Delete(filePath);
-                        Console.WriteLine($"🗑️ Cleaned up file: {Path.GetFileName(filePath)}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"❌ Error during cleanup: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Enhanced file validation method
-        /// </summary>
-        /// <param name="file">The uploaded file</param>
-        /// <returns>True if file is valid, false otherwise</returns>
-        private new bool IsValidFile(IFormFile file)
-        {
-            try
-            {
-                if (file == null || file.Length == 0)
-                {
-                    Console.WriteLine("❌ File is null or empty");
-                    return false;
-                }
-
-                // Check file size (max 5MB)
-                const long maxFileSize = 5 * 1024 * 1024; // 5MB
-                if (file.Length > maxFileSize)
-                {
-                    Console.WriteLine($"❌ File size too large: {file.Length} bytes (max: {maxFileSize} bytes)");
-                    return false;
-                }
-
-                // Check file extension
-                var allowedExtensions = new[] { ".pdf", ".jpg", ".jpeg", ".png" };
-                var fileExtension = Path.GetExtension(file.FileName)?.ToLowerInvariant();
-
-                if (string.IsNullOrEmpty(fileExtension) || !allowedExtensions.Contains(fileExtension))
-                {
-                    Console.WriteLine($"❌ Invalid file extension: {fileExtension}");
-                    return false;
-                }
-
-                // Check MIME type for additional security
-                var allowedMimeTypes = new[]
-                {
-            "application/pdf",
-            "image/jpeg",
-            "image/jpg",
-            "image/png"
-        };
-
-                if (!allowedMimeTypes.Contains(file.ContentType?.ToLowerInvariant()))
-                {
-                    Console.WriteLine($"❌ Invalid MIME type: {file.ContentType}");
-                    return false;
-                }
-
-                // Check if filename contains invalid characters
-                var invalidChars = Path.GetInvalidFileNameChars();
-                if (file.FileName.Any(c => invalidChars.Contains(c)))
-                {
-                    Console.WriteLine($"❌ Filename contains invalid characters: {file.FileName}");
-                    return false;
-                }
-
-                Console.WriteLine($"✅ File validation passed: {file.FileName}");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"❌ Error validating file: {ex.Message}");
-                return false;
-            }
-        }
 
         #endregion
 
@@ -3005,67 +2727,7 @@ namespace PerizinanPeternakan.Controllers
                 });
             }
         }
-
-        // ADD API endpoint untuk document details validation
-        [HttpPost]
-        public async Task<IActionResult> ValidateDocumentDetailsAPI([FromBody] List<DocumentDetailsViewModel> documentDetails)
-        {
-            try
-            {
-                var validationResults = new List<object>();
-
-                foreach (var doc in documentDetails)
-                {
-                    var isValid = true;
-                    var errors = new List<string>();
-
-                    if (doc.IsRequired)
-                    {
-                        if (!doc.DocumentDate.HasValue)
-                        {
-                            errors.Add("Tanggal dokumen harus diisi");
-                            isValid = false;
-                        }
-
-                        if (string.IsNullOrEmpty(doc.DocumentNumber))
-                        {
-                            errors.Add("Nomor dokumen harus diisi");
-                            isValid = false;
-                        }
-                        else if (!IsValidDocumentNumber(doc.DocumentNumber))
-                        {
-                            errors.Add("Format nomor dokumen tidak valid");
-                            isValid = false;
-                        }
-                    }
-
-                    validationResults.Add(new
-                    {
-                        documentId = doc.DocumentId,
-                        isValid = isValid,
-                        errors = errors
-                    });
-                }
-
-                return Json(new
-                {
-                    success = true,
-                    results = validationResults,
-                    allValid = validationResults.All(r => (bool)((dynamic)r).isValid)
-                });
-            }
-            catch (Exception ex)
-            {
-                return Json(new
-                {
-                    success = false,
-                    message = ex.Message
-                });
-            }
-        }
-
-        // Baru banget ini
-
+        
         /// <summary>
         /// API endpoint untuk mengambil data user dengan format yang lebih spesifik
         /// untuk form individual applicant
@@ -3327,10 +2989,6 @@ namespace PerizinanPeternakan.Controllers
             }
         }
 
-        /// <summary>
-        /// Get location suggestions based on user input
-        /// Helpful untuk autocomplete provinsi/kabupaten
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetLocationSuggestions(string query, string type = "province")
         {
@@ -3341,12 +2999,10 @@ namespace PerizinanPeternakan.Controllers
                     return Json(new { success = true, data = new List<object>() });
                 }
 
-                // This is a placeholder - replace with your actual location data source
                 var suggestions = new List<object>();
 
                 if (type.ToLower() == "province")
                 {
-                    // Example province suggestions
                     var provinces = new[]
                     {
                 "Nusa Tenggara Barat",
@@ -3488,7 +3144,7 @@ namespace PerizinanPeternakan.Controllers
                 OriginLocation = permit.OriginLocation,
                 DestinationLocation = permit.DestinationLocation,
 
-                // ⭐ Populate editable fields
+                // Populate editable fields
                 EditableCompanyName = permit.CompanyName,
                 EditableCompanyAddress = permit.CompanyAddress,
                 EditableOriginLocation = permit.OriginLocation,
@@ -3496,7 +3152,7 @@ namespace PerizinanPeternakan.Controllers
                 EditableDeparturePort = permit.DeparturePort,
                 EditableArrivalPort = permit.ArrivalPort,
 
-                // ⭐ NEW: Populate location IDs (will be parsed from location strings)
+                // Populate location IDs
                 EditableOriginProvinceId = ExtractProvinceFromLocation(permit.OriginLocation),
                 EditableOriginRegencyId = ExtractRegencyFromLocation(permit.OriginLocation),
                 EditableDestinationProvinceId = ExtractProvinceFromLocation(permit.DestinationLocation),
@@ -3504,7 +3160,7 @@ namespace PerizinanPeternakan.Controllers
 
                 IsEditingData = true,
 
-                // ⭐ NEW: Convert to editable livestock details
+                // Convert to editable livestock details
                 EditableLivestockDetails = permit.LivestockDetails.Select((d, index) => new EditableLivestockDetailViewModel
                 {
                     Id = d.Id,
@@ -3552,9 +3208,9 @@ namespace PerizinanPeternakan.Controllers
             return View("ApproveWithEdit", model);
         }
 
-        /// <summary>
-        /// Save admin edits including livestock details and process approval
-        /// </summary>
+        // ⭐ NEW: Enhanced location parsing method
+
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ApproveWithEdits(PermitApprovalViewModel model)
@@ -3577,107 +3233,31 @@ namespace PerizinanPeternakan.Controllers
 
             try
             {
-                var permit = await _context.PermitApplications
-                    .Include(p => p.User)
-                    .Include(p => p.LivestockDetails)
-                    .Include(p => p.Documents)
-                    .FirstOrDefaultAsync(p => p.Id == model.Id);
+                var result = await _approvalService.ProcessApprovalWithEditsAsync(model.Id, model, userId.Value);
 
-                if (permit == null)
+                if (result.Success)
                 {
-                    TempData["ErrorMessage"] = "Permohonan tidak ditemukan";
+                    var successMessage = $"Permohonan {result.PermitApplicationNumber} berhasil {result.ActionText.ToLower()}";
+                    if (result.ChangedFields.Any())
+                    {
+                        successMessage += $" dengan {result.ChangedFields.Count} perubahan data";
+                    }
+
+                    TempData["SuccessMessage"] = successMessage;
                     return RedirectToAction("Index");
                 }
-
-                if (!CanUserApprove(userRole, permit.Status))
+                else
                 {
-                    TempData["ErrorMessage"] = "Permohonan tidak dapat diproses pada tahap ini";
-                    return RedirectToAction("Detail", new { id = model.Id });
-                }
-
-                // ⭐ Apply admin edits if data was changed
-                var changedFields = new List<string>();
-                var originalData = new Dictionary<string, string>();
-
-                if (model.IsEditingData && model.Action == "Approve")
-                {
-                    // Apply basic field changes (same as before)
-                    changedFields.AddRange(await ApplyBasicFieldChanges(permit, model, originalData));
-
-                    // ⭐ NEW: Apply livestock changes
-                    var livestockChanges = await ApplyLivestockChanges(permit, model);
-                    changedFields.AddRange(livestockChanges);
-                }
-
-                // Validate documents for admin approval
-                if (userRole == "Admin" && model.Action == "Approve" && permit.Documents.Count < 7)
-                {
-                    TempData["ErrorMessage"] = "Dokumen pendukung belum lengkap. Permohonan tidak dapat disetujui.";
+                    ModelState.AddModelError("", result.ErrorMessage);
                     return View("ApproveWithEdit", model);
                 }
-
-                // Continue with normal approval process
-                var fromStatus = permit.Status;
-                PermitStatus toStatus = PermitStatus.AdminApproved;
-                string actionText = "Disetujui Admin";
-
-                if (model.Action == "Approve")
-                {
-                    permit.AdminId = userId.Value;
-                    permit.AdminApprovalDate = DateTime.Now;
-                    permit.CurrentApprovalLevel = 2;
-                    permit.Status = toStatus;
-
-                    // Generate PDF document after admin approve
-                    await GeneratePermitDocument(permit);
-                }
-                else // Reject
-                {
-                    toStatus = PermitStatus.AdminRejected;
-                    actionText = "Ditolak Admin";
-                    permit.Status = toStatus;
-                    permit.RejectionReason = model.Comments;
-                }
-
-                // Create enhanced comments with change tracking
-                var enhancedComments = model.Comments ?? "";
-                if (changedFields.Any())
-                {
-                    enhancedComments += $"\n\n📝 PERUBAHAN DATA OLEH ADMIN:\n{string.Join("\n", changedFields)}";
-                }
-
-                // Add approval history
-                var history = new PermitApprovalHistory
-                {
-                    PermitApplicationId = permit.Id,
-                    UserId = userId.Value,
-                    FromStatus = fromStatus,
-                    ToStatus = toStatus,
-                    Action = actionText,
-                    Comments = enhancedComments,
-                    ActionDate = DateTime.Now
-                };
-
-                _context.PermitApprovalHistories.Add(history);
-                await _context.SaveChangesAsync();
-
-                var successMessage = $"Permohonan {permit.ApplicationNumber} berhasil {actionText.ToLower()}";
-                if (changedFields.Any())
-                {
-                    successMessage += $" dengan {changedFields.Count} perubahan data";
-                }
-
-                TempData["SuccessMessage"] = successMessage;
-                return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in ApproveWithEdits: {ex.Message}");
                 ModelState.AddModelError("", "Terjadi kesalahan saat memproses approval. Silakan coba lagi.");
                 return View("ApproveWithEdit", model);
             }
         }
-
         #endregion
 
         #region Helper Methods for Admin Edit
@@ -3685,7 +3265,7 @@ namespace PerizinanPeternakan.Controllers
         /// <summary>
         /// Apply basic field changes (company, location, ports)
         /// </summary>
-        
+
         /// <summary>
         /// Apply livestock detail changes
         /// </summary>
@@ -3780,15 +3360,15 @@ namespace PerizinanPeternakan.Controllers
         /// </summary>
         private string GetProvinceCodeByName(string provinceName)
         {
-            // Implement lookup logic based on your province data structure
-            // This is a placeholder - replace with actual implementation
+            if (string.IsNullOrEmpty(provinceName))
+                return "";
+
+            // Simple mapping - in real implementation, you might want to use a lookup table
             var provinceMap = new Dictionary<string, string>
-    {
-        { "Nusa Tenggara Barat", "52" },
-        { "Nusa Tenggara Timur", "53" },
-        { "Bali", "51" },
-        // Add more mappings as needed
-    };
+            {
+                { "Nusa Tenggara Barat", "52" }
+                // Add more mappings as needed
+            };
 
             return provinceMap.ContainsKey(provinceName) ? provinceMap[provinceName] : "";
         }
@@ -3798,9 +3378,16 @@ namespace PerizinanPeternakan.Controllers
         /// </summary>
         private string GetRegencyCodeByName(string regencyName)
         {
-            // Implement lookup logic based on your regency data structure
-            // This is a placeholder - replace with actual implementation
-            return "";
+            if (string.IsNullOrEmpty(regencyName))
+                return "";
+
+            // Simple mapping - in real implementation, you might want to use a lookup table
+            var regencyMap = new Dictionary<string, string>
+            {
+                // Add mappings as needed
+            };
+
+            return regencyMap.ContainsKey(regencyName) ? regencyMap[regencyName] : "";
         }
 
         #endregion
