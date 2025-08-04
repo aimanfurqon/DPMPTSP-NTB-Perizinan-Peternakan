@@ -3344,14 +3344,23 @@ namespace PerizinanPeternakan.Controllers
         {
             if (string.IsNullOrEmpty(location)) return "";
 
+            Console.WriteLine($"ExtractRegencyFromLocation - Input location: '{location}'");
+            
             var parts = location.Split(',');
+            Console.WriteLine($"ExtractRegencyFromLocation - Parts count: {parts.Length}");
+            
             if (parts.Length >= 1)
             {
                 var regency = parts[0].Trim();
-                // Return a default code or lookup from your regency data
-                return GetRegencyCodeByName(regency);
+                Console.WriteLine($"ExtractRegencyFromLocation - Extracted regency: '{regency}'");
+                
+                var regencyCode = GetRegencyCodeByName(regency);
+                Console.WriteLine($"ExtractRegencyFromLocation - Regency code: '{regencyCode}'");
+                
+                return regencyCode;
             }
 
+            Console.WriteLine($"ExtractRegencyFromLocation - No regency found");
             return "";
         }
 
@@ -3363,11 +3372,41 @@ namespace PerizinanPeternakan.Controllers
             if (string.IsNullOrEmpty(provinceName))
                 return "";
 
-            // Simple mapping - in real implementation, you might want to use a lookup table
+            // Enhanced mapping for common provinces
             var provinceMap = new Dictionary<string, string>
             {
-                { "Nusa Tenggara Barat", "52" }
-                // Add more mappings as needed
+                { "Nusa Tenggara Barat", "52" },
+                { "Nusa Tenggara Timur", "53" },
+                { "Bali", "51" },
+                { "Jawa Timur", "35" },
+                { "Jawa Tengah", "33" },
+                { "Jawa Barat", "32" },
+                { "DKI Jakarta", "31" },
+                { "Sumatera Utara", "12" },
+                { "Sumatera Barat", "13" },
+                { "Riau", "14" },
+                { "Jambi", "15" },
+                { "Sumatera Selatan", "16" },
+                { "Bengkulu", "17" },
+                { "Lampung", "18" },
+                { "Bangka Belitung", "19" },
+                { "Kepulauan Riau", "21" },
+                { "Aceh", "11" },
+                { "Kalimantan Barat", "61" },
+                { "Kalimantan Tengah", "62" },
+                { "Kalimantan Selatan", "63" },
+                { "Kalimantan Timur", "64" },
+                { "Kalimantan Utara", "65" },
+                { "Sulawesi Utara", "71" },
+                { "Sulawesi Tengah", "72" },
+                { "Sulawesi Selatan", "73" },
+                { "Sulawesi Tenggara", "74" },
+                { "Gorontalo", "75" },
+                { "Sulawesi Barat", "76" },
+                { "Maluku", "81" },
+                { "Maluku Utara", "82" },
+                { "Papua", "94" },
+                { "Papua Barat", "91" }
             };
 
             return provinceMap.ContainsKey(provinceName) ? provinceMap[provinceName] : "";
@@ -3378,16 +3417,68 @@ namespace PerizinanPeternakan.Controllers
         /// </summary>
         private string GetRegencyCodeByName(string regencyName)
         {
+            Console.WriteLine($"GetRegencyCodeByName - Input regencyName: '{regencyName}'");
+            
             if (string.IsNullOrEmpty(regencyName))
+            {
+                Console.WriteLine($"GetRegencyCodeByName - Empty regency name");
                 return "";
+            }
 
-            // Simple mapping - in real implementation, you might want to use a lookup table
+            // Enhanced mapping for common regencies in NTB and other provinces
             var regencyMap = new Dictionary<string, string>
             {
-                // Add mappings as needed
+                // Nusa Tenggara Barat
+                { "Lombok Barat", "5201" },
+                { "Lombok Tengah", "5202" },
+                { "Lombok Timur", "5203" },
+                { "Sumbawa", "5204" },
+                { "Dompu", "5205" },
+                { "Bima", "5206" },
+                { "Sumbawa Barat", "5207" },
+                { "Lombok Utara", "5208" },
+                { "Mataram", "5271" },
+                { "Kota Bima", "5272" },
+                
+                // Nusa Tenggara Timur
+                { "Kupang", "5301" },
+                { "Timor Tengah Selatan", "5302" },
+                { "Timor Tengah Utara", "5303" },
+                { "Belu", "5304" },
+                { "Alor", "5305" },
+                { "Flores Timur", "5306" },
+                { "Sikka", "5307" },
+                { "Ende", "5308" },
+                { "Ngada", "5309" },
+                { "Manggarai", "5310" },
+                { "Sumba Timur", "5311" },
+                { "Sumba Barat", "5312" },
+                { "Lembata", "5313" },
+                { "Rote Ndao", "5314" },
+                { "Manggarai Barat", "5315" },
+                { "Nagekeo", "5316" },
+                { "Sumba Tengah", "5317" },
+                { "Sumba Barat Daya", "5318" },
+                { "Manggarai Timur", "5319" },
+                { "Sabu Raijua", "5320" },
+                { "Malaka", "5321" },
+                { "Kota Kupang", "5371" },
+                
+                // Bali
+                { "Jembrana", "5101" },
+                { "Tabanan", "5102" },
+                { "Badung", "5103" },
+                { "Gianyar", "5104" },
+                { "Karangasem", "5105" },
+                { "Klungkung", "5106" },
+                { "Bangli", "5107" },
+                { "Buleleng", "5108" },
+                { "Denpasar", "5171" }
             };
 
-            return regencyMap.ContainsKey(regencyName) ? regencyMap[regencyName] : "";
+            var result = regencyMap.ContainsKey(regencyName) ? regencyMap[regencyName] : "";
+            Console.WriteLine($"GetRegencyCodeByName - Result: '{result}' (Found: {regencyMap.ContainsKey(regencyName)})");
+            return result;
         }
 
         #endregion

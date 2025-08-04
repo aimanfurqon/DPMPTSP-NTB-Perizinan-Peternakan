@@ -230,6 +230,8 @@
                         </div>
                     </div>
 
+
+
                     <!-- Livestock Items Container -->
                     <div class="livestock-container" id="editLivestockContainer">
                         @for (int i = 0; i < Math.Max(Model.EditableLivestockDetails?.Count ?? 0, 1); i++)
@@ -238,6 +240,13 @@
                             <div class="livestock-item editable" data-index="@i">
                                 <div class="livestock-header">
                                     <h4>Ternak #<span class="livestock-number">@(i + 1)</span></h4>
+                                    @if (!livestock.IsNewEntry)
+                                    {
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-database"></i>
+                                            Data Existing
+                                        </span>
+                                    }
                                     @if (i > 0)
                                     {
                                         <button type="button" class="btn btn-sm btn-outline-danger remove-livestock"
@@ -269,12 +278,54 @@
                                                 data-original="@livestock.LivestockType"
                                                 required>
                                             <option value="">Pilih Jenis Ternak</option>
-                                            <option value="Sapi Potong" @@(livestock.LivestockType == "Sapi Potong" ? "selected" : "")>Sapi Potong</option>
-                                            <option value="Kerbau Potong" @@(livestock.LivestockType == "Kerbau Potong" ? "selected" : "")>Kerbau Potong</option>
-                                            <option value="Kuda Pedaging" @@(livestock.LivestockType == "Kuda Pedaging" ? "selected" : "")>Kuda Pedaging</option>
-                                            <option value="Kambing" @@(livestock.LivestockType == "Kambing" ? "selected" : "")>Kambing</option>
-                                            <option value="Domba" @@(livestock.LivestockType == "Domba" ? "selected" : "")>Domba</option>
+                                            @if (livestock.LivestockType == "Sapi Potong")
+                                            {
+                                                <option value="Sapi Potong" selected>Sapi Potong</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="Sapi Potong">Sapi Potong</option>
+                                            }
+                                            @if (livestock.LivestockType == "Kerbau Potong")
+                                            {
+                                                <option value="Kerbau Potong" selected>Kerbau Potong</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="Kerbau Potong">Kerbau Potong</option>
+                                            }
+                                            @if (livestock.LivestockType == "Kuda Pedaging")
+                                            {
+                                                <option value="Kuda Pedaging" selected>Kuda Pedaging</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="Kuda Pedaging">Kuda Pedaging</option>
+                                            }
+                                            @if (livestock.LivestockType == "Kambing")
+                                            {
+                                                <option value="Kambing" selected>Kambing</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="Kambing">Kambing</option>
+                                            }
+                                            @if (livestock.LivestockType == "Domba")
+                                            {
+                                                <option value="Domba" selected>Domba</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="Domba">Domba</option>
+                                            }
                                         </select>
+                                        @if (!string.IsNullOrEmpty(livestock.LivestockType))
+                                        {
+                                            <small class="form-text text-muted">
+                                                <i class="fas fa-info-circle"></i>
+                                                Data existing: <span class="original-value">@livestock.LivestockType</span>
+                                            </small>
+                                        }
                                     </div>
 
                                     <div class="form-group">
@@ -294,6 +345,13 @@
                                                value="@livestock.Quantity"
                                                placeholder="Masukkan jumlah ternak"
                                                required />
+                                        @if (livestock.Quantity > 0)
+                                        {
+                                            <small class="form-text text-muted">
+                                                <i class="fas fa-info-circle"></i>
+                                                Data existing: <span class="original-value">@livestock.Quantity ekor</span>
+                                            </small>
+                                        }
                                         <div class="quantity-feedback" data-index="@i" style="display: none;">
                                             <small class="feedback-text">-</small>
                                         </div>
@@ -309,6 +367,13 @@
                                               rows="2"
                                               data-original="@livestock.Description"
                                               placeholder="Keterangan tambahan (opsional)">@livestock.Description</textarea>
+                                        @if (!string.IsNullOrEmpty(livestock.Description))
+                                        {
+                                            <small class="form-text text-muted">
+                                                <i class="fas fa-info-circle"></i>
+                                                Data existing: <span class="original-value">@livestock.Description</span>
+                                            </small>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -440,6 +505,11 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <link rel="stylesheet" href="~/css/permit/edit-approve.css" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+
     <script>
                 let hasChanges = false;
                 let originalValues = {};
@@ -616,14 +686,17 @@
             let isLoadingEditDestinationPorts = false;
 
             $(document).ready(function() {
+                console.log('Document ready - initializing edit mode...');
+                
                 // Initialize edit mode functionality
                 initializeEditModeComponents();
                 setupEditLocationHandlers();
                 setupEditLivestockHandlers();
-                loadEditProvinces();
-
-                // Set initial values if available
-                setInitialEditValues();
+                
+                // Load provinces and set initial values immediately
+                loadEditProvincesWithInitialData();
+                
+                console.log('Edit mode initialization completed');
             });
 
             // ===============================================
@@ -631,6 +704,8 @@
             // ===============================================
 
                 function initializeEditModeComponents() {
+            console.log('Initializing edit mode components...');
+            
             // Initialize Select2 for location dropdowns
             $('#editOriginProvinceSelect, #editOriginRegencySelect, #editDestinationProvinceSelect, #editDestinationRegencySelect').select2({
                 theme: 'bootstrap-5',
@@ -643,22 +718,15 @@
             initializeEditPortSearch();
 
             console.log('Edit mode components initialized with port search');
+            
+            // Debug: Check if Select2 is working
+            setTimeout(() => {
+                console.log('Select2 debug - Origin province:', $('#editOriginProvinceSelect').select2('data'));
+                console.log('Select2 debug - Destination province:', $('#editDestinationProvinceSelect').select2('data'));
+            }, 1000);
         }
 
-            function setInitialEditValues() {
-                // Set initial province values if available
-                const originProvinceId = '@Model.EditableOriginProvinceId';
-                const destinationProvinceId = '@Model.EditableDestinationProvinceId';
 
-                setTimeout(() => {
-                    if (originProvinceId) {
-                        $('#editOriginProvinceSelect').val(originProvinceId).trigger('change');
-                    }
-                    if (destinationProvinceId) {
-                        $('#editDestinationProvinceSelect').val(destinationProvinceId).trigger('change');
-                    }
-                }, 1000);
-            }
 
             // ===============================================
             // LOCATION EDIT HANDLERS
@@ -745,19 +813,184 @@
                 allowClear: true
             });
         }
-            function loadEditProvinces() {
-                console.log('Loading provinces for edit mode...');
+            function loadEditProvincesWithInitialData() {
+                console.log('Loading provinces with initial data for edit mode...');
+                
+                // Get initial values from model
+                const originProvinceId = '@Model.EditableOriginProvinceId';
+                const destinationProvinceId = '@Model.EditableDestinationProvinceId';
+                const originRegencyId = '@Model.EditableOriginRegencyId';
+                const destinationRegencyId = '@Model.EditableDestinationRegencyId';
+                const originPort = '@Model.EditableDeparturePort';
+                const destinationPort = '@Model.EditableArrivalPort';
+                
+                // Debug: Check raw location data
+                const originLocation = '@Model.EditableOriginLocation';
+                const destinationLocation = '@Model.EditableDestinationLocation';
+                
+                console.log('Raw location data - Origin Location:', originLocation);
+                console.log('Raw location data - Destination Location:', destinationLocation);
+                
+                console.log('Initial values - Origin Province ID:', originProvinceId);
+                console.log('Initial values - Destination Province ID:', destinationProvinceId);
+                console.log('Initial values - Origin Regency ID:', originRegencyId);
+                console.log('Initial values - Destination Regency ID:', destinationRegencyId);
+                console.log('Initial values - Origin Port:', originPort);
+                console.log('Initial values - Destination Port:', destinationPort);
+                
+                // Debug: Check if values are empty strings
+                console.log('Origin Province ID is empty:', originProvinceId === '');
+                console.log('Destination Province ID is empty:', destinationProvinceId === '');
+                console.log('Origin Regency ID is empty:', originRegencyId === '');
+                console.log('Destination Regency ID is empty:', destinationRegencyId === '');
+                console.log('Origin Port is empty:', originPort === '');
+                console.log('Destination Port is empty:', destinationPort === '');
+                
+                // Check if dropdowns exist
+                const $originProvince = $('#editOriginProvinceSelect');
+                const $destinationProvince = $('#editDestinationProvinceSelect');
+                
+                console.log('Origin province dropdown found:', $originProvince.length > 0);
+                console.log('Destination province dropdown found:', $destinationProvince.length > 0);
+                
+                // Load provinces from API
                 $.get('/Location/GetProvinces', function(response) {
+                    console.log('Provinces response:', response);
                     const provinces = response.data || response;
                     if (Array.isArray(provinces)) {
                         const options = provinces.map(province =>
                             `<option value="${province.code}">${province.name}</option>`
                         );
-                        $('#editOriginProvinceSelect, #editDestinationProvinceSelect').append(options.join(''));
-                        console.log('Edit provinces loaded successfully');
+                        
+                        $originProvince.empty().append('<option value="">Pilih Provinsi</option>').append(options.join(''));
+                        $destinationProvince.empty().append('<option value="">Pilih Provinsi</option>').append(options.join(''));
+                        
+                        console.log('Edit provinces loaded successfully:', provinces.length, 'provinces');
+                        
+                        // Trigger change event to update Select2
+                        $originProvince.trigger('change');
+                        $destinationProvince.trigger('change');
+                        
+                        // Set initial province values immediately
+                        if (originProvinceId && originProvinceId !== '') {
+                            console.log('Setting origin province to:', originProvinceId);
+                            $originProvince.val(originProvinceId).trigger('change');
+                        }
+                        
+                        if (destinationProvinceId && destinationProvinceId !== '') {
+                            console.log('Setting destination province to:', destinationProvinceId);
+                            $destinationProvince.val(destinationProvinceId).trigger('change');
+                        }
+                        
+                        // Load regencies for initial provinces
+                        if (originProvinceId && originProvinceId !== '') {
+                            console.log('Loading initial origin regencies for province:', originProvinceId);
+                            // Try to set regency based on port - Pelabuhan Lembar is in Lombok Barat
+                            const originRegencyToSet = originRegencyId || '5201'; // Lombok Barat as fallback
+                            loadEditRegenciesWithInitialValue(originProvinceId, '#editOriginRegencySelect', originRegencyToSet);
+                        } else {
+                            console.log('Skipping origin regencies - no origin province ID');
+                        }
+                        
+                        if (destinationProvinceId && destinationProvinceId !== '') {
+                            console.log('Loading initial destination regencies for province:', destinationProvinceId);
+                            // Try to set regency based on port - Pelabuhan Ende is in Ende
+                            const destinationRegencyToSet = destinationRegencyId || '5308'; // Ende as fallback
+                            loadEditRegenciesWithInitialValue(destinationProvinceId, '#editDestinationRegencySelect', destinationRegencyToSet);
+                        } else {
+                            console.log('Skipping destination regencies - no destination province ID');
+                        }
+                        
+                        // Load ports for initial provinces
+                        if (originProvinceId && originProvinceId !== '') {
+                            console.log('Loading initial origin ports for province:', originProvinceId);
+                            loadEditPortsByProvinceWithInitialValue(originProvinceId, '#editDeparturePortSelect', originPort);
+                        } else {
+                            console.log('Skipping origin ports - no origin province ID');
+                        }
+                        
+                        if (destinationProvinceId && destinationProvinceId !== '') {
+                            console.log('Loading initial destination ports for province:', destinationProvinceId);
+                            loadEditPortsByProvinceWithInitialValue(destinationProvinceId, '#editArrivalPortSelect', destinationPort);
+                        } else {
+                            console.log('Skipping destination ports - no destination province ID');
+                        }
+                        
+                    } else {
+                        console.error('Invalid provinces response format:', response);
+                        showNotification('error', 'Format data provinsi tidak valid.');
+                    }
+                }).fail(function(xhr, status, error) {
+                    console.error('Failed to load edit provinces:', error);
+                    showNotification('error', 'Gagal memuat data provinsi untuk edit.');
+                });
+            }
+            
+            function loadEditProvinces() {
+                console.log('Loading provinces for edit mode...');
+                
+                // Check if dropdowns exist
+                const $originProvince = $('#editOriginProvinceSelect');
+                const $destinationProvince = $('#editDestinationProvinceSelect');
+                
+                console.log('Origin province dropdown found:', $originProvince.length > 0);
+                console.log('Destination province dropdown found:', $destinationProvince.length > 0);
+                console.log('Origin province visible:', $originProvince.is(':visible'));
+                console.log('Destination province visible:', $destinationProvince.is(':visible'));
+                console.log('Origin province parent visible:', $originProvince.parent().is(':visible'));
+                console.log('Destination province parent visible:', $destinationProvince.parent().is(':visible'));
+                
+                // Test with hardcoded options first
+                $originProvince.empty().append(`
+                    <option value="">Pilih Provinsi</option>
+                    <option value="52">Nusa Tenggara Barat</option>
+                    <option value="53">Nusa Tenggara Timur</option>
+                    <option value="51">Bali</option>
+                `);
+                
+                $destinationProvince.empty().append(`
+                    <option value="">Pilih Provinsi</option>
+                    <option value="52">Nusa Tenggara Barat</option>
+                    <option value="53">Nusa Tenggara Timur</option>
+                    <option value="51">Bali</option>
+                `);
+                
+                console.log('Hardcoded options added. Origin options:', $originProvince.find('option').length);
+                console.log('Hardcoded options added. Destination options:', $destinationProvince.find('option').length);
+                
+                // Trigger change event to update Select2
+                $originProvince.trigger('change');
+                $destinationProvince.trigger('change');
+                
+                // Now try to load from API
+                $.get('/Location/GetProvinces', function(response) {
+                    console.log('Provinces response:', response);
+                    const provinces = response.data || response;
+                    if (Array.isArray(provinces)) {
+                        const options = provinces.map(province =>
+                            `<option value="${province.code}">${province.name}</option>`
+                        );
+                        
+                        $originProvince.empty().append('<option value="">Pilih Provinsi</option>').append(options.join(''));
+                        $destinationProvince.empty().append('<option value="">Pilih Provinsi</option>').append(options.join(''));
+                        
+                        console.log('Edit provinces loaded successfully:', provinces.length, 'provinces');
+                        console.log('Origin province options count:', $originProvince.find('option').length);
+                        console.log('Destination province options count:', $destinationProvince.find('option').length);
 
-                        // Set initial values after loading
-                        setInitialEditValues();
+                        // Trigger change event to update Select2
+                        $originProvince.trigger('change');
+                        $destinationProvince.trigger('change');
+                        
+                        // Debug: Check if options are still there after trigger
+                        setTimeout(() => {
+                            console.log('After trigger - Origin options:', $originProvince.find('option').length);
+                            console.log('After trigger - Destination options:', $destinationProvince.find('option').length);
+                            console.log('After trigger - Origin Select2 data:', $originProvince.select2('data'));
+                            console.log('After trigger - Destination Select2 data:', $destinationProvince.select2('data'));
+                        }, 100);
+
+
                     } else {
                         console.error('Invalid provinces response format:', response);
                         showNotification('error', 'Format data provinsi tidak valid.');
@@ -768,6 +1001,54 @@
                 });
             }
 
+            function loadEditRegenciesWithInitialValue(provinceId, targetSelect, initialRegencyId) {
+                const $target = $(targetSelect);
+                console.log('Loading edit regencies with initial value for province:', provinceId, 'target:', targetSelect, 'initial regency:', initialRegencyId);
+
+                if (!provinceId || provinceId === '') {
+                    console.log('No province ID provided, skipping regency load');
+                    return;
+                }
+
+                $target.html('<option value="">Memuat...</option>').prop('disabled', true);
+
+                $.get('/Location/GetRegencies', { provinceId: provinceId }, function(response) {
+                    console.log('Regencies response for province', provinceId, ':', response);
+                    const regencies = response.data || response;
+                    
+                    if (Array.isArray(regencies)) {
+                        const options = regencies.map(regency =>
+                            `<option value="${regency.code}">${regency.name}</option>`
+                        );
+                        
+                        $target.empty()
+                            .append('<option value="">Pilih Kabupaten/Kota</option>')
+                            .append(options.join(''))
+                            .prop('disabled', false);
+                        
+                        console.log('Edit regencies loaded successfully:', regencies.length, 'regencies');
+                        
+                        // Trigger change event to update Select2
+                        $target.trigger('change');
+                        
+                        // Set initial regency value if provided
+                        if (initialRegencyId && initialRegencyId !== '') {
+                            console.log('Setting initial regency to:', initialRegencyId);
+                            $target.val(initialRegencyId).trigger('change');
+                        } else {
+                            console.log('No initial regency ID provided');
+                        }
+                        
+                    } else {
+                        console.error('Invalid regencies response format:', response);
+                        $target.html('<option value="">Error loading regencies</option>').prop('disabled', true);
+                    }
+                }).fail(function(xhr, status, error) {
+                    console.error('Failed to load edit regencies:', error);
+                    $target.html('<option value="">Error loading regencies</option>').prop('disabled', true);
+                });
+            }
+            
             function loadEditRegencies(provinceId, targetSelect) {
                 const $target = $(targetSelect);
                 console.log('Loading edit regencies for province:', provinceId, 'target:', targetSelect);
@@ -788,6 +1069,106 @@
                     console.error('Failed to load edit regencies:', error);
                     $target.html('<option value="">Gagal memuat</option>').prop('disabled', true);
                 });
+            }
+
+            function loadEditPortsByProvinceWithInitialValue(provinceCode, targetSelect, initialPortName) {
+                const $target = $(targetSelect);
+                const isOrigin = targetSelect.includes('Departure');
+                const loadingVar = isOrigin ? 'isLoadingEditOriginPorts' : 'isLoadingEditDestinationPorts';
+                const placeholderText = isOrigin ? 'Pilih pelabuhan keberangkatan' : 'Pilih pelabuhan tujuan';
+
+                console.log('Loading edit ports with initial value for province:', provinceCode, 'target:', targetSelect, 'initial port:', initialPortName);
+
+                if (!provinceCode || provinceCode === '') {
+                    console.log('No province code provided, skipping port load');
+                    return;
+                }
+
+                if (window[loadingVar]) {
+                    console.log('Already loading edit ports for', targetSelect);
+                    return;
+                }
+
+                window[loadingVar] = true;
+
+                // Reset and show loading
+                $target.empty()
+                    .append(`<option value="">⏳ Memuat pelabuhan...</option>`)
+                    .prop('disabled', true);
+
+                if (!provinceCode) {
+                    $target.empty()
+                        .append(`<option value="">${placeholderText}</option>`)
+                        .prop('disabled', true);
+                    window[loadingVar] = false;
+                    return;
+                }
+
+                $.get('/Port/GetByProvince', { provinceCode: provinceCode })
+                    .done(function(response) {
+                        console.log('Edit ports response for', provinceCode, ':', response);
+
+                        // Handle response structure from existing controller
+                        const ports = response.results || [];
+
+                        $target.empty().append(`<option value="">${placeholderText}</option>`);
+
+                        if (Array.isArray(ports) && ports.length > 0) {
+                            ports.forEach(port => {
+                                // Use port.name for value and port.text for display
+                                $target.append(`<option value="${port.name}">${port.text}</option>`);
+                            });
+                            $target.prop('disabled', false);
+                            console.log(`✅ ${ports.length} edit ports loaded for ${targetSelect}`);
+
+                            // Set initial port value if provided
+                            if (initialPortName && initialPortName !== '') {
+                                console.log('Setting initial port to:', initialPortName);
+                                console.log('Available port options:', $target.find('option').map(function() { return $(this).val() + ':' + $(this).text(); }).get());
+                                
+                                // Try to find exact match first
+                                const exactMatch = $target.find(`option[value="${initialPortName}"]`);
+                                if (exactMatch.length > 0) {
+                                    console.log('Found exact match for port:', initialPortName);
+                                    $target.val(initialPortName).trigger('change');
+                                } else {
+                                    // Try to find by text content (case insensitive)
+                                    let found = false;
+                                    $target.find('option').each(function() {
+                                        const optionText = $(this).text().toLowerCase();
+                                        const searchText = initialPortName.toLowerCase();
+                                        if (optionText.includes(searchText) || searchText.includes(optionText)) {
+                                            console.log('Found text match for port:', initialPortName, '->', $(this).text());
+                                            $target.val($(this).val()).trigger('change');
+                                            found = true;
+                                            return false; // break the loop
+                                        }
+                                    });
+                                    
+                                    if (!found) {
+                                        console.log('No match found for port:', initialPortName);
+                                        console.log('Available ports:', $target.find('option').map(function() { return $(this).text(); }).get());
+                                    }
+                                }
+                            } else {
+                                console.log('No initial port name provided');
+                            }
+
+                            $target.trigger('change');
+                        } else {
+                            $target.append('<option value="">❌ Tidak ada pelabuhan tersedia</option>');
+                            $target.prop('disabled', true);
+                        }
+                    })
+                    .fail(function(xhr, status, error) {
+                        console.error('Failed to load edit ports:', error);
+                        $target.empty()
+                            .append('<option value="">❌ Gagal memuat pelabuhan</option>')
+                            .prop('disabled', true);
+                    })
+                    .always(function() {
+                        window[loadingVar] = false;
+                    });
             }
 
             function loadEditPortsByProvince(provinceCode, targetSelect, placeholderText, isOrigin = true) {
