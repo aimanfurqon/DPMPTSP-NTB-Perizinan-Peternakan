@@ -574,7 +574,7 @@
                                 </li>
                             `);
                         });
-                    } else {
+                    } else{
                         $('#changeTracker').hide();
                     }
                 }
@@ -632,7 +632,6 @@
                    $('#editApprovalForm').submit();
                }
 
-               // Warn user about unsaved changes when leaving page
                window.addEventListener('beforeunload', function(e) {
                    if (hasChanges) {
                        e.preventDefault();
@@ -694,7 +693,10 @@
                 setupEditLivestockHandlers();
                 
                 // Load provinces and set initial values immediately
-                loadEditProvincesWithInitialData();
+                setTimeout(function() {
+                    console.log('Starting to load provinces with initial data...');
+                    loadEditProvincesWithInitialData();
+                }, 500);
                 
                 console.log('Edit mode initialization completed');
             });
@@ -875,18 +877,32 @@
                         if (originProvinceId && originProvinceId !== '') {
                             console.log('Setting origin province to:', originProvinceId);
                             $originProvince.val(originProvinceId).trigger('change');
+                            
+                            // Debug: Check if value was set correctly
+                            setTimeout(() => {
+                                console.log('Origin province value after set:', $originProvince.val());
+                                console.log('Origin province Select2 data:', $originProvince.select2('data'));
+                            }, 100);
                         }
                         
                         if (destinationProvinceId && destinationProvinceId !== '') {
                             console.log('Setting destination province to:', destinationProvinceId);
                             $destinationProvince.val(destinationProvinceId).trigger('change');
+                            
+                            // Debug: Check if value was set correctly
+                            setTimeout(() => {
+                                console.log('Destination province value after set:', $destinationProvince.val());
+                                console.log('Destination province Select2 data:', $destinationProvince.select2('data'));
+                            }, 100);
                         }
                         
                         // Load regencies for initial provinces
                         if (originProvinceId && originProvinceId !== '') {
                             console.log('Loading initial origin regencies for province:', originProvinceId);
+                            console.log('Origin regency ID to set:', originRegencyId);
                             // Try to set regency based on port - Pelabuhan Lembar is in Lombok Barat
-                            const originRegencyToSet = originRegencyId || '5201'; // Lombok Barat as fallback
+                            const originRegencyToSet = originRegencyId || '31.73'; // Jakarta Barat as fallback
+                            console.log('Origin regency to set (with fallback):', originRegencyToSet);
                             loadEditRegenciesWithInitialValue(originProvinceId, '#editOriginRegencySelect', originRegencyToSet);
                         } else {
                             console.log('Skipping origin regencies - no origin province ID');
@@ -894,24 +910,32 @@
                         
                         if (destinationProvinceId && destinationProvinceId !== '') {
                             console.log('Loading initial destination regencies for province:', destinationProvinceId);
-                            // Try to set regency based on port - Pelabuhan Ende is in Ende
-                            const destinationRegencyToSet = destinationRegencyId || '5308'; // Ende as fallback
+                            console.log('Destination regency ID to set:', destinationRegencyId);
+                            // Try to set regency based on port - Pelabuhan Lembar is in Lombok Barat
+                            const destinationRegencyToSet = destinationRegencyId || '52.01'; // Lombok Barat as fallback
+                            console.log('Destination regency to set (with fallback):', destinationRegencyToSet);
                             loadEditRegenciesWithInitialValue(destinationProvinceId, '#editDestinationRegencySelect', destinationRegencyToSet);
                         } else {
                             console.log('Skipping destination regencies - no destination province ID');
                         }
                         
-                        // Load ports for initial provinces
+                        // Load ports for initial provinces with delay to avoid conflicts
                         if (originProvinceId && originProvinceId !== '') {
                             console.log('Loading initial origin ports for province:', originProvinceId);
-                            loadEditPortsByProvinceWithInitialValue(originProvinceId, '#editDeparturePortSelect', originPort);
+                            console.log('Origin port to set:', originPort);
+                            setTimeout(() => {
+                                loadEditPortsByProvinceWithInitialValue(originProvinceId, '#editDeparturePortSelect', originPort);
+                            }, 1000);
                         } else {
                             console.log('Skipping origin ports - no origin province ID');
                         }
                         
                         if (destinationProvinceId && destinationProvinceId !== '') {
                             console.log('Loading initial destination ports for province:', destinationProvinceId);
-                            loadEditPortsByProvinceWithInitialValue(destinationProvinceId, '#editArrivalPortSelect', destinationPort);
+                            console.log('Destination port to set:', destinationPort);
+                            setTimeout(() => {
+                                loadEditPortsByProvinceWithInitialValue(destinationProvinceId, '#editArrivalPortSelect', destinationPort);
+                            }, 1500);
                         } else {
                             console.log('Skipping destination ports - no destination province ID');
                         }
@@ -1034,7 +1058,16 @@
                         // Set initial regency value if provided
                         if (initialRegencyId && initialRegencyId !== '') {
                             console.log('Setting initial regency to:', initialRegencyId);
-                            $target.val(initialRegencyId).trigger('change');
+                            
+                            // Force Select2 to update
+                            $target.val(initialRegencyId);
+                            $target.trigger('change.select2');
+                            
+                            // Debug: Check if value was set correctly
+                            setTimeout(() => {
+                                                        console.log('Regency value after set:', $target.val());
+                        console.log('Regency Select2 data:', $target.select2('data'));
+                            }, 200);
                         } else {
                             console.log('No initial regency ID provided');
                         }
@@ -1130,7 +1163,16 @@
                                 const exactMatch = $target.find(`option[value="${initialPortName}"]`);
                                 if (exactMatch.length > 0) {
                                     console.log('Found exact match for port:', initialPortName);
-                                    $target.val(initialPortName).trigger('change');
+                                    $target.val(initialPortName);
+                                    $target.trigger('change.select2');
+                                    
+                                    // Debug: Check if value was set correctly
+                                    setTimeout(() => {
+                                        console.log('Port value after set:', $target.val());
+                                        console.log('Port Select2 data:', $target.select2('data'));
+                                        console.log('Port options available:', $target.find('option').length);
+                                        console.log('Port option with value', initialPortName, 'exists:', $target.find(`option[value="${initialPortName}"]`).length > 0);
+                                    }, 200);
                                 } else {
                                     // Try to find by text content (case insensitive)
                                     let found = false;
@@ -1139,7 +1181,17 @@
                                         const searchText = initialPortName.toLowerCase();
                                         if (optionText.includes(searchText) || searchText.includes(optionText)) {
                                             console.log('Found text match for port:', initialPortName, '->', $(this).text());
-                                            $target.val($(this).val()).trigger('change');
+                                            $target.val($(this).val());
+                                            $target.trigger('change.select2');
+                                            
+                                            // Debug: Check if value was set correctly
+                                            setTimeout(() => {
+                                                console.log('Port value after text match set:', $target.val());
+                                                console.log('Port Select2 data:', $target.select2('data'));
+                                                console.log('Port options available:', $target.find('option').length);
+                                                console.log('Port option with value', $(this).val(), 'exists:', $target.find(`option[value="${$(this).val()}"]`).length > 0);
+                                            }, 200);
+                                            
                                             found = true;
                                             return false; // break the loop
                                         }

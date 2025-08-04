@@ -3428,17 +3428,25 @@ namespace PerizinanPeternakan.Controllers
             // Enhanced mapping for common regencies in NTB and other provinces
             var regencyMap = new Dictionary<string, string>
             {
+                // DKI Jakarta
+                { "Kota Administrasi Jakarta Barat", "31.73" },
+                { "Kota Administrasi Jakarta Pusat", "31.71" },
+                { "Kota Administrasi Jakarta Selatan", "31.74" },
+                { "Kota Administrasi Jakarta Timur", "31.75" },
+                { "Kota Administrasi Jakarta Utara", "31.72" },
+                { "Kabupaten Administrasi Kepulauan Seribu", "31.01" },
+                
                 // Nusa Tenggara Barat
-                { "Lombok Barat", "5201" },
-                { "Lombok Tengah", "5202" },
-                { "Lombok Timur", "5203" },
-                { "Sumbawa", "5204" },
-                { "Dompu", "5205" },
-                { "Bima", "5206" },
-                { "Sumbawa Barat", "5207" },
-                { "Lombok Utara", "5208" },
-                { "Mataram", "5271" },
-                { "Kota Bima", "5272" },
+                { "Lombok Barat", "52.01" },
+                { "Lombok Tengah", "52.02" },
+                { "Lombok Timur", "52.03" },
+                { "Sumbawa", "52.04" },
+                { "Dompu", "52.05" },
+                { "Bima", "52.06" },
+                { "Sumbawa Barat", "52.07" },
+                { "Lombok Utara", "52.08" },
+                { "Kota Mataram", "52.71" },
+                { "Kota Bima", "52.72" },
                 
                 // Nusa Tenggara Timur
                 { "Kupang", "5301" },
