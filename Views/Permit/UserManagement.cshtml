@@ -1,0 +1,377 @@
+@model List<PerizinanPeternakan.ViewModels.UserManagementViewModel>
+@{
+    ViewData["Title"] = "Manajemen User";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-users-cog"></i> Manajemen User</h2>
+                <div>
+                    <a href="@Url.Action("Index", "Dashboard")" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Kembali
+                    </a>
+                    <button type="button" class="btn btn-primary" onclick="loadUserStatistics()">
+                        <i class="fas fa-chart-bar"></i> Statistik
+                    </button>
+                </div>
+            </div>
+
+            <!-- Statistics Section -->
+            <div class="row mb-4" id="statisticsSection" style="display: none;">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 id="totalUsers">0</h3>
+                            <p class="text-muted">Total User</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 id="activeUsers">0</h3>
+                            <p class="text-muted">User Aktif</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 id="inactiveUsers">0</h3>
+                            <p class="text-muted">User Nonaktif</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 id="adminUsers">0</h3>
+                            <p class="text-muted">Administrator</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Table -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-list"></i> Daftar User</h5>
+                    <input type="text" id="userSearch" class="form-control" style="width: 300px;" placeholder="Cari user...">
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="userTable">
+                            <thead>
+                                <tr>
+                                    <th>No.</th>
+                                    <th>Nama Lengkap</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Tanggal Daftar</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < Model.Count; i++)
+                                {
+                                    var user = Model[i];
+                                    <tr data-user-id="@user.Id">
+                                        <td>@(i + 1)</td>
+                                        <td>
+                                            <div>
+                                                <strong>@user.NamaLengkap</strong><br>
+                                                <small class="text-muted">@user.NoTelepon</small>
+                                            </div>
+                                        </td>
+                                        <td>@user.Email</td>
+                                        <td>
+                                            <span class="badge @user.RoleBadgeClass">@user.RoleDisplayName</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge @user.StatusBadgeClass">@user.StatusText</span>
+                                        </td>
+                                        <td>@user.CreatedAt.ToString("dd/MM/yyyy")</td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                        onclick="viewUserDetails(@user.Id)" title="Lihat Detail">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-warning" 
+                                                        onclick="editUserRole(@user.Id, '@user.Role')" title="Edit Role">
+                                                    <i class="fas fa-user-edit"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm @(user.IsActive ? "btn-outline-danger" : "btn-outline-success")" 
+                                                        onclick="toggleUserStatus(@user.Id, @user.IsActive.ToString().ToLower())" 
+                                                        title="@(user.IsActive ? "Nonaktifkan" : "Aktifkan") User">
+                                                    <i class="fas @(user.IsActive ? "fa-user-times" : "fa-user-check")"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Details Modal -->
+<div class="modal fade" id="userDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user"></i> Detail User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="userDetailsContent">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p>Memuat detail user...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Role Modal -->
+<div class="modal fade" id="editRoleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user-edit"></i> Edit Role User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editRoleForm">
+                    <input type="hidden" id="editUserId" />
+                    <div class="mb-3">
+                        <label for="userName" class="form-label">Nama User</label>
+                        <input type="text" class="form-control" id="userName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="currentRole" class="form-label">Role Saat Ini</label>
+                        <input type="text" class="form-control" id="currentRole" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newRole" class="form-label">Role Baru *</label>
+                        <select class="form-select" id="newRole" required>
+                            <option value="">Pilih Role</option>
+                            <option value="User">User</option>
+                            <option value="Admin">Administrator</option>
+                            <option value="Verifikator">Verifikator</option>
+                            <option value="KepalaDinas">Kepala Dinas</option>
+                        </select>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Peringatan:</strong> Perubahan role akan mempengaruhi akses user ke sistem.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="saveUserRole()">
+                    <i class="fas fa-save"></i> Simpan Perubahan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Search functionality
+        $('#userSearch').on('keyup', function() {
+            var value = $(this).val().toLowerCase();
+            $('#userTable tbody tr').filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        });
+
+        // Load user statistics
+        function loadUserStatistics() {
+            $.get('/Permit/GetUserStatistics')
+                .done(function(response) {
+                    if (response.success) {
+                        $('#totalUsers').text(response.data.TotalUsers);
+                        $('#activeUsers').text(response.data.ActiveUsers);
+                        $('#inactiveUsers').text(response.data.InactiveUsers);
+                        
+                        var adminCount = response.data.RoleStatistics.find(s => s.Role === 'Admin')?.Count || 0;
+                        $('#adminUsers').text(adminCount);
+                        
+                        $('#statisticsSection').show();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                })
+                .fail(function() {
+                    alert('Gagal memuat statistik user');
+                });
+        }
+
+        // View user details
+        function viewUserDetails(userId) {
+            $.get('/Permit/GetUserDetails', { id: userId })
+                .done(function(response) {
+                    console.log('Response:', response); // Debug
+                    if (response.success) {
+                        var user = response.data;
+                        console.log('User data:', user); // Debug
+                        
+                        var roleDisplayName = getRoleDisplayName(user.Role);
+                        var statusText = user.IsActive ? 'Aktif' : 'Nonaktif';
+                        var statusClass = user.IsActive ? 'badge-success' : 'badge-danger';
+                        
+                        $('#userDetailsContent').html(`
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Nama Lengkap:</strong> ${user.NamaLengkap || 'Tidak ada data'}</p>
+                                    <p><strong>Email:</strong> ${user.Email || 'Tidak ada data'}</p>
+                                    <p><strong>No. Telepon:</strong> ${user.NoTelepon || 'Tidak ada data'}</p>
+                                    <p><strong>Alamat:</strong> ${user.Alamat || '-'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Role:</strong> <span class="badge badge-primary">${roleDisplayName || 'Tidak ada data'}</span></p>
+                                    <p><strong>Status:</strong> <span class="badge ${statusClass}">${statusText}</span></p>
+                                    <p><strong>Tanggal Daftar:</strong> ${formatDate(user.RegistrationDate)}</p>
+                                    <p><strong>Login Terakhir:</strong> ${user.LastLoginDate ? formatDate(user.LastLoginDate) : 'Belum pernah login'}</p>
+                                </div>
+                            </div>
+                        `);
+                        
+                        const modal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
+                        modal.show();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                })
+                .fail(function(xhr, status, error) {
+                    console.log('Error:', xhr, status, error); // Debug
+                    alert('Gagal memuat detail user');
+                });
+        }
+
+        // Edit user role
+        function editUserRole(userId, currentRole) {
+            $('#editUserId').val(userId);
+            $('#userName').val($(`tr[data-user-id="${userId}"] td:nth-child(2) strong`).text());
+            $('#currentRole').val(getRoleDisplayName(currentRole));
+            $('#newRole').val(currentRole);
+            
+            const modal = new bootstrap.Modal(document.getElementById('editRoleModal'));
+            modal.show();
+        }
+
+        // Save user role
+        function saveUserRole() {
+            var userId = $('#editUserId').val();
+            var newRole = $('#newRole').val();
+            
+            if (!newRole) {
+                alert('Pilih role baru');
+                return;
+            }
+            
+            $.post('/Permit/UpdateUserRole', { userId: userId, newRole: newRole })
+                .done(function(response) {
+                    if (response.success) {
+                        alert(response.message);
+                        
+                        var roleDisplayName = getRoleDisplayName(newRole);
+                        var roleBadgeClass = getRoleBadgeClass(newRole);
+                        
+                        $(`tr[data-user-id="${userId}"] td:nth-child(4) .badge`)
+                            .removeClass()
+                            .addClass(`badge ${roleBadgeClass}`)
+                            .text(roleDisplayName);
+                        
+                        $('#editRoleModal').modal('hide');
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                })
+                .fail(function() {
+                    alert('Gagal mengubah role user');
+                });
+        }
+
+        // Toggle user status
+        function toggleUserStatus(userId, currentStatus) {
+            var actionText = currentStatus === 'true' ? 'nonaktifkan' : 'aktifkan';
+            
+            if (!confirm(`Apakah yakin ingin ${actionText} user ini?`)) {
+                return;
+            }
+            
+            $.post('/Permit/ToggleUserStatus', { userId: userId })
+                .done(function(response) {
+                    if (response.success) {
+                        alert(response.message);
+                        
+                        var newStatus = response.newStatus;
+                        var statusText = newStatus ? 'Aktif' : 'Nonaktif';
+                        var statusClass = newStatus ? 'badge-success' : 'badge-danger';
+                        var buttonClass = newStatus ? 'btn-outline-danger' : 'btn-outline-success';
+                        var buttonIcon = newStatus ? 'fa-user-times' : 'fa-user-check';
+                        var buttonTitle = newStatus ? 'Nonaktifkan' : 'Aktifkan';
+                        
+                        $(`tr[data-user-id="${userId}"] td:nth-child(5) .badge`)
+                            .removeClass()
+                            .addClass(`badge ${statusClass}`)
+                            .text(statusText);
+                        
+                        var button = $(`tr[data-user-id="${userId}"] td:nth-child(7) .btn-group button:last-child`);
+                        button.removeClass().addClass(`btn btn-sm ${buttonClass}`);
+                        button.attr('title', `${buttonTitle} User`);
+                        button.find('i').removeClass().addClass(`fas ${buttonIcon}`);
+                        button.attr('onclick', `toggleUserStatus(${userId}, ${!newStatus})`);
+                        
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                })
+                .fail(function() {
+                    alert('Gagal mengubah status user');
+                });
+        }
+
+        // Helper functions
+        function getRoleDisplayName(role) {
+            const roleMap = {
+                'User': 'User',
+                'Admin': 'Administrator',
+                'Verifikator': 'Verifikator',
+                'KepalaDinas': 'Kepala Dinas'
+            };
+            return roleMap[role] || role;
+        }
+
+        function getRoleBadgeClass(role) {
+            const badgeMap = {
+                'Admin': 'badge-danger',
+                'Verifikator': 'badge-warning',
+                'KepalaDinas': 'badge-info',
+                'User': 'badge-secondary'
+            };
+            return badgeMap[role] || 'badge-secondary';
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('id-ID');
+        }
+    </script>
+} 

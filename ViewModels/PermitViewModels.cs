@@ -794,14 +794,129 @@ namespace PerizinanPeternakan.ViewModels
     public class DocumentUploadResultViewModel
     {
         public bool Success { get; set; }
-        public string Message { get; set; } = string.Empty;
-        public int UploadedCount { get; set; }
-        public List<string> Errors { get; set; } = new List<string>();
-        public List<DocumentViewModel> UploadedDocuments { get; set; } = new List<DocumentViewModel>();
+        public string Message { get; set; } = "";
+        public string FilePath { get; set; } = "";
+        public string FileName { get; set; } = "";
+        public long FileSize { get; set; }
+        public string FormattedFileSize { get; set; } = "";
+    }
 
-        public string Summary => Success
-            ? $"Berhasil upload {UploadedCount} dokumen"
-            : $"Gagal upload: {Message}";
+    // ===============================================
+    // USER MANAGEMENT VIEW MODELS
+    // ===============================================
+
+    public class UserManagementViewModel
+    {
+        public int Id { get; set; }
+        public string NamaLengkap { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string NoTelepon { get; set; } = "";
+        public string Role { get; set; } = "";
+        public bool IsActive { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? LastLoginAt { get; set; }
+
+        public string RoleDisplayName => Role switch
+        {
+            "User" => "User",
+            "Admin" => "Administrator",
+            "Verifikator" => "Verifikator",
+            "KepalaDinas" => "Kepala Dinas",
+            _ => Role
+        };
+
+        public string StatusBadgeClass => IsActive ? "badge-success" : "badge-danger";
+        public string StatusText => IsActive ? "Aktif" : "Nonaktif";
+        public string RoleBadgeClass => Role switch
+        {
+            "Admin" => "badge-danger",
+            "Verifikator" => "badge-warning",
+            "KepalaDinas" => "badge-info",
+            _ => "badge-secondary"
+        };
+    }
+
+    public class UserStatisticsViewModel
+    {
+        public int TotalUsers { get; set; }
+        public int ActiveUsers { get; set; }
+        public int InactiveUsers { get; set; }
+        public List<RoleStatistics> RoleStatistics { get; set; } = new();
+        public List<MonthlyRegistration> MonthlyRegistrations { get; set; } = new();
+        public List<RecentUser> RecentUsers { get; set; } = new();
+    }
+
+    public class RoleStatistics
+    {
+        public string Role { get; set; } = "";
+        public int Count { get; set; }
+        public int ActiveCount { get; set; }
+        public int InactiveCount { get; set; }
+
+        public string RoleDisplayName => Role switch
+        {
+            "User" => "User",
+            "Admin" => "Administrator",
+            "Verifikator" => "Verifikator",
+            "KepalaDinas" => "Kepala Dinas",
+            _ => Role
+        };
+
+        public string RoleBadgeClass => Role switch
+        {
+            "Admin" => "badge-danger",
+            "Verifikator" => "badge-warning",
+            "KepalaDinas" => "badge-info",
+            _ => "badge-secondary"
+        };
+    }
+
+    public class MonthlyRegistration
+    {
+        public string Month { get; set; } = "";
+        public int Count { get; set; }
+
+        public string MonthDisplayName
+        {
+            get
+            {
+                if (DateTime.TryParse(Month + "-01", out DateTime date))
+                {
+                    return date.ToString("MMMM yyyy", new System.Globalization.CultureInfo("id-ID"));
+                }
+                return Month;
+            }
+        }
+    }
+
+    public class RecentUser
+    {
+        public int Id { get; set; }
+        public string NamaLengkap { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Role { get; set; } = "";
+        public bool IsActive { get; set; }
+        public DateTime TanggalDaftar { get; set; }
+
+        public string RoleDisplayName => Role switch
+        {
+            "User" => "User",
+            "Admin" => "Administrator",
+            "Verifikator" => "Verifikator",
+            "KepalaDinas" => "Kepala Dinas",
+            _ => Role
+        };
+
+        public string RoleBadgeClass => Role switch
+        {
+            "Admin" => "badge-danger",
+            "Verifikator" => "badge-warning",
+            "KepalaDinas" => "badge-info",
+            _ => "badge-secondary"
+        };
+
+        public string StatusBadgeClass => IsActive ? "badge-success" : "badge-danger";
+        public string StatusText => IsActive ? "Aktif" : "Nonaktif";
     }
 
 

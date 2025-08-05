@@ -41,6 +41,14 @@
                         Proses Permohonan
                     </a>
                 }
+
+                @if (userRole == "Admin")
+                {
+                    <a href="@Url.Action("EnableEditMode", "Permit", new { id = Model.Id })" class="btn btn-warning">
+                        <i class="fas fa-edit"></i>
+                        Edit Data Permohonan
+                    </a>
+                }
             </div>
         </div>
 

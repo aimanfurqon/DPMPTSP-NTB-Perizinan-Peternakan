@@ -418,42 +418,139 @@
                     </div>
                 </div>
             </div>
-            <!-- Section 4: Dokumen Pendukung (Read-only) -->
-            <div class="review-section">
-                <div class="section-header">
-                    <h3>
-                        <i class="fas fa-file-alt"></i>
-                        Dokumen Pendukung
-                        <span class="readonly-badge">Tidak Dapat Diedit</span>
-                    </h3>
-                    <span class="document-count">@Model.Documents.Count dokumen</span>
-                </div>
 
-                <div class="documents-summary">
-                    @foreach (var doc in Model.Documents.Take(5))
-                    {
-                        <div class="document-item">
-                            <i class="fas fa-file-@(doc.FileExtension == ".pdf" ? "pdf text-danger" : "image text-primary")"></i>
-                            <span>@doc.DocumentName</span>
-                        </div>
-                    }
-                    @if (Model.Documents.Count > 5)
-                    {
-                        <div class="document-item">
-                            <i class="fas fa-ellipsis-h"></i>
-                            <span>... dan @(Model.Documents.Count - 5) dokumen lainnya</span>
-                        </div>
-                    }
-                </div>
+
+                    <!-- Section 4: Dokumen Pendukung (Editable for Admin) -->
+        <div class="review-section" id="documentSection">
+            <div class="section-header">
+                <h3>
+                    <i class="fas fa-file-alt"></i>
+                    Dokumen Pendukung
+                    <span class="editable-badge">Dapat Diedit</span>
+                </h3>
+                <span class="document-count">@Model.Documents.Count dokumen</span>
             </div>
 
-            <!-- Section 5: Form Approval dengan Edit -->
-            <div class="approval-form-section">
+            <div class="documents-container">
+                @if (Model.Documents.Any())
+                {
+                    <div class="documents-grid">
+                        @foreach (var doc in Model.Documents)
+                        {
+                            <div class="document-card">
+                                <div class="document-header">
+                                    <div class="document-icon">
+                                        @switch (doc.FileExtension.ToLower())
+                                        {
+                                            case ".pdf":
+                                                <i class="fas fa-file-pdf text-danger"></i>
+                                                break;
+                                            case ".jpg":
+                                            case ".jpeg":
+                                            case ".png":
+                                                <i class="fas fa-file-image text-primary"></i>
+                                                break;
+                                            default:
+                                                <i class="fas fa-file text-secondary"></i>
+                                                break;
+                                        }
+                                    </div>
+                                    <div class="document-info">
+                                        <h4>@doc.DocumentDisplayName</h4>
+                                        <div class="document-meta">
+                                            <span class="file-size">@doc.FormattedFileSize</span>
+                                            <span class="upload-date">@doc.UploadDate.ToString("dd/MM/yyyy HH:mm")</span>
+                                            <span class="uploaded-by">@doc.UploadedBy</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="document-actions">
+                                    <a href="@Url.Action("DownloadDocument", "Permit", new { id = doc.Id })" 
+                                       class="btn btn-sm btn-outline-primary" 
+                                       target="_blank">
+                                        <i class="fas fa-download"></i>
+                                        Download
+                                    </a>
+                                    
+                                    @if (doc.FileExtension.ToLower() == ".pdf")
+                                    {
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-secondary"
+                                                onclick="previewDocument('@doc.FilePath', '@doc.DocumentDisplayName')">
+                                            <i class="fas fa-eye"></i>
+                                            Preview
+                                        </button>
+                                    }
+                                    else if (doc.FileExtension.ToLower() == ".jpg" || doc.FileExtension.ToLower() == ".jpeg" || doc.FileExtension.ToLower() == ".png")
+                                    {
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-secondary"
+                                                onclick="previewImage('@doc.FilePath', '@doc.DocumentDisplayName')">
+                                            <i class="fas fa-eye"></i>
+                                            Preview
+                                        </button>
+                                    }
+
+                                    <!-- Edit Document Button -->
+                                    <button type="button" 
+                                            class="btn btn-sm btn-warning"
+                                            onclick="editDocument(@doc.Id, '@doc.DocumentType', '@doc.DocumentDisplayName')">
+                                        <i class="fas fa-edit"></i>
+                                        Edit
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Add New Document Button -->
+                    <div class="add-document-section mt-4">
+                        <button type="button" class="btn btn-success" onclick="showAddDocumentModal()">
+                            <i class="fas fa-plus"></i>
+                            Tambah Dokumen Baru
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="no-documents">
+                        <i class="fas fa-folder-open"></i>
+                        <h4>Tidak Ada Dokumen</h4>
+                        <p>Belum ada dokumen pendukung yang diupload</p>
+                        <button type="button" class="btn btn-success mt-3" onclick="showAddDocumentModal()">
+                            <i class="fas fa-plus"></i>
+                            Tambah Dokumen Pertama
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Section 5: Form Approval dengan Edit -->
+        <div class="approval-form-section">
                 <div class="section-header">
                     <h3>
                         <i class="fas fa-clipboard-check"></i>
                         Review & Persetujuan
                     </h3>
+                </div>
+
+                <!-- Navigation Links for Admin -->
+                <div class="admin-navigation mb-4">
+                    <div class="alert alert-info">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Admin Navigation:</strong> 
+                                <span class="text-muted">Edit dokumen pendukung tersedia di section bawah</span>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="scrollToDocumentSection()">
+                                <i class="fas fa-file-alt"></i>
+                                Lihat Dokumen Pendukung
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -500,6 +597,199 @@
             </div>
         </div>
     </form>
+</div>
+
+<!-- Document Edit Modal -->
+<div class="modal fade" id="documentEditModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit"></i>
+                    Edit Dokumen
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="documentEditForm" enctype="multipart/form-data">
+                    <input type="hidden" id="editDocumentId" name="documentId" />
+                    
+                    <div class="mb-3">
+                        <label for="editDocumentType" class="form-label">Jenis Dokumen</label>
+                        <select class="form-select" id="editDocumentType" name="documentType" required>
+                            <option value="">Pilih Jenis Dokumen</option>
+                            <option value="SURAT_PERMOHONAN">Surat Permohonan</option>
+                            <option value="REKOMENDASI_DINAS_PROV">Rekomendasi Dinas Peternakan Provinsi NTB</option>
+                            <option value="REKOMENDASI_DAERAH_TUJUAN">Rekomendasi Pemasukan Ternak dari Daerah Tujuan</option>
+                            <option value="SKKH_KABUPATEN_ASAL">SKKH dari Kabupaten Asal</option>
+                            <option value="SKKH_DINAS_PROVINSI">SKKH dari Dinas Peternakan Provinsi NTB</option>
+                            <option value="SURAT_JALAN_TERNAK">Surat Keterangan Jalan Ternak/Rekomendasi Asal</option>
+                            <option value="HASIL_PEMERIKSAAN_FISIK">Hasil Pemeriksaan Fisik (Holding Ground)</option>
+                            <option value="DOKUMEN_OPSIONAL">Dokumen Opsional</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editDocumentNumber" class="form-label">Nomor Dokumen (Opsional)</label>
+                        <input type="text" class="form-control" id="editDocumentNumber" name="documentNumber" placeholder="Masukkan nomor dokumen">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editDocumentDate" class="form-label">Tanggal Dokumen (Opsional)</label>
+                        <input type="date" class="form-control" id="editDocumentDate" name="documentDate">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editDocumentFile" class="form-label">File Dokumen</label>
+                        <input type="file" class="form-control" id="editDocumentFile" name="documentFile" accept=".pdf,.jpg,.jpeg,.png">
+                        <div class="form-text">Pilih file baru untuk mengganti dokumen yang ada</div>
+                    </div>
+
+                    <div class="current-document-info mb-3">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Dokumen Saat Ini:</strong>
+                            <div id="currentDocumentInfo"></div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-danger" onclick="deleteDocument()">
+                    <i class="fas fa-trash"></i>
+                    Hapus Dokumen
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveDocumentEdit()">
+                    <i class="fas fa-save"></i>
+                    Simpan Perubahan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Document Modal -->
+<div class="modal fade" id="addDocumentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus"></i>
+                    Tambah Dokumen Baru
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addDocumentForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="addDocumentType" class="form-label">Jenis Dokumen *</label>
+                        <select class="form-select" id="addDocumentType" name="documentType" required>
+                            <option value="">Pilih Jenis Dokumen</option>
+                            <option value="SURAT_PERMOHONAN">Surat Permohonan</option>
+                            <option value="REKOMENDASI_DINAS_PROV">Rekomendasi Dinas Peternakan Provinsi NTB</option>
+                            <option value="REKOMENDASI_DAERAH_TUJUAN">Rekomendasi Pemasukan Ternak dari Daerah Tujuan</option>
+                            <option value="SKKH_KABUPATEN_ASAL">SKKH dari Kabupaten Asal</option>
+                            <option value="SKKH_DINAS_PROVINSI">SKKH dari Dinas Peternakan Provinsi NTB</option>
+                            <option value="SURAT_JALAN_TERNAK">Surat Keterangan Jalan Ternak/Rekomendasi Asal</option>
+                            <option value="HASIL_PEMERIKSAAN_FISIK">Hasil Pemeriksaan Fisik (Holding Ground)</option>
+                            <option value="DOKUMEN_OPSIONAL">Dokumen Opsional</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="addDocumentNumber" class="form-label">Nomor Dokumen (Opsional)</label>
+                        <input type="text" class="form-control" id="addDocumentNumber" name="documentNumber" placeholder="Masukkan nomor dokumen">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="addDocumentDate" class="form-label">Tanggal Dokumen (Opsional)</label>
+                        <input type="date" class="form-control" id="addDocumentDate" name="documentDate">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="addDocumentFile" class="form-label">File Dokumen *</label>
+                        <input type="file" class="form-control" id="addDocumentFile" name="documentFile" accept=".pdf,.jpg,.jpeg,.png" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="saveNewDocument()">
+                    <i class="fas fa-save"></i>
+                    Upload Dokumen
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Document Preview Modal -->
+<div class="modal fade" id="documentPreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewModalTitle">
+                    <i class="fas fa-file-pdf text-danger"></i>
+                    Preview Dokumen
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="preview-container">
+                    <div class="preview-toolbar">
+                        <div class="toolbar-left">
+                            <span id="previewDocumentName">Memuat dokumen...</span>
+                        </div>
+                        <div class="toolbar-right">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="downloadFromPreview()">
+                                <i class="fas fa-download"></i>
+                                Download
+                            </button>
+                        </div>
+                    </div>
+                    <div class="preview-frame-container">
+                        <div class="loading-spinner" id="previewLoader">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Memuat preview dokumen...</p>
+                        </div>
+                        <iframe id="previewFrame" style="display: none; width: 100%; height: 600px; border: none;"></iframe>
+                        <div class="preview-error" id="previewError" style="display: none;">
+                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                            <p>Gagal memuat preview dokumen. Silakan download untuk melihat dokumen.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalTitle">
+                    <i class="fas fa-file-image text-primary"></i>
+                    Preview Gambar
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="previewImage" src="" alt="Preview" class="img-fluid" style="max-height: 600px;" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-primary" onclick="downloadFromImagePreview()">
+                    <i class="fas fa-download"></i>
+                    Download
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
@@ -1853,5 +2143,184 @@
 
            // Initialize edit mode summary
            updateEditSummary();
+
+           // ===============================================
+           // DOCUMENT MANAGEMENT FUNCTIONS
+           // ===============================================
+
+           function scrollToDocumentSection() {
+               document.getElementById('documentSection').scrollIntoView({ 
+                   behavior: 'smooth',
+                   block: 'start'
+               });
+           }
+
+           function editDocument(documentId, documentType, documentName) {
+               $('#editDocumentId').val(documentId);
+               $('#editDocumentType').val(documentType);
+               $('#currentDocumentInfo').html(`
+                   <div class="mt-2">
+                       <strong>Nama:</strong> ${documentName}<br>
+                       <strong>Jenis:</strong> ${getDocumentTypeDisplayName(documentType)}
+                   </div>
+               `);
+               
+               const modal = new bootstrap.Modal(document.getElementById('documentEditModal'));
+               modal.show();
+           }
+
+           function showAddDocumentModal() {
+               $('#addDocumentForm')[0].reset();
+               const modal = new bootstrap.Modal(document.getElementById('addDocumentModal'));
+               modal.show();
+           }
+
+           function saveDocumentEdit() {
+               const formData = new FormData($('#documentEditForm')[0]);
+               formData.append('permitId', @Model.Id);
+
+               $.ajax({
+                   url: '/Permit/UpdateDocument',
+                   type: 'POST',
+                   data: formData,
+                   processData: false,
+                   contentType: false,
+                   success: function(response) {
+                       if (response.success) {
+                           showNotification('success', 'Dokumen berhasil diperbarui');
+                           location.reload();
+                       } else {
+                           showNotification('error', response.message || 'Gagal memperbarui dokumen');
+                       }
+                   },
+                   error: function() {
+                       showNotification('error', 'Terjadi kesalahan saat memperbarui dokumen');
+                   }
+               });
+           }
+
+           function saveNewDocument() {
+               const formData = new FormData($('#addDocumentForm')[0]);
+               formData.append('permitId', @Model.Id);
+
+               $.ajax({
+                   url: '/Permit/AddDocument',
+                   type: 'POST',
+                   data: formData,
+                   processData: false,
+                   contentType: false,
+                   success: function(response) {
+                       if (response.success) {
+                           showNotification('success', 'Dokumen berhasil ditambahkan');
+                           location.reload();
+                       } else {
+                           showNotification('error', response.message || 'Gagal menambahkan dokumen');
+                       }
+                   },
+                   error: function() {
+                       showNotification('error', 'Terjadi kesalahan saat menambahkan dokumen');
+                   }
+               });
+           }
+
+           function deleteDocument() {
+               const documentId = $('#editDocumentId').val();
+               
+               if (!confirm('Apakah yakin ingin menghapus dokumen ini?')) {
+                   return;
+               }
+
+               $.ajax({
+                   url: '/Permit/DeleteDocument',
+                   type: 'POST',
+                   data: { 
+                       documentId: documentId,
+                       permitId: @Model.Id
+                   },
+                   success: function(response) {
+                       if (response.success) {
+                           showNotification('success', 'Dokumen berhasil dihapus');
+                           location.reload();
+                       } else {
+                           showNotification('error', response.message || 'Gagal menghapus dokumen');
+                       }
+                   },
+                   error: function() {
+                       showNotification('error', 'Terjadi kesalahan saat menghapus dokumen');
+                   }
+               });
+           }
+
+           function getDocumentTypeDisplayName(documentType) {
+               const typeMap = {
+                   'SURAT_PERMOHONAN': 'Surat Permohonan',
+                   'REKOMENDASI_DINAS_PROV': 'Rekomendasi Dinas Peternakan Provinsi NTB',
+                   'REKOMENDASI_DAERAH_TUJUAN': 'Rekomendasi Pemasukan Ternak dari Daerah Tujuan',
+                   'SKKH_KABUPATEN_ASAL': 'SKKH dari Kabupaten Asal',
+                   'SKKH_DINAS_PROVINSI': 'SKKH dari Dinas Peternakan Provinsi NTB',
+                   'SURAT_JALAN_TERNAK': 'Surat Keterangan Jalan Ternak/Rekomendasi Asal',
+                   'HASIL_PEMERIKSAAN_FISIK': 'Hasil Pemeriksaan Fisik (Holding Ground)',
+                   'DOKUMEN_OPSIONAL': 'Dokumen Opsional'
+               };
+               return typeMap[documentType] || documentType;
+           }
+
+           // Document preview functions (reuse from Detail.cshtml)
+           let currentPreviewPath = '';
+           let currentImagePath = '';
+
+           function previewDocument(filePath, documentName) {
+               currentPreviewPath = filePath;
+               const modal = new bootstrap.Modal(document.getElementById('documentPreviewModal'));
+               
+               document.getElementById('previewDocumentName').textContent = documentName;
+               document.getElementById('previewLoader').style.display = 'flex';
+               document.getElementById('previewFrame').style.display = 'none';
+               document.getElementById('previewError').style.display = 'none';
+
+               const iframe = document.getElementById('previewFrame');
+               iframe.src = filePath;
+
+               iframe.onload = function() {
+                   document.getElementById('previewLoader').style.display = 'none';
+                   iframe.style.display = 'block';
+               };
+
+               iframe.onerror = function() {
+                   document.getElementById('previewLoader').style.display = 'none';
+                   document.getElementById('previewError').style.display = 'flex';
+               };
+
+               setTimeout(() => {
+                   if (document.getElementById('previewLoader').style.display !== 'none') {
+                       document.getElementById('previewLoader').style.display = 'none';
+                       iframe.style.display = 'block';
+                   }
+               }, 3000);
+
+               modal.show();
+           }
+
+           function previewImage(imagePath, imageName) {
+               currentImagePath = imagePath;
+               const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+               
+               document.getElementById('imageModalTitle').innerHTML = `<i class="fas fa-file-image text-primary"></i> ${imageName}`;
+               document.getElementById('previewImage').src = imagePath;
+
+               modal.show();
+           }
+
+           function downloadFromPreview() {
+               if (currentPreviewPath) {
+                   window.open(currentPreviewPath, '_blank');
+               }
+           }
+
+           function downloadFromImagePreview() {
+               if (currentImagePath) {
+                   window.open(currentImagePath, '_blank');
+               }
+           }
     </script>
 }

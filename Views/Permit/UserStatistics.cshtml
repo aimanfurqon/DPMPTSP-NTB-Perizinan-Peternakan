@@ -1,0 +1,325 @@
+@model PerizinanPeternakan.ViewModels.UserStatisticsViewModel
+@{
+    ViewData["Title"] = "Statistik User";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-chart-bar text-primary"></i> Statistik User</h2>
+                <a href="/Permit/UserManagement" class="btn btn-outline-primary">
+                    <i class="fas fa-users"></i> Daftar User
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total User
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalUsers</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                User Aktif
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.ActiveUsers</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                User Nonaktif
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.InactiveUsers</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-times fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Tingkat Aktivitas
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @if (Model.TotalUsers > 0)
+                                {
+                                    @($"{Math.Round((double)Model.ActiveUsers / Model.TotalUsers * 100, 1)}%")
+                                }
+                                else
+                                {
+                                    @("0%")
+                                }
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Role Statistics -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Statistik Berdasarkan Role</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Role</th>
+                                    <th>Total</th>
+                                    <th>Aktif</th>
+                                    <th>Nonaktif</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var role in Model.RoleStatistics)
+                                {
+                                    <tr>
+                                        <td>
+                                            <span class="badge @role.RoleBadgeClass">@role.RoleDisplayName</span>
+                                        </td>
+                                        <td>@role.Count</td>
+                                        <td>
+                                            <span class="badge badge-success">@role.ActiveCount</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-danger">@role.InactiveCount</span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Registration Chart -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Registrasi Bulanan (6 Bulan Terakhir)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyRegistrationChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Users -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">User Terbaru</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Nama Lengkap</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Tanggal Daftar</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var user in Model.RecentUsers)
+                                {
+                                    <tr>
+                                        <td>@user.NamaLengkap</td>
+                                        <td>@user.Email</td>
+                                        <td>
+                                            <span class="badge @user.RoleBadgeClass">@user.RoleDisplayName</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge @user.StatusBadgeClass">@user.StatusText</span>
+                                        </td>
+                                        <td>@user.TanggalDaftar.ToString("dd MMM yyyy")</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-info" onclick="viewUserDetails(@user.Id)">
+                                                <i class="fas fa-eye"></i> Detail
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Details Modal -->
+<div class="modal fade" id="userDetailsModal" tabindex="-1" aria-labelledby="userDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userDetailsModalLabel">Detail User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="userDetailsContent">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Monthly Registration Chart
+        var ctx = document.getElementById('monthlyRegistrationChart').getContext('2d');
+        var monthlyData = @Html.Raw(Json.Serialize(Model.MonthlyRegistrations));
+        
+        var labels = monthlyData.map(item => item.monthDisplayName);
+        var data = monthlyData.map(item => item.count);
+        
+        var monthlyChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Jumlah Registrasi',
+                    data: data,
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+        // View user details
+        function viewUserDetails(userId) {
+            $.get('/Permit/GetUserDetails', { id: userId })
+                .done(function(response) {
+                    console.log('Response:', response);
+                    if (response.success) {
+                        var user = response.data;
+                        console.log('User data:', user);
+                        
+                        var roleDisplayName = getRoleDisplayName(user.Role);
+                        var statusText = user.IsActive ? 'Aktif' : 'Nonaktif';
+                        var statusClass = user.IsActive ? 'badge-success' : 'badge-danger';
+                        
+                        $('#userDetailsContent').html(`
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Nama Lengkap:</strong> ${user.NamaLengkap || 'Tidak ada data'}</p>
+                                    <p><strong>Email:</strong> ${user.Email || 'Tidak ada data'}</p>
+                                    <p><strong>No. Telepon:</strong> ${user.NoTelepon || 'Tidak ada data'}</p>
+                                    <p><strong>Alamat:</strong> ${user.Alamat || '-'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Role:</strong> <span class="badge badge-primary">${roleDisplayName || 'Tidak ada data'}</span></p>
+                                    <p><strong>Status:</strong> <span class="badge ${statusClass}">${statusText}</span></p>
+                                    <p><strong>Tanggal Daftar:</strong> ${formatDate(user.RegistrationDate)}</p>
+                                    <p><strong>Login Terakhir:</strong> ${user.LastLoginDate ? formatDate(user.LastLoginDate) : 'Belum pernah login'}</p>
+                                </div>
+                            </div>
+                        `);
+                        
+                        const modal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
+                        modal.show();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                })
+                .fail(function(xhr, status, error) {
+                    console.log('Error:', xhr, status, error);
+                    alert('Gagal memuat detail user');
+                });
+        }
+
+        function getRoleDisplayName(role) {
+            switch (role) {
+                case 'User': return 'User';
+                case 'Admin': return 'Administrator';
+                case 'Verifikator': return 'Verifikator';
+                case 'KepalaDinas': return 'Kepala Dinas';
+                default: return role;
+            }
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'Tidak ada data';
+            var date = new Date(dateString);
+            return date.toLocaleDateString('id-ID', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+    </script>
+} 
