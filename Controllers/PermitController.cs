@@ -150,6 +150,233 @@ namespace PerizinanPeternakan.Controllers
                 return View(new List<AdminHistoryViewModel>());
             }
         }
+
+        public async Task<IActionResult> VerifikatorHistory(
+            DateTime? startDate = null,
+            DateTime? endDate = null,
+            PermitStatus? statusFilter = null,
+            string searchTerm = null,
+            int page = 1)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return RedirectToAction("Login", "Auth");
+
+            var userRole = HttpContext.Session.GetString("Role");
+            if (userRole != "Verifikator")
+            {
+                TempData["ErrorMessage"] = "Akses ditolak. Halaman ini hanya untuk Verifikator.";
+                return RedirectToAction("Index", "Dashboard");
+            }
+
+            try
+            {
+                int pageSize = 10;
+
+                var query = _context.PermitApplications
+                    .Where(p => p.VerifikatorId == userId.Value &&
+                               (p.Status >= PermitStatus.VerifikatorApproved || p.Status == PermitStatus.VerifikatorRejected))
+                    .Include(p => p.User)
+                    .Include(p => p.ApprovalHistory.Where(h => h.UserId == userId.Value))
+                    .Include(p => p.Documents)
+                    .AsQueryable();
+
+                if (startDate.HasValue)
+                {
+                    query = query.Where(p => p.VerificationDate >= startDate.Value);
+                }
+
+                if (endDate.HasValue)
+                {
+                    query = query.Where(p => p.VerificationDate <= endDate.Value);
+                }
+
+                if (statusFilter.HasValue)
+                {
+                    query = query.Where(p => p.Status == statusFilter.Value);
+                }
+
+                if (!string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    query = query.Where(p =>
+                        p.ApplicationNumber.Contains(searchTerm) ||
+                        p.User.NamaLengkap.Contains(searchTerm) ||
+                        p.CompanyName.Contains(searchTerm));
+                }
+
+                var totalItems = await query.CountAsync();
+                var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+                var verifikatorHistoryList = await query
+                    .OrderByDescending(p => p.VerificationDate ?? p.SubmissionDate)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(p => new VerifikatorHistoryViewModel
+                    {
+                        Id = p.Id,
+                        ApplicationNumber = p.ApplicationNumber,
+                        CompanyName = p.CompanyName,
+                        ApplicantName = p.User.NamaLengkap,
+                        Status = p.Status,
+                        SubmissionDate = p.SubmissionDate,
+                        VerificationDate = p.VerificationDate,
+                        VerifikatorComments = p.ApprovalHistory
+                            .Where(h => h.UserId == userId.Value && h.Action.Contains("Verifikator"))
+                            .OrderByDescending(h => h.ActionDate)
+                            .Select(h => h.Comments)
+                            .FirstOrDefault(),
+                        VerifikatorAction = p.ApprovalHistory
+                            .Where(h => h.UserId == userId.Value && h.Action.Contains("Verifikator"))
+                            .OrderByDescending(h => h.ActionDate)
+                            .Select(h => h.Action)
+                            .FirstOrDefault(),
+                        DocumentCount = p.Documents.Count,
+                        CanView = true
+                    })
+                    .ToListAsync();
+
+                var allVerifikatorHistory = await _context.PermitApplications
+                    .Where(p => p.VerifikatorId == userId.Value)
+                    .ToListAsync();
+
+                ViewBag.VerifikatorName = HttpContext.Session.GetString("NamaLengkap");
+                ViewBag.TotalReviewed = allVerifikatorHistory.Count;
+                ViewBag.TotalApproved = allVerifikatorHistory.Count(h =>
+                    h.Status == PermitStatus.VerifikatorApproved ||
+                    h.Status == PermitStatus.FinalApproved);
+                ViewBag.TotalRejected = allVerifikatorHistory.Count(h => h.Status == PermitStatus.VerifikatorRejected);
+                ViewBag.FilteredCount = totalItems;
+
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
+                ViewBag.HasPreviousPage = page > 1;
+                ViewBag.HasNextPage = page < totalPages;
+
+                ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
+                ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
+                ViewBag.StatusFilter = statusFilter;
+                ViewBag.SearchTerm = searchTerm;
+
+                return View(verifikatorHistoryList);
+            }
+            catch (Exception)
+            {
+                TempData["ErrorMessage"] = "Terjadi kesalahan saat memuat riwayat verifikasi.";
+                return View(new List<VerifikatorHistoryViewModel>());
+            }
+        }
+
+        public async Task<IActionResult> KepalaDinasHistory(
+            DateTime? startDate = null,
+            DateTime? endDate = null,
+            PermitStatus? statusFilter = null,
+            string searchTerm = null,
+            int page = 1)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return RedirectToAction("Login", "Auth");
+
+            var userRole = HttpContext.Session.GetString("Role");
+            if (userRole != "KepalaDinas")
+            {
+                TempData["ErrorMessage"] = "Akses ditolak. Halaman ini hanya untuk Kepala Dinas.";
+                return RedirectToAction("Index", "Dashboard");
+            }
+
+            try
+            {
+                int pageSize = 10;
+
+                var query = _context.PermitApplications
+                    .Where(p => p.KepalaDinasId == userId.Value &&
+                               (p.Status >= PermitStatus.FinalApproved || p.Status == PermitStatus.FinalRejected))
+                    .Include(p => p.User)
+                    .Include(p => p.ApprovalHistory.Where(h => h.UserId == userId.Value))
+                    .Include(p => p.Documents)
+                    .AsQueryable();
+
+                if (startDate.HasValue)
+                {
+                    query = query.Where(p => p.FinalApprovalDate >= startDate.Value);
+                }
+
+                if (endDate.HasValue)
+                {
+                    query = query.Where(p => p.FinalApprovalDate <= endDate.Value);
+                }
+
+                if (statusFilter.HasValue)
+                {
+                    query = query.Where(p => p.Status == statusFilter.Value);
+                }
+
+                if (!string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    query = query.Where(p =>
+                        p.ApplicationNumber.Contains(searchTerm) ||
+                        p.User.NamaLengkap.Contains(searchTerm) ||
+                        p.CompanyName.Contains(searchTerm));
+                }
+
+                var totalItems = await query.CountAsync();
+                var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+                var kepalaDinasHistoryList = await query
+                    .OrderByDescending(p => p.FinalApprovalDate ?? p.SubmissionDate)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(p => new KepalaDinasHistoryViewModel
+                    {
+                        Id = p.Id,
+                        ApplicationNumber = p.ApplicationNumber,
+                        CompanyName = p.CompanyName,
+                        ApplicantName = p.User.NamaLengkap,
+                        Status = p.Status,
+                        SubmissionDate = p.SubmissionDate,
+                        FinalApprovalDate = p.FinalApprovalDate,
+                        KepalaDinasComments = p.ApprovalHistory
+                            .Where(h => h.UserId == userId.Value && h.Action.Contains("KepalaDinas"))
+                            .OrderByDescending(h => h.ActionDate)
+                            .Select(h => h.Comments)
+                            .FirstOrDefault(),
+                        KepalaDinasAction = p.ApprovalHistory
+                            .Where(h => h.UserId == userId.Value && h.Action.Contains("KepalaDinas"))
+                            .OrderByDescending(h => h.ActionDate)
+                            .Select(h => h.Action)
+                            .FirstOrDefault(),
+                        DocumentCount = p.Documents.Count,
+                        CanView = true
+                    })
+                    .ToListAsync();
+
+                var allKepalaDinasHistory = await _context.PermitApplications
+                    .Where(p => p.KepalaDinasId == userId.Value)
+                    .ToListAsync();
+
+                ViewBag.KepalaDinasName = HttpContext.Session.GetString("NamaLengkap");
+                ViewBag.TotalReviewed = allKepalaDinasHistory.Count;
+                ViewBag.TotalApproved = allKepalaDinasHistory.Count(h =>
+                    h.Status == PermitStatus.FinalApproved);
+                ViewBag.TotalRejected = allKepalaDinasHistory.Count(h => h.Status == PermitStatus.FinalRejected);
+                ViewBag.FilteredCount = totalItems;
+
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
+                ViewBag.HasPreviousPage = page > 1;
+                ViewBag.HasNextPage = page < totalPages;
+
+                ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
+                ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
+                ViewBag.StatusFilter = statusFilter;
+                ViewBag.SearchTerm = searchTerm;
+
+                return View(kepalaDinasHistoryList);
+            }
+            catch (Exception)
+            {
+                TempData["ErrorMessage"] = "Terjadi kesalahan saat memuat riwayat persetujuan.";
+                return View(new List<KepalaDinasHistoryViewModel>());
+            }
+        }
         [HttpGet]
         public async Task<IActionResult> GetCurrentUserData()
         {

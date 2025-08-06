@@ -290,6 +290,46 @@ namespace PerizinanPeternakan.ViewModels
         public string FormattedAdminApprovalDate => AdminApprovalDate?.ToString("dd MMM yyyy HH:mm") ?? "-";
     }
 
+    public class VerifikatorHistoryViewModel
+    {
+        public int Id { get; set; }
+        public string ApplicationNumber { get; set; } = string.Empty;
+        public string CompanyName { get; set; } = string.Empty;
+        public string ApplicantName { get; set; } = string.Empty;
+        public PermitStatus Status { get; set; }
+        public DateTime SubmissionDate { get; set; }
+        public DateTime? VerificationDate { get; set; }
+        public string VerifikatorComments { get; set; } = string.Empty;
+        public string VerifikatorAction { get; set; } = string.Empty;
+        public int DocumentCount { get; set; }
+        public bool CanView { get; set; }
+
+        // Computed properties
+        public string StatusText => PermitStatusHelper.GetStatusText(Status);
+        public string StatusClass => PermitStatusHelper.GetStatusClass(Status);
+        public string FormattedVerificationDate => VerificationDate?.ToString("dd MMM yyyy HH:mm") ?? "-";
+    }
+
+    public class KepalaDinasHistoryViewModel
+    {
+        public int Id { get; set; }
+        public string ApplicationNumber { get; set; } = string.Empty;
+        public string CompanyName { get; set; } = string.Empty;
+        public string ApplicantName { get; set; } = string.Empty;
+        public PermitStatus Status { get; set; }
+        public DateTime SubmissionDate { get; set; }
+        public DateTime? FinalApprovalDate { get; set; }
+        public string KepalaDinasComments { get; set; } = string.Empty;
+        public string KepalaDinasAction { get; set; } = string.Empty;
+        public int DocumentCount { get; set; }
+        public bool CanView { get; set; }
+
+        // Computed properties
+        public string StatusText => PermitStatusHelper.GetStatusText(Status);
+        public string StatusClass => PermitStatusHelper.GetStatusClass(Status);
+        public string FormattedFinalApprovalDate => FinalApprovalDate?.ToString("dd MMM yyyy HH:mm") ?? "-";
+    }
+
     public class LivestockDetailViewModel
     {
         [Required(ErrorMessage = "Jenis ternak harus diisi")]
