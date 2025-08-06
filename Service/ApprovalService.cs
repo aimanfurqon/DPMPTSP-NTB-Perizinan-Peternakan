@@ -552,19 +552,29 @@ namespace PerizinanPeternakan.Services
                     {
                         await _notificationService.SendNewPermitNotificationAsync(permit, "KepalaDinas");
                     }
+                    else if (userRole == "KepalaDinas")
+                    {
+                        // Send final approval notification to user
+                        await _notificationService.SendFinalApprovalNotificationAsync(permit, comments);
+                    }
                 }
                 else // Reject
                 {
                     var rejectionMapping = GetRejectionMapping(userRole);
                     toStatus = rejectionMapping.ToStatus;
                     actionText = rejectionMapping.ActionText;
-                    permit.RejectionReason = comments;
 
-                    // Reset approval level and clear approval data based on rejection
+                    // Reset approval data for rejection
                     await ResetApprovalDataForRejection(permit, userRole);
 
-                    // Send rejection notification
+                    // Send rejection notification to user
                     await _notificationService.SendRejectionNotificationAsync(permit, comments, userRole);
+
+                    // Send rejection notification to previous level (if applicable)
+                    if (userRole == "Verifikator" || userRole == "KepalaDinas")
+                    {
+                        await _notificationService.SendRejectionToPreviousLevelAsync(permit, comments, userRole);
+                    }
                 }
 
                 permit.Status = toStatus;
