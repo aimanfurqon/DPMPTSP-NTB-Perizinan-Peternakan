@@ -1,0 +1,24 @@
+<svg width="200" height="80" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="signatureGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#000000;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:0.6" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background for signature area -->
+  <rect x="10" y="10" width="180" height="60" fill="none" stroke="#cccccc" stroke-width="1" stroke-dasharray="5,5"/>
+  
+  <!-- Sample signature text -->
+  <text x="100" y="35" font-family="cursive" font-size="16" fill="url(#signatureGradient)" text-anchor="middle">
+    Hj. Eva Dewiyani, SP
+  </text>
+  
+  <!-- Decorative line -->
+  <line x1="20" y1="50" x2="180" y2="50" stroke="#000000" stroke-width="2" opacity="0.7"/>
+  
+  <!-- Note text -->
+  <text x="100" y="70" font-family="Arial" font-size="8" fill="#666666" text-anchor="middle">
+    Sample Signature - Replace with actual signature
+  </text>
+</svg> 

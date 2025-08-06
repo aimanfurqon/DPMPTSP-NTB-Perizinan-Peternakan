@@ -539,6 +539,10 @@ namespace PerizinanPeternakan.Services
                     {
                         await GeneratePermitDocument(permit);
                     }
+                    else if (userRole == "KepalaDinas")
+                    {
+                        await GeneratePermitDocumentWithSignature(permit);
+                    }
 
                     // Send approval notification
                     await _notificationService.SendApprovalNotificationAsync(permit, action, comments, userRole);
@@ -709,6 +713,33 @@ namespace PerizinanPeternakan.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error generating permit document for {ApplicationNumber}", permit.ApplicationNumber);
+                permit.GeneratedDocumentPath = $"/documents/permits/error_{permit.Id}_{DateTime.Now:yyyyMMddHHmmss}.html";
+            }
+        }
+
+        private async Task GeneratePermitDocumentWithSignature(LivestockPermitApplication permit)
+        {
+            try
+            {
+                var htmlBytes = await _pdfGenerator.GeneratePermitPdfWithSignature(permit);
+
+                var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "documents", "permits");
+                if (!Directory.Exists(uploadsPath))
+                {
+                    Directory.CreateDirectory(uploadsPath);
+                }
+
+                var fileName = $"permit_signed_{permit.ApplicationNumber.Replace("/", "_")}_{DateTime.Now:yyyyMMddHHmmss}.html";
+                var filePath = Path.Combine(uploadsPath, fileName);
+
+                await File.WriteAllBytesAsync(filePath, htmlBytes);
+                permit.GeneratedDocumentPath = $"/documents/permits/{fileName}";
+
+                _logger.LogInformation("Generated signed permit document for {ApplicationNumber}: {FilePath}", permit.ApplicationNumber, fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating signed permit document for {ApplicationNumber}", permit.ApplicationNumber);
                 permit.GeneratedDocumentPath = $"/documents/permits/error_{permit.Id}_{DateTime.Now:yyyyMMddHHmmss}.html";
             }
         }
