@@ -39,6 +39,34 @@ namespace PerizinanPeternakan.Controllers
             return View(stats);
         }
 
+        public async Task<IActionResult> KepalaDinasDashboard()
+        {
+            var userIdString = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out var userId))
+            {
+                return RedirectToAction(nameof(AuthController.Login), "Auth");
+            }
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                HttpContext.Session.Clear();
+                return RedirectToAction(nameof(AuthController.Login), "Auth");
+            }
+
+            if (user.Role != "KepalaDinas")
+            {
+                TempData["ErrorMessage"] = "Akses ditolak. Hanya Kepala Dinas yang dapat mengakses halaman ini.";
+                return RedirectToAction("Index");
+            }
+
+            ViewData["UserName"] = user.NamaLengkap;
+            ViewData["UserRole"] = user.Role;
+
+            var dashboardData = await GetKepalaDinasDashboardDataAsync();
+            return View(dashboardData);
+        }
+
         private async Task<DashboardStatsViewModel> GetDashboardStatsAsync(User user)
         {
             var stats = new DashboardStatsViewModel();
@@ -116,6 +144,140 @@ namespace PerizinanPeternakan.Controllers
             }
 
             return stats;
+        }
+
+        private async Task<KepalaDinasDashboardViewModel> GetKepalaDinasDashboardDataAsync()
+        {
+            var dashboardData = new KepalaDinasDashboardViewModel();
+            var currentYear = DateTime.Now.Year;
+            var currentMonth = DateTime.Now.Month;
+
+            // Get quota data for the current year
+            var quotaData = await _context.LivestockQuotas
+                .Where(q => q.Year == currentYear)
+                .ToListAsync();
+
+            // Get permit applications for the current year
+            var permitData = await _context.PermitApplications
+                .Where(p => p.SubmissionDate.Year == currentYear && p.Status == PermitStatus.FinalApproved)
+                .Include(p => p.LivestockDetails)
+                .ToListAsync();
+
+            // Prepare monthly quota vs realization data
+            var monthlyQuotaData = new List<MonthlyQuotaData>();
+            for (int month = 1; month <= 12; month++)
+            {
+                // For now, we'll use a simplified approach since quota is not monthly
+                // We'll distribute the total quota evenly across months or use a fixed monthly quota
+                var totalQuota = quotaData.Sum(q => q.TotalQuota);
+                var monthlyQuota = totalQuota / 12; // Distribute evenly
+                
+                var monthRealization = permitData
+                    .Where(p => p.FinalApprovalDate?.Month == month)
+                    .Sum(p => p.LivestockDetails.Sum(ld => ld.Quantity));
+
+                monthlyQuotaData.Add(new MonthlyQuotaData
+                {
+                    Month = month,
+                    MonthName = GetMonthName(month),
+                    Quota = monthlyQuota,
+                    Realization = monthRealization,
+                    Percentage = monthlyQuota > 0 ? (monthRealization * 100.0 / monthlyQuota) : 0
+                });
+            }
+
+            dashboardData.MonthlyQuotaData = monthlyQuotaData;
+
+            // Prepare monthly permit classification data
+            var monthlyPermitData = new List<MonthlyPermitData>();
+            for (int month = 1; month <= 12; month++)
+            {
+                var monthPermits = permitData.Where(p => p.FinalApprovalDate?.Month == month).ToList();
+                
+                var classificationData = monthPermits
+                    .GroupBy(p => p.OriginLocation.Split(',')[0].Trim()) // Get province from origin
+                    .Select(g => new PermitClassificationData
+                    {
+                        Origin = g.Key,
+                        Count = g.Count(),
+                        TotalQuantity = g.Sum(p => p.LivestockDetails.Sum(ld => ld.Quantity))
+                    })
+                    .OrderByDescending(x => x.Count)
+                    .ToList();
+
+                monthlyPermitData.Add(new MonthlyPermitData
+                {
+                    Month = month,
+                    MonthName = GetMonthName(month),
+                    TotalPermits = monthPermits.Count,
+                    TotalQuantity = monthPermits.Sum(p => p.LivestockDetails.Sum(ld => ld.Quantity)),
+                    Classifications = classificationData
+                });
+            }
+
+            dashboardData.MonthlyPermitData = monthlyPermitData;
+
+            // Calculate summary statistics
+            dashboardData.TotalQuota = quotaData.Sum(q => q.TotalQuota);
+            dashboardData.TotalRealization = permitData.Sum(p => p.LivestockDetails.Sum(ld => ld.Quantity));
+            dashboardData.TotalPermits = permitData.Count;
+            dashboardData.AverageProcessingDays = await CalculateAverageProcessingDaysAsync();
+
+            // Get top origins
+            dashboardData.TopOrigins = permitData
+                .GroupBy(p => p.OriginLocation.Split(',')[0].Trim())
+                .Select(g => new TopOriginData
+                {
+                    Origin = g.Key,
+                    Count = g.Count(),
+                    TotalQuantity = g.Sum(p => p.LivestockDetails.Sum(ld => ld.Quantity))
+                })
+                .OrderByDescending(x => x.Count)
+                .Take(5)
+                .ToList();
+
+            return dashboardData;
+        }
+
+        private string GetMonthName(int month)
+        {
+            return month switch
+            {
+                1 => "Januari",
+                2 => "Februari",
+                3 => "Maret",
+                4 => "April",
+                5 => "Mei",
+                6 => "Juni",
+                7 => "Juli",
+                8 => "Agustus",
+                9 => "September",
+                10 => "Oktober",
+                11 => "November",
+                12 => "Desember",
+                _ => "Unknown"
+            };
+        }
+
+        private async Task<double> CalculateAverageProcessingDaysAsync()
+        {
+            var completedPermits = await _context.PermitApplications
+                .Where(p => p.Status == PermitStatus.FinalApproved && 
+                           p.FinalApprovalDate.HasValue)
+                .Select(p => new
+                {
+                    p.SubmissionDate,
+                    p.FinalApprovalDate
+                })
+                .ToListAsync();
+
+            if (!completedPermits.Any())
+                return 0;
+
+            var totalDays = completedPermits.Sum(p => 
+                (p.FinalApprovalDate.Value - p.SubmissionDate).TotalDays);
+
+            return totalDays / completedPermits.Count;
         }
     }
 }

@@ -324,10 +324,54 @@ namespace PerizinanPeternakan.ViewModels
         public int DocumentCount { get; set; }
         public bool CanView { get; set; }
 
-        // Computed properties
         public string StatusText => PermitStatusHelper.GetStatusText(Status);
         public string StatusClass => PermitStatusHelper.GetStatusClass(Status);
         public string FormattedFinalApprovalDate => FinalApprovalDate?.ToString("dd MMM yyyy HH:mm") ?? "-";
+    }
+
+    // ViewModels untuk Dashboard Kepala Dinas
+    public class KepalaDinasDashboardViewModel
+    {
+        public List<MonthlyQuotaData> MonthlyQuotaData { get; set; } = new();
+        public List<MonthlyPermitData> MonthlyPermitData { get; set; } = new();
+        public List<TopOriginData> TopOrigins { get; set; } = new();
+        public int TotalQuota { get; set; }
+        public int TotalRealization { get; set; }
+        public int TotalPermits { get; set; }
+        public double AverageProcessingDays { get; set; }
+        public double RealizationPercentage => TotalQuota > 0 ? (TotalRealization * 100.0 / TotalQuota) : 0;
+    }
+
+    public class MonthlyQuotaData
+    {
+        public int Month { get; set; }
+        public string MonthName { get; set; } = string.Empty;
+        public int Quota { get; set; }
+        public int Realization { get; set; }
+        public double Percentage { get; set; }
+    }
+
+    public class MonthlyPermitData
+    {
+        public int Month { get; set; }
+        public string MonthName { get; set; } = string.Empty;
+        public int TotalPermits { get; set; }
+        public int TotalQuantity { get; set; }
+        public List<PermitClassificationData> Classifications { get; set; } = new();
+    }
+
+    public class PermitClassificationData
+    {
+        public string Origin { get; set; } = string.Empty;
+        public int Count { get; set; }
+        public int TotalQuantity { get; set; }
+    }
+
+    public class TopOriginData
+    {
+        public string Origin { get; set; } = string.Empty;
+        public int Count { get; set; }
+        public int TotalQuantity { get; set; }
     }
 
     public class LivestockDetailViewModel

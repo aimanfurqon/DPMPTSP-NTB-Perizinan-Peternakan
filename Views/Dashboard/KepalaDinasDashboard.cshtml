@@ -1,0 +1,505 @@
+@model PerizinanPeternakan.ViewModels.KepalaDinasDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard Kepala Dinas";
+    var userRole = ViewData["UserRole"]?.ToString();
+    var userName = ViewData["UserName"]?.ToString();
+}
+
+<div class="dashboard-container">
+    <!-- Header Section -->
+    <div class="header-section">
+        <div class="header-content">
+            <div class="welcome-info">
+                <h1>
+                    <i class="fas fa-chart-line"></i>
+                    Dashboard Kepala Dinas
+                </h1>
+                <p>Selamat Datang, @userName!</p>
+                <span class="user-badge">@userRole</span>
+            </div>
+            <div class="quick-stats">
+                <div class="quick-stat">
+                    <span class="number">@Model.TotalQuota.ToString("N0")</span>
+                    <span class="label">Total Kuota</span>
+                </div>
+                <div class="quick-stat">
+                    <span class="number">@Model.TotalRealization.ToString("N0")</span>
+                    <span class="label">Total Realisasi</span>
+                </div>
+                <div class="quick-stat">
+                    <span class="number">@Model.RealizationPercentage.ToString("F1")%</span>
+                    <span class="label">Persentase</span>
+                </div>
+                <div class="quick-stat">
+                    <span class="number">@Model.TotalPermits</span>
+                    <span class="label">Total Izin</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon primary">
+                <i class="fas fa-chart-bar"></i>
+            </div>
+            <div class="stat-content">
+                <div class="number">@Model.TotalQuota.ToString("N0")</div>
+                <div class="label">Total Kuota Tahunan</div>
+                <div class="stat-trend">
+                    <i class="fas fa-info-circle"></i> Kuota @DateTime.Now.Year
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon success">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-content">
+                <div class="number">@Model.TotalRealization.ToString("N0")</div>
+                <div class="label">Total Realisasi</div>
+                <div class="stat-trend">
+                    <i class="fas fa-chart-line"></i> @Model.RealizationPercentage.ToString("F1")% dari kuota
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon info">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="stat-content">
+                <div class="number">@Model.TotalPermits</div>
+                <div class="label">Total Izin Disetujui</div>
+                <div class="stat-trend">
+                    <i class="fas fa-calendar-check"></i> Tahun @DateTime.Now.Year
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon warning">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+                <div class="number">@Model.AverageProcessingDays.ToString("F1")</div>
+                <div class="label">Rata-rata Proses (Hari)</div>
+                <div class="stat-trend">
+                    <i class="fas fa-tachometer-alt"></i> Efisiensi proses
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+        <!-- Quota vs Realization Chart -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3>
+                    <i class="fas fa-chart-bar"></i>
+                    Perbandingan Kuota vs Realisasi Bulanan
+                </h3>
+                <p>Grafik perbandingan kuota yang ditetapkan dengan realisasi izin perbulan</p>
+            </div>
+            <div class="chart-content">
+                <canvas id="quotaChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Monthly Permit Classification Chart -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3>
+                    <i class="fas fa-chart-pie"></i>
+                    Klasifikasi Izin Bulanan
+                </h3>
+                <p>Distribusi izin berdasarkan asal ternak perbulan</p>
+            </div>
+            <div class="chart-content">
+                <canvas id="permitChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Origins Table -->
+    <div class="table-section">
+        <div class="section-header">
+            <h3>
+                <i class="fas fa-list"></i>
+                Top 5 Asal Ternak
+            </h3>
+            <p>Provinsi dengan jumlah izin terbanyak</p>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Provinsi Asal</th>
+                        <th>Jumlah Izin</th>
+                        <th>Total Ternak</th>
+                        <th>Persentase</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.TopOrigins.Count; i++)
+                    {
+                        var origin = Model.TopOrigins[i];
+                        var percentage = Model.TotalPermits > 0 ? (origin.Count * 100.0 / Model.TotalPermits) : 0;
+                        <tr>
+                            <td>@(i + 1)</td>
+                            <td>
+                                <strong>@origin.Origin</strong>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">@origin.Count</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-success">@origin.TotalQuantity.ToString("N0")</span>
+                            </td>
+                            <td>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar bg-info" 
+                                         style="width: @percentage%;" 
+                                         title="@percentage.ToString("F1")%">
+                                        @percentage.ToString("F1")%
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Quota vs Realization Chart
+        const quotaCtx = document.getElementById('quotaChart').getContext('2d');
+        const quotaChart = new Chart(quotaCtx, {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.MonthlyQuotaData.Select(x => x.MonthName))),
+                datasets: [
+                    {
+                        label: 'Kuota',
+                        data: @Html.Raw(Json.Serialize(Model.MonthlyQuotaData.Select(x => x.Quota))),
+                        backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Realisasi',
+                        data: @Html.Raw(Json.Serialize(Model.MonthlyQuotaData.Select(x => x.Realization))),
+                        backgroundColor: 'rgba(75, 192, 192, 0.8)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Perbandingan Kuota vs Realisasi Bulanan'
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Jumlah Ternak'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Monthly Permit Classification Chart
+        const permitCtx = document.getElementById('permitChart').getContext('2d');
+        const permitChart = new Chart(permitCtx, {
+            type: 'line',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.MonthlyPermitData.Select(x => x.MonthName))),
+                datasets: [
+                    {
+                        label: 'Total Izin',
+                        data: @Html.Raw(Json.Serialize(Model.MonthlyPermitData.Select(x => x.TotalPermits))),
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 2,
+                        fill: false
+                    },
+                    {
+                        label: 'Total Ternak',
+                        data: @Html.Raw(Json.Serialize(Model.MonthlyPermitData.Select(x => x.TotalQuantity))),
+                        backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 2,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Tren Izin Bulanan'
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Jumlah'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+}
+
+<style>
+    .dashboard-container {
+        padding: 20px;
+        background-color: #f8f9fa;
+        min-height: 100vh;
+    }
+
+    .header-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .welcome-info h1 {
+        margin: 0;
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+
+    .welcome-info p {
+        margin: 10px 0;
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+
+    .user-badge {
+        background: rgba(255,255,255,0.2);
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .quick-stats {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .quick-stat {
+        text-align: center;
+        background: rgba(255,255,255,0.1);
+        padding: 15px 20px;
+        border-radius: 10px;
+        min-width: 120px;
+    }
+
+    .quick-stat .number {
+        display: block;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .quick-stat .label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .stat-icon.primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .stat-icon.success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .stat-icon.info { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .stat-icon.warning { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+
+    .stat-content .number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 5px;
+    }
+
+    .stat-content .label {
+        font-size: 1rem;
+        color: #7f8c8d;
+        margin-bottom: 10px;
+    }
+
+    .stat-trend {
+        font-size: 0.9rem;
+        color: #95a5a6;
+    }
+
+    .charts-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .chart-container {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .chart-header h3 {
+        margin: 0 0 10px 0;
+        color: #2c3e50;
+        font-size: 1.3rem;
+    }
+
+    .chart-header p {
+        color: #7f8c8d;
+        margin: 0 0 20px 0;
+    }
+
+    .chart-content {
+        height: 400px;
+        position: relative;
+    }
+
+    .table-section {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .section-header h3 {
+        margin: 0 0 10px 0;
+        color: #2c3e50;
+        font-size: 1.3rem;
+    }
+
+    .section-header p {
+        color: #7f8c8d;
+        margin: 0 0 20px 0;
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+
+    .table th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    .badge {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+    }
+
+    .progress {
+        background-color: #e9ecef;
+        border-radius: 10px;
+    }
+
+    .progress-bar {
+        border-radius: 10px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    @@media (max-width: 768px) {
+        .header-content {
+            flex-direction: column;
+            text-align: center;
+            gap: 20px;
+        }
+
+        .quick-stats {
+            justify-content: center;
+        }
+
+        .charts-section {
+            grid-template-columns: 1fr;
+        }
+
+        .stat-card {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+</style> 
