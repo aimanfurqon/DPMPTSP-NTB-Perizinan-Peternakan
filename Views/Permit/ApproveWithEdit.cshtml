@@ -569,11 +569,27 @@
                 <div class="action-buttons">
                     <div class="button-group">
                         <button type="button"
+                                class="btn btn-primary btn-lg"
+                                onclick="saveEditsOnly()"
+                                id="saveEditsBtn">
+                            <i class="fas fa-save"></i>
+                            Simpan Perubahan
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-info btn-lg"
+                                onclick="previewPdfAsAdminEditMode(@Model.Id)"
+                                id="previewPdfBtn">
+                            <i class="fas fa-file-pdf"></i>
+                            Preview PDF
+                        </button>
+
+                        <button type="button"
                                 class="btn btn-success btn-lg"
                                 onclick="submitEditApproval('Approve')"
                                 id="approveBtn">
                             <i class="fas fa-check"></i>
-                            Simpan Perubahan & Setujui
+                            Setujui Permohonan
                         </button>
 
                         <button type="button"
@@ -586,9 +602,13 @@
                     </div>
 
                     <div class="action-info">
+                        <div class="info-item save-info">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Simpan perubahan terlebih dahulu, kemudian preview PDF sebelum menyetujui</span>
+                        </div>
                         <div class="info-item approve-info">
                             <i class="fas fa-info-circle"></i>
-                            <span>Perubahan data akan disimpan dan dicatat dalam riwayat approval</span>
+                            <span>Setelah preview PDF, Anda dapat menyetujui atau menolak permohonan</span>
                         </div>
                     </div>
                 </div>
@@ -2321,6 +2341,84 @@
                if (currentImagePath) {
                    window.open(currentImagePath, '_blank');
                }
+           }
+
+           function saveEditsOnly() {
+               if (!confirm('Apakah yakin ingin menyimpan perubahan data? Perubahan akan disimpan tanpa menyetujui permohonan.')) {
+                   return;
+               }
+
+               // Show loading state
+               const saveBtn = document.getElementById('saveEditsBtn');
+               const originalText = saveBtn.innerHTML;
+               saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+               saveBtn.disabled = true;
+
+               // Create form data
+               const formData = new FormData(document.getElementById('editApprovalForm'));
+               formData.append('Action', 'SaveOnly');
+
+               // Submit to SaveEditsOnly action
+               fetch('/Permit/SaveEditsOnly', {
+                   method: 'POST',
+                   body: formData
+               })
+               .then(response => {
+                   if (response.ok) {
+                       return response.text();
+                   }
+                   throw new Error('Network response was not ok');
+               })
+               .then(html => {
+                   // Reload the page to show updated data
+                   window.location.reload();
+               })
+               .catch(error => {
+                   console.error('Error:', error);
+                   alert('Terjadi kesalahan saat menyimpan perubahan. Silakan coba lagi.');
+               })
+               .finally(() => {
+                   // Restore button state
+                   saveBtn.innerHTML = originalText;
+                   saveBtn.disabled = false;
+               });
+           }
+
+           function previewPdfAsAdminEditMode(permitId) {
+               const modal = new bootstrap.Modal(document.getElementById('documentPreviewModal'));
+               
+               // Reset modal state
+               document.getElementById('previewModalTitle').innerHTML = '<i class="fas fa-file-pdf text-danger"></i> Preview PDF - Edit Mode';
+               document.getElementById('previewDocumentName').textContent = 'Memuat preview PDF...';
+               document.getElementById('previewLoader').style.display = 'flex';
+               document.getElementById('previewFrame').style.display = 'none';
+               document.getElementById('previewError').style.display = 'none';
+
+               // Load PDF in iframe
+               const iframe = document.getElementById('previewFrame');
+               iframe.src = `/Permit/PreviewPdfEditMode/${permitId}`;
+
+               // Handle iframe load
+               iframe.onload = function() {
+                   document.getElementById('previewLoader').style.display = 'none';
+                   iframe.style.display = 'block';
+                   document.getElementById('previewDocumentName').textContent = 'Dokumen Izin Pengeluaran Ternak';
+               };
+
+               iframe.onerror = function() {
+                   document.getElementById('previewLoader').style.display = 'none';
+                   document.getElementById('previewError').style.display = 'flex';
+               };
+
+               // Fallback timeout
+               setTimeout(() => {
+                   if (document.getElementById('previewLoader').style.display !== 'none') {
+                       document.getElementById('previewLoader').style.display = 'none';
+                       iframe.style.display = 'block';
+                   }
+               }, 3000);
+
+               modal.show();
            }
     </script>
 }

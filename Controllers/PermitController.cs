@@ -4790,5 +4790,153 @@ namespace PerizinanPeternakan.Controllers
                 return RedirectToAction("Index", "Dashboard");
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> PreviewPdf(int id)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return RedirectToAction("Login", "Auth");
+
+            var userRole = HttpContext.Session.GetString("Role");
+            if (userRole != "Admin")
+            {
+                TempData["ErrorMessage"] = "Hanya Admin yang dapat melihat preview PDF";
+                return RedirectToAction("Index");
+            }
+
+            var permit = await _context.PermitApplications
+                .Include(p => p.User)
+                .Include(p => p.LivestockDetails)
+                .Include(p => p.Documents)
+                .Include(p => p.Admin)
+                .Include(p => p.Verifikator)
+                .Include(p => p.KepalaDinas)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (permit == null)
+            {
+                TempData["ErrorMessage"] = "Permohonan tidak ditemukan";
+                return RedirectToAction("Index");
+            }
+
+            try
+            {
+                // Generate PDF content using the existing service
+                var pdfBytes = await _pdfGenerator.GeneratePermitPdf(permit);
+                var pdfContent = System.Text.Encoding.UTF8.GetString(pdfBytes);
+
+                return Content(pdfContent, "text/html");
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Gagal generate preview PDF. Silakan coba lagi.";
+                return RedirectToAction("Approve", new { id });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> PreviewPdfEditMode(int id)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return RedirectToAction("Login", "Auth");
+
+            var userRole = HttpContext.Session.GetString("Role");
+            if (userRole != "Admin")
+            {
+                TempData["ErrorMessage"] = "Hanya Admin yang dapat melihat preview PDF";
+                return RedirectToAction("Index");
+            }
+
+            var permit = await _context.PermitApplications
+                .Include(p => p.User)
+                .Include(p => p.LivestockDetails)
+                .Include(p => p.Documents)
+                .Include(p => p.Admin)
+                .Include(p => p.Verifikator)
+                .Include(p => p.KepalaDinas)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (permit == null)
+            {
+                TempData["ErrorMessage"] = "Permohonan tidak ditemukan";
+                return RedirectToAction("Index");
+            }
+
+            try
+            {
+                // Generate PDF content using the existing service
+                var pdfBytes = await _pdfGenerator.GeneratePermitPdf(permit);
+                var pdfContent = System.Text.Encoding.UTF8.GetString(pdfBytes);
+
+                return Content(pdfContent, "text/html");
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Gagal generate preview PDF. Silakan coba lagi.";
+                return RedirectToAction("EnableEditMode", new { id });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveEditsOnly(PermitApprovalViewModel model)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return RedirectToAction("Login", "Auth");
+
+            var userRole = HttpContext.Session.GetString("Role");
+            if (userRole != "Admin")
+            {
+                TempData["ErrorMessage"] = "Hanya Admin yang dapat menyimpan edit";
+                return RedirectToAction("Index");
+            }
+
+            try
+            {
+                var permit = await _context.PermitApplications
+                    .Include(p => p.LivestockDetails)
+                    .FirstOrDefaultAsync(p => p.Id == model.Id);
+
+                if (permit == null)
+                {
+                    TempData["ErrorMessage"] = "Permohonan tidak ditemukan";
+                    return RedirectToAction("Index");
+                }
+
+                // Apply changes without approval
+                var changedFields = new List<string>();
+
+                // Apply basic field changes
+                var basicChanges = await ApplyBasicFieldChanges(permit, model, new Dictionary<string, string>());
+                changedFields.AddRange(basicChanges);
+
+                // Apply livestock changes
+                var livestockChanges = await ApplyLivestockChanges(permit, model);
+                changedFields.AddRange(livestockChanges);
+
+                // Save changes
+                await _context.SaveChangesAsync();
+
+                // Add admin history for the edit
+                await _context.PermitApprovalHistories.AddAsync(new PermitApprovalHistory
+                {
+                    PermitApplicationId = permit.Id,
+                    UserId = userId.Value,
+                    Action = "Edit Data",
+                    Comments = $"Admin mengedit data permohonan. Perubahan: {string.Join(", ", changedFields)}",
+                    ActionDate = DateTime.Now
+                });
+
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = $"Data permohonan berhasil disimpan dengan {changedFields.Count} perubahan";
+                return RedirectToAction("EnableEditMode", new { id = model.Id });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Terjadi kesalahan saat menyimpan perubahan. Silakan coba lagi.");
+                return View("ApproveWithEdit", model);
+            }
+        }
     }
 }

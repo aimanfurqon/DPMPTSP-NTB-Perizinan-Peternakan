@@ -27,6 +27,10 @@
             <i class="fas fa-edit"></i>
             Edit Data
         </a>
+        <button type="button" class="btn btn-info" onclick="previewPdfAsAdmin(@Model.Id)">
+            <i class="fas fa-file-pdf"></i>
+            Preview PDF
+        </button>
     }
 
             @if (userRole == "Verifikator" || userRole == "KepalaDinas")
@@ -943,6 +947,43 @@ function saveDocumentDetails() {
             if (currentPreviewPath) {
                 window.open(currentPreviewPath, '_blank');
             }
+        }
+
+        function previewPdfAsAdmin(permitId) {
+            const modal = new bootstrap.Modal(document.getElementById('documentPreviewModal'));
+            
+            // Reset modal state
+            document.getElementById('previewModalTitle').innerHTML = '<i class="fas fa-file-pdf text-danger"></i> Preview PDF - Admin';
+            document.getElementById('previewDocumentName').textContent = 'Memuat preview PDF...';
+            document.getElementById('previewLoader').style.display = 'flex';
+            document.getElementById('previewFrame').style.display = 'none';
+            document.getElementById('previewError').style.display = 'none';
+
+            // Load PDF in iframe
+            const iframe = document.getElementById('previewFrame');
+            iframe.src = `/Permit/PreviewPdf/${permitId}`;
+
+            // Handle iframe load
+            iframe.onload = function() {
+                document.getElementById('previewLoader').style.display = 'none';
+                iframe.style.display = 'block';
+                document.getElementById('previewDocumentName').textContent = 'Dokumen Izin Pengeluaran Ternak';
+            };
+
+            iframe.onerror = function() {
+                document.getElementById('previewLoader').style.display = 'none';
+                document.getElementById('previewError').style.display = 'flex';
+            };
+
+            // Fallback timeout
+            setTimeout(() => {
+                if (document.getElementById('previewLoader').style.display !== 'none') {
+                    document.getElementById('previewLoader').style.display = 'none';
+                    iframe.style.display = 'block';
+                }
+            }, 3000);
+
+            modal.show();
         }
 
         document.getElementById('Comments').addEventListener('input', function() {
