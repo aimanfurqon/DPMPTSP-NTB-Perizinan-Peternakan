@@ -218,13 +218,14 @@ namespace PerizinanPeternakan.Models
                 PermitStatus.Submitted => "warning",
                 PermitStatus.UnderAdminReview => "info",
                 PermitStatus.AdminApproved => "primary",
-                PermitStatus.AdminRejected => "danger",
+                PermitStatus.AdminRejected => "warning", // Back to user level
                 PermitStatus.UnderVerifikatorReview => "info",
                 PermitStatus.VerifikatorApproved => "primary",
-                PermitStatus.VerifikatorRejected => "danger",
+                PermitStatus.VerifikatorRejected => "info", // Back to admin level
                 PermitStatus.PendingKepalaDinas => "info",
-                PermitStatus.KepalaDinasRejected => "danger",
+                PermitStatus.KepalaDinasRejected => "info", // Back to verifikator level
                 PermitStatus.FinalApproved => "success",
+                PermitStatus.FinalRejected => "info", // Back to kepala dinas level
                 _ => "secondary"
             };
         }
@@ -244,6 +245,7 @@ namespace PerizinanPeternakan.Models
                 PermitStatus.PendingKepalaDinas => "Menunggu Kepala Dinas",
                 PermitStatus.KepalaDinasRejected => "Ditolak Kepala Dinas",
                 PermitStatus.FinalApproved => "Disetujui Final",
+                PermitStatus.FinalRejected => "Ditolak Final",
                 _ => "Tidak Diketahui"
             };
         }
@@ -256,13 +258,14 @@ namespace PerizinanPeternakan.Models
                 PermitStatus.Submitted => 25,
                 PermitStatus.UnderAdminReview => 30,
                 PermitStatus.AdminApproved => 50,
-                PermitStatus.AdminRejected => 0,
+                PermitStatus.AdminRejected => 25, // Back to user level
                 PermitStatus.UnderVerifikatorReview => 60,
                 PermitStatus.VerifikatorApproved => 75,
-                PermitStatus.VerifikatorRejected => 0,
+                PermitStatus.VerifikatorRejected => 30, // Back to admin level
                 PermitStatus.PendingKepalaDinas => 85,
-                PermitStatus.KepalaDinasRejected => 0,
+                PermitStatus.KepalaDinasRejected => 60, // Back to verifikator level
                 PermitStatus.FinalApproved => 100,
+                PermitStatus.FinalRejected => 85, // Back to kepala dinas level
                 _ => 0
             };
         }
@@ -357,7 +360,8 @@ namespace PerizinanPeternakan.Models
         {
             return status == PermitStatus.AdminRejected ||
                    status == PermitStatus.VerifikatorRejected ||
-                   status == PermitStatus.KepalaDinasRejected;
+                   status == PermitStatus.KepalaDinasRejected ||
+                   status == PermitStatus.FinalRejected;
         }
 
         public static int GetApprovalLevel(PermitStatus status)
@@ -375,6 +379,7 @@ namespace PerizinanPeternakan.Models
                 PermitStatus.PendingKepalaDinas => 3,
                 PermitStatus.KepalaDinasRejected => 3,
                 PermitStatus.FinalApproved => 4,
+                PermitStatus.FinalRejected => 3,
                 _ => 0
             };
         }
@@ -402,13 +407,14 @@ namespace PerizinanPeternakan.Models
                 PermitStatus.Submitted => "Permohonan telah diajukan dan menunggu review dari admin",
                 PermitStatus.UnderAdminReview => "Permohonan sedang dalam review oleh admin",
                 PermitStatus.AdminApproved => "Permohonan telah disetujui admin dan akan diverifikasi",
-                PermitStatus.AdminRejected => "Permohonan ditolak oleh admin",
+                PermitStatus.AdminRejected => "Permohonan ditolak admin dan dikembalikan ke pemohon untuk perbaikan",
                 PermitStatus.UnderVerifikatorReview => "Permohonan sedang dalam proses verifikasi",
                 PermitStatus.VerifikatorApproved => "Permohonan telah diverifikasi dan menunggu persetujuan final",
-                PermitStatus.VerifikatorRejected => "Permohonan ditolak oleh verifikator",
+                PermitStatus.VerifikatorRejected => "Permohonan ditolak verifikator dan dikembalikan ke admin untuk review ulang",
                 PermitStatus.PendingKepalaDinas => "Permohonan menunggu persetujuan dari Kepala Dinas",
-                PermitStatus.KepalaDinasRejected => "Permohonan ditolak oleh Kepala Dinas",
+                PermitStatus.KepalaDinasRejected => "Permohonan ditolak Kepala Dinas dan dikembalikan ke verifikator untuk review ulang",
                 PermitStatus.FinalApproved => "Permohonan telah disetujui secara final dan dapat diunduh",
+                PermitStatus.FinalRejected => "Permohonan ditolak final dan dikembalikan ke Kepala Dinas untuk review ulang",
                 _ => "Status tidak diketahui"
             };
         }
@@ -417,7 +423,7 @@ namespace PerizinanPeternakan.Models
         {
             if (IsRejectedStatus(status))
             {
-                return "bg-danger";
+                return "bg-warning"; // Changed from bg-danger to bg-warning for rejected statuses
             }
 
             return status switch

@@ -1150,6 +1150,17 @@ namespace PerizinanPeternakan.Controllers
                 _context.PermitApprovalHistories.Add(approvalHistory);
                 await _context.SaveChangesAsync();
 
+                // Send email notification for new permit
+                try
+                {
+                    await _approvalService.SendNewPermitNotificationsAsync(permitApplication.Id);
+                }
+                catch (Exception ex)
+                {
+                    // Log the error but don't fail the permit creation
+                    Console.WriteLine($"⚠️ Error sending email notification: {ex.Message}");
+                }
+
                 // Success message
                 var applicantTypeText = model.ApplicantType == "Individual" ? "perorangan" : "perusahaan";
                 var applicantName = model.ApplicantType == "Individual" ? model.IndividualName : model.CompanyName;

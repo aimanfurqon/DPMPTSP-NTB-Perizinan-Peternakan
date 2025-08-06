@@ -9,6 +9,7 @@ namespace PerizinanPeternakan.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IPdfGeneratorService _pdfGenerator;
+        private readonly INotificationService _notificationService;
         private readonly ILogger<ApprovalService> _logger;
 
         // Business rules constants
@@ -18,10 +19,12 @@ namespace PerizinanPeternakan.Services
         public ApprovalService(
             ApplicationDbContext context,
             IPdfGeneratorService pdfGenerator,
+            INotificationService notificationService,
             ILogger<ApprovalService> logger)
         {
             _context = context;
             _pdfGenerator = pdfGenerator;
+            _notificationService = notificationService;
             _logger = logger;
         }
 
@@ -487,6 +490,31 @@ namespace PerizinanPeternakan.Services
             };
         }
 
+        public async Task SendNewPermitNotificationsAsync(int permitId)
+        {
+            try
+            {
+                var permit = await _context.PermitApplications
+                    .Include(p => p.User)
+                    .FirstOrDefaultAsync(p => p.Id == permitId);
+
+                if (permit == null)
+                {
+                    _logger.LogWarning("Permit {PermitId} not found for notification", permitId);
+                    return;
+                }
+
+                // Send notification to Admin role
+                await _notificationService.SendNewPermitNotificationAsync(permit, "Admin");
+
+                _logger.LogInformation("New permit notifications sent for permit {ApplicationNumber}", permit.ApplicationNumber);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending new permit notifications for permit {PermitId}", permitId);
+            }
+        }
+
         #region Private Helper Methods
 
         private async Task<ApprovalResult> ProcessSingleApprovalAsync(LivestockPermitApplication permit, string action, string comments, int userId, string userRole)
@@ -511,6 +539,19 @@ namespace PerizinanPeternakan.Services
                     {
                         await GeneratePermitDocument(permit);
                     }
+
+                    // Send approval notification
+                    await _notificationService.SendApprovalNotificationAsync(permit, action, comments, userRole);
+
+                    // Send new permit notification to next level
+                    if (userRole == "Admin")
+                    {
+                        await _notificationService.SendNewPermitNotificationAsync(permit, "Verifikator");
+                    }
+                    else if (userRole == "Verifikator")
+                    {
+                        await _notificationService.SendNewPermitNotificationAsync(permit, "KepalaDinas");
+                    }
                 }
                 else // Reject
                 {
@@ -518,6 +559,12 @@ namespace PerizinanPeternakan.Services
                     toStatus = rejectionMapping.ToStatus;
                     actionText = rejectionMapping.ActionText;
                     permit.RejectionReason = comments;
+
+                    // Reset approval level and clear approval data based on rejection
+                    await ResetApprovalDataForRejection(permit, userRole);
+
+                    // Send rejection notification
+                    await _notificationService.SendRejectionNotificationAsync(permit, comments, userRole);
                 }
 
                 permit.Status = toStatus;
@@ -551,6 +598,33 @@ namespace PerizinanPeternakan.Services
                     Success = false,
                     ErrorMessage = ex.Message
                 };
+            }
+        }
+
+        private async Task ResetApprovalDataForRejection(LivestockPermitApplication permit, string userRole)
+        {
+            switch (userRole)
+            {
+                case "Verifikator":
+                    // Reset to Admin review state
+                    permit.VerifikatorId = null;
+                    permit.VerificationDate = null;
+                    permit.CurrentApprovalLevel = 2; // Back to Admin review state
+                    break;
+                case "KepalaDinas":
+                    // Reset to Verifikator review state
+                    permit.KepalaDinasId = null;
+                    permit.FinalApprovalDate = null;
+                    permit.ValidFrom = null;
+                    permit.ValidUntil = null;
+                    permit.CurrentApprovalLevel = 3; // Back to Verifikator review state
+                    break;
+                case "Admin":
+                    // Reset to initial state (User can edit and resubmit)
+                    permit.AdminId = null;
+                    permit.AdminApprovalDate = null;
+                    permit.CurrentApprovalLevel = 1; // Back to initial state
+                    break;
             }
         }
 
@@ -595,9 +669,9 @@ namespace PerizinanPeternakan.Services
         {
             return userRole switch
             {
-                "Admin" => (PermitStatus.AdminRejected, "Ditolak Admin"),
-                "Verifikator" => (PermitStatus.VerifikatorRejected, "Ditolak Verifikator"),
-                "KepalaDinas" => (PermitStatus.KepalaDinasRejected, "Ditolak Kepala Dinas"),
+                "Admin" => (PermitStatus.Submitted, "Ditolak Admin - Kembali ke User"),
+                "Verifikator" => (PermitStatus.UnderAdminReview, "Ditolak Verifikator - Kembali ke Admin"),
+                "KepalaDinas" => (PermitStatus.UnderVerifikatorReview, "Ditolak Kepala Dinas - Kembali ke Verifikator"),
                 _ => throw new ArgumentException($"Invalid user role for rejection: {userRole}")
             };
         }

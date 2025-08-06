@@ -31,6 +31,7 @@ builder.Services.AddTransient<IEmailSender, MailKitEmailSender>();
 builder.Services.AddScoped<IApplicationNumberService, ApplicationNumberService>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IApprovalService, ApprovalService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 

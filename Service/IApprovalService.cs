@@ -88,5 +88,6 @@ namespace PerizinanPeternakan.Services
         /// <param name="permitId">Permit application ID</param>
         /// <returns>Auto-advance result</returns>
         Task<AutoAdvanceResult> AutoAdvancePermitAsync(int permitId);
+        Task SendNewPermitNotificationsAsync(int permitId);
     }
 }
