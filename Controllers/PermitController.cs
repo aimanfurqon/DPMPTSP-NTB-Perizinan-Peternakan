@@ -3390,11 +3390,11 @@ namespace PerizinanPeternakan.Controllers
                 EditableDeparturePort = permit.DeparturePort,
                 EditableArrivalPort = permit.ArrivalPort,
 
-                // Populate location IDs
-                EditableOriginProvinceId = ExtractProvinceFromLocation(permit.OriginLocation),
-                EditableOriginRegencyId = ExtractRegencyFromLocation(permit.OriginLocation),
-                EditableDestinationProvinceId = ExtractProvinceFromLocation(permit.DestinationLocation),
-                EditableDestinationRegencyId = ExtractRegencyFromLocation(permit.DestinationLocation),
+                // Populate location IDs - use port-based approach for better accuracy
+                EditableOriginProvinceId = await GetProvinceCodeFromPortName(permit.DeparturePort),
+                EditableOriginRegencyId = await GetRegencyCodeFromPortName(permit.DeparturePort),
+                EditableDestinationProvinceId = await GetProvinceCodeFromPortName(permit.ArrivalPort),
+                EditableDestinationRegencyId = await GetRegencyCodeFromPortName(permit.ArrivalPort),
 
                 IsEditingData = true,
 
@@ -3719,7 +3719,17 @@ namespace PerizinanPeternakan.Controllers
                 { "Klungkung", "5106" },
                 { "Bangli", "5107" },
                 { "Buleleng", "5108" },
-                { "Denpasar", "5171" }
+                { "Denpasar", "5171" },
+                
+                // Additional mappings for port cities
+                { "Larantuka", "5306" }, // Flores Timur
+                { "Kayangan", "52.08" }, // Lombok Utara
+                { "Mataram", "52.71" }, // Kota Mataram
+                { "Surabaya", "35.78" }, // Kota Surabaya
+                { "Denpasar", "5171" }, // Kota Denpasar
+                { "Lembar", "52.01" }, // Lombok Barat
+                { "Tanjung Perak", "35.78" }, // Kota Surabaya
+                { "Benoa", "5171" } // Kota Denpasar
             };
 
             var result = regencyMap.ContainsKey(regencyName) ? regencyMap[regencyName] : "";
@@ -3894,6 +3904,34 @@ namespace PerizinanPeternakan.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"Error getting province code from port: {ex.Message}");
+                return "";
+            }
+        }
+
+        /// <summary>
+        /// Get regency code from port name using existing Port database
+        /// </summary>
+        private async Task<string> GetRegencyCodeFromPortName(string portName)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(portName)) return "";
+
+                var port = await _context.Ports
+                    .Where(p => p.Name == portName && p.IsActive)
+                    .FirstOrDefaultAsync();
+
+                if (port == null) return "";
+
+                // Use the City property to get regency code
+                var regencyCode = GetRegencyCodeByName(port.City);
+                Console.WriteLine($"GetRegencyCodeFromPortName - Port: {portName}, City: {port.City}, Regency Code: {regencyCode}");
+                
+                return regencyCode;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting regency code from port: {ex.Message}");
                 return "";
             }
         }
@@ -4164,6 +4202,7 @@ namespace PerizinanPeternakan.Controllers
                 var documentType = Request.Form["documentType"].ToString();
                 var documentNumber = Request.Form["documentNumber"].ToString();
                 var documentDateStr = Request.Form["documentDate"].ToString();
+                var documentDescription = Request.Form["documentDescription"].ToString();
                 var documentFile = Request.Form.Files["documentFile"];
 
                 // Validate permit exists and belongs to user
@@ -4185,8 +4224,32 @@ namespace PerizinanPeternakan.Controllers
 
                 // Update document details
                 document.DocumentType = documentType;
-                document.DocumentNumber = string.IsNullOrEmpty(documentNumber) ? null : documentNumber;
-                document.DocumentDate = string.IsNullOrEmpty(documentDateStr) ? null : DateTime.Parse(documentDateStr);
+                
+                // Define document types that don't need number and date
+                var noNumberDateTypes = new[] { "SKKH_KABUPATEN_ASAL", "SKKH_DINAS_PROVINSI", "SURAT_JALAN_TERNAK", "HASIL_PEMERIKSAAN_FISIK" };
+                
+                // Set document number and date based on document type
+                if (noNumberDateTypes.Contains(documentType))
+                {
+                    // For these document types, always set to null
+                    document.DocumentNumber = null;
+                    document.DocumentDate = null;
+                }
+                else
+                {
+                    // For other document types, use the provided values
+                    document.DocumentNumber = string.IsNullOrEmpty(documentNumber) ? null : documentNumber;
+                    
+                    // Parse document date safely
+                    DateTime? documentDate = null;
+                    if (!string.IsNullOrEmpty(documentDateStr) && DateTime.TryParse(documentDateStr, out DateTime parsedDate))
+                    {
+                        documentDate = parsedDate;
+                    }
+                    document.DocumentDate = documentDate;
+                }
+                
+                document.DocumentDescription = string.IsNullOrEmpty(documentDescription) ? null : documentDescription;
                 document.UploadedByUserId = GetCurrentUserId() ?? 0;
                 document.UploadDate = DateTime.Now;
 
@@ -4251,6 +4314,7 @@ namespace PerizinanPeternakan.Controllers
                 var documentType = Request.Form["documentType"].ToString();
                 var documentNumber = Request.Form["documentNumber"].ToString();
                 var documentDateStr = Request.Form["documentDate"].ToString();
+                var documentDescription = Request.Form["documentDescription"].ToString();
                 var documentFile = Request.Form.Files["documentFile"];
 
                 if (documentFile == null || documentFile.Length == 0)
@@ -4293,14 +4357,20 @@ namespace PerizinanPeternakan.Controllers
                     await documentFile.CopyToAsync(stream);
                 }
 
+                // Define document types that don't need number and date
+                var noNumberDateTypes = new[] { "SKKH_KABUPATEN_ASAL", "SKKH_DINAS_PROVINSI", "SURAT_JALAN_TERNAK", "HASIL_PEMERIKSAAN_FISIK" };
+                
                 // Create document record
                 var document = new PermitDocument
                 {
                     PermitApplicationId = permitId,
                     DocumentType = documentType,
                     DocumentName = fileName,
-                    DocumentNumber = string.IsNullOrEmpty(documentNumber) ? null : documentNumber,
-                    DocumentDate = string.IsNullOrEmpty(documentDateStr) ? null : DateTime.Parse(documentDateStr),
+                    DocumentNumber = noNumberDateTypes.Contains(documentType) ? null : (string.IsNullOrEmpty(documentNumber) ? null : documentNumber),
+                    DocumentDescription = string.IsNullOrEmpty(documentDescription) ? null : documentDescription,
+                    DocumentDate = noNumberDateTypes.Contains(documentType) ? null : 
+                        (string.IsNullOrEmpty(documentDateStr) ? null : 
+                        (DateTime.TryParse(documentDateStr, out DateTime parsedDate) ? parsedDate : null)),
                     FilePath = $"/documents/supporting/{uniqueFileName}",
                     FileSize = documentFile.Length,
                     FileExtension = Path.GetExtension(fileName),

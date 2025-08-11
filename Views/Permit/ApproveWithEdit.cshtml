@@ -420,15 +420,17 @@
             </div>
 
 
-                    <!-- Section 4: Dokumen Pendukung (Editable for Admin) -->
-        <div class="review-section" id="documentSection">
+        <!-- Section 4: Dokumen Pendukung (Editable for Admin) -->
+        <div class="edit-section" id="documentSection">
             <div class="section-header">
                 <h3>
                     <i class="fas fa-file-alt"></i>
                     Dokumen Pendukung
-                    <span class="editable-badge">Dapat Diedit</span>
+                    <span class="edit-badge">Dapat Diedit</span>
                 </h3>
-                <span class="document-count">@Model.Documents.Count dokumen</span>
+                <div class="section-header-actions">
+                    <span class="document-count">@Model.Documents.Count dokumen</span>
+                </div>
             </div>
 
             <div class="documents-container">
@@ -477,7 +479,7 @@
                                     {
                                         <button type="button" 
                                                 class="btn btn-sm btn-outline-secondary"
-                                                onclick="previewDocument('@doc.FilePath', '@doc.DocumentDisplayName')">
+                                                onclick="previewDocumentById(@doc.Id, '@doc.DocumentDisplayName')">
                                             <i class="fas fa-eye"></i>
                                             Preview
                                         </button>
@@ -486,7 +488,7 @@
                                     {
                                         <button type="button" 
                                                 class="btn btn-sm btn-outline-secondary"
-                                                onclick="previewImage('@doc.FilePath', '@doc.DocumentDisplayName')">
+                                                onclick="previewImageById(@doc.Id, '@doc.DocumentDisplayName')">
                                             <i class="fas fa-eye"></i>
                                             Preview
                                         </button>
@@ -528,76 +530,76 @@
         </div>
 
         <!-- Section 5: Form Approval dengan Edit -->
-        <div class="approval-form-section">
-                <div class="section-header">
-                    <h3>
-                        <i class="fas fa-clipboard-check"></i>
-                        Review & Persetujuan
-                    </h3>
-                </div>
+        <div class="edit-section">
+            <div class="section-header">
+                <h3>
+                    <i class="fas fa-clipboard-check"></i>
+                    Review & Persetujuan
+                </h3>
+            </div>
 
-                <!-- Navigation Links for Admin -->
-                <div class="admin-navigation mb-4">
-                    <div class="alert alert-info">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <i class="fas fa-info-circle"></i>
-                                <strong>Admin Navigation:</strong> 
-                                <span class="text-muted">Edit dokumen pendukung tersedia di section bawah</span>
-                            </div>
-                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="scrollToDocumentSection()">
-                                <i class="fas fa-file-alt"></i>
-                                Lihat Dokumen Pendukung
-                            </button>
+            <!-- Navigation Links for Admin -->
+            @* <div class="admin-navigation mb-4">
+                <div class="alert alert-info">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Admin Navigation:</strong> 
+                            <span class="text-muted">Edit dokumen pendukung tersedia di section bawah</span>
                         </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="scrollToDocumentSection()">
+                            <i class="fas fa-file-alt"></i>
+                            Lihat Dokumen Pendukung
+                        </button>
                     </div>
                 </div>
+            </div> *@
 
-                <div class="form-group">
-                    <label asp-for="Comments" class="form-label">
-                        <i class="fas fa-comment"></i>
-                        Komentar Admin
-                    </label>
-                    <textarea asp-for="Comments" class="form-control" rows="4"
-                              placeholder="Berikan komentar hasil review dan perubahan yang dilakukan..."></textarea>
-                    <span asp-validation-for="Comments" class="text-danger"></span>
-                    <small class="form-text text-muted">
-                        Komentar akan otomatis mencatat perubahan data yang Anda lakukan
-                    </small>
-                </div>
+            <div class="form-group">
+                <label asp-for="Comments" class="form-label">
+                    <i class="fas fa-comment"></i>
+                    Komentar Admin
+                </label>
+                <textarea asp-for="Comments" class="form-control" rows="4"
+                          placeholder="Berikan komentar hasil review dan perubahan yang dilakukan..."></textarea>
+                <span asp-validation-for="Comments" class="text-danger"></span>
+                <small class="form-text text-muted">
+                    Komentar akan otomatis mencatat perubahan data yang Anda lakukan
+                </small>
+            </div>
 
-                <div class="action-buttons">
-                    <div class="button-group">
-                        <button type="button"
-                                class="btn btn-primary btn-lg"
-                                onclick="saveEditsOnly()"
-                                id="saveEditsBtn">
-                            <i class="fas fa-save"></i>
-                            Simpan Perubahan
-                        </button>
+            <div class="action-buttons">
+                <div class="button-group">
+                    <button type="button"
+                            class="btn btn-primary btn-lg"
+                            onclick="saveEditsOnly()"
+                            id="saveEditsBtn">
+                        <i class="fas fa-save"></i>
+                        Simpan Perubahan
+                    </button>
 
-                        <button type="button"
-                                class="btn btn-info btn-lg"
-                                onclick="previewPdfAsAdminEditMode(@Model.Id)"
-                                id="previewPdfBtn">
-                            <i class="fas fa-file-pdf"></i>
-                            Preview PDF
-                        </button>
+                    <button type="button"
+                            class="btn btn-info btn-lg"
+                            onclick="previewPdfAsAdminEditMode(@Model.Id)"
+                            id="previewPdfBtn">
+                        <i class="fas fa-file-pdf"></i>
+                        Preview PDF
+                    </button>
 
-                        <button type="button"
-                                class="btn btn-success btn-lg"
-                                onclick="submitEditApproval('Approve')"
-                                id="approveBtn">
-                            <i class="fas fa-check"></i>
-                            Setujui Permohonan
-                        </button>
+                    <button type="button"
+                            class="btn btn-success btn-lg"
+                            onclick="submitEditApproval('Approve')"
+                            id="approveBtn">
+                        <i class="fas fa-check"></i>
+                        Setujui Permohonan
+                    </button>
 
-                        <button type="button"
-                                class="btn btn-danger btn-lg"
-                                onclick="submitEditApproval('Reject')"
-                                id="rejectBtn">
-                            <i class="fas fa-times"></i>
-                            Tolak Permohonan
+                    <button type="button"
+                            class="btn btn-danger btn-lg"
+                            onclick="submitEditApproval('Reject')"
+                            id="rejectBtn">
+                        <i class="fas fa-times"></i>
+                        Tolak Permohonan
                         </button>
                     </div>
 
@@ -635,7 +637,11 @@
                     <input type="hidden" id="editDocumentId" name="documentId" />
                     
                     <div class="mb-3">
-                        <label for="editDocumentType" class="form-label">Jenis Dokumen</label>
+                        <label for="editDocumentType" class="form-label">
+                            <i class="fas fa-file-alt"></i>
+                            Jenis Dokumen
+                            <span class="text-danger">*</span>
+                        </label>
                         <select class="form-select" id="editDocumentType" name="documentType" required>
                             <option value="">Pilih Jenis Dokumen</option>
                             <option value="SURAT_PERMOHONAN">Surat Permohonan</option>
@@ -650,17 +656,41 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="editDocumentNumber" class="form-label">Nomor Dokumen (Opsional)</label>
-                        <input type="text" class="form-control" id="editDocumentNumber" name="documentNumber" placeholder="Masukkan nomor dokumen">
+                        <label for="editDocumentNumber" class="form-label">
+                            <i class="fas fa-hashtag"></i>
+                            Nomor Dokumen
+                            <span class="text-muted">(Opsional)</span>
+                        </label>
+                        <input type="text" class="form-control" id="editDocumentNumber" name="documentNumber" placeholder="Contoh: 001/2024/DPM-PTSP">
+                        <div class="form-text">Masukkan nomor dokumen jika tersedia</div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="editDocumentDate" class="form-label">Tanggal Dokumen (Opsional)</label>
+                        <label for="editDocumentDate" class="form-label">
+                            <i class="fas fa-calendar"></i>
+                            Tanggal Dokumen
+                            <span class="text-muted">(Opsional)</span>
+                        </label>
                         <input type="date" class="form-control" id="editDocumentDate" name="documentDate">
+                        <div class="form-text">Pilih tanggal dokumen jika tersedia</div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="editDocumentFile" class="form-label">File Dokumen</label>
+                        <label for="editDocumentDescription" class="form-label">
+                            <i class="fas fa-comment"></i>
+                            Keterangan Dokumen
+                            <span class="text-muted">(Opsional)</span>
+                        </label>
+                        <textarea class="form-control" id="editDocumentDescription" name="documentDescription" rows="3" placeholder="Masukkan keterangan tambahan tentang dokumen ini"></textarea>
+                        <div class="form-text">Tambahkan keterangan atau catatan tentang dokumen ini</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editDocumentFile" class="form-label">
+                            <i class="fas fa-file-upload"></i>
+                            File Dokumen
+                            <span class="text-muted">(Opsional)</span>
+                        </label>
                         <input type="file" class="form-control" id="editDocumentFile" name="documentFile" accept=".pdf,.jpg,.jpeg,.png">
                         <div class="form-text">Pilih file baru untuk mengganti dokumen yang ada</div>
                     </div>
@@ -669,8 +699,18 @@
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle"></i>
                             <strong>Dokumen Saat Ini:</strong>
-                            <div id="currentDocumentInfo"></div>
+                            <div id="currentDocumentInfo" class="mt-2"></div>
                         </div>
+                    </div>
+                    
+                    <div class="form-text mb-3">
+                        <i class="fas fa-lightbulb text-warning"></i>
+                        <strong>Tips:</strong> 
+                        <ul class="mb-0 mt-1">
+                            <li>Field nomor dan tanggal dokumen hanya muncul untuk jenis dokumen yang memerlukannya</li>
+                            <li>Untuk SKKH, Surat Jalan Ternak, dan Hasil Pemeriksaan Fisik, field tersebut tidak diperlukan</li>
+                            <li>Isi keterangan dokumen untuk menambahkan catatan tambahan</li>
+                        </ul>
                     </div>
                 </form>
             </div>
@@ -703,7 +743,11 @@
             <div class="modal-body">
                 <form id="addDocumentForm" enctype="multipart/form-data">
                     <div class="mb-3">
-                        <label for="addDocumentType" class="form-label">Jenis Dokumen *</label>
+                        <label for="addDocumentType" class="form-label">
+                            <i class="fas fa-file-alt"></i>
+                            Jenis Dokumen
+                            <span class="text-danger">*</span>
+                        </label>
                         <select class="form-select" id="addDocumentType" name="documentType" required>
                             <option value="">Pilih Jenis Dokumen</option>
                             <option value="SURAT_PERMOHONAN">Surat Permohonan</option>
@@ -718,18 +762,53 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="addDocumentNumber" class="form-label">Nomor Dokumen (Opsional)</label>
-                        <input type="text" class="form-control" id="addDocumentNumber" name="documentNumber" placeholder="Masukkan nomor dokumen">
+                        <label for="addDocumentNumber" class="form-label">
+                            <i class="fas fa-hashtag"></i>
+                            Nomor Dokumen
+                            <span class="text-muted">(Opsional)</span>
+                        </label>
+                        <input type="text" class="form-control" id="addDocumentNumber" name="documentNumber" placeholder="Contoh: 001/2024/DPM-PTSP">
+                        <div class="form-text">Masukkan nomor dokumen jika tersedia</div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="addDocumentDate" class="form-label">Tanggal Dokumen (Opsional)</label>
+                        <label for="addDocumentDate" class="form-label">
+                            <i class="fas fa-calendar"></i>
+                            Tanggal Dokumen
+                            <span class="text-muted">(Opsional)</span>
+                        </label>
                         <input type="date" class="form-control" id="addDocumentDate" name="documentDate">
+                        <div class="form-text">Pilih tanggal dokumen jika tersedia</div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="addDocumentFile" class="form-label">File Dokumen *</label>
+                        <label for="addDocumentDescription" class="form-label">
+                            <i class="fas fa-comment"></i>
+                            Keterangan Dokumen
+                            <span class="text-muted">(Opsional)</span>
+                        </label>
+                        <textarea class="form-control" id="addDocumentDescription" name="documentDescription" rows="3" placeholder="Masukkan keterangan tambahan tentang dokumen ini"></textarea>
+                        <div class="form-text">Tambahkan keterangan atau catatan tentang dokumen ini</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="addDocumentFile" class="form-label">
+                            <i class="fas fa-file-upload"></i>
+                            File Dokumen
+                            <span class="text-danger">*</span>
+                        </label>
                         <input type="file" class="form-control" id="addDocumentFile" name="documentFile" accept=".pdf,.jpg,.jpeg,.png" required>
+                        <div class="form-text">Pilih file dokumen yang akan diupload</div>
+                    </div>
+                    
+                    <div class="form-text mb-3">
+                        <i class="fas fa-lightbulb text-warning"></i>
+                        <strong>Tips:</strong> 
+                        <ul class="mb-0 mt-1">
+                            <li>Field nomor dan tanggal dokumen hanya muncul untuk jenis dokumen yang memerlukannya</li>
+                            <li>Untuk SKKH, Surat Jalan Ternak, dan Hasil Pemeriksaan Fisik, field tersebut tidak diperlukan</li>
+                            <li>Isi keterangan dokumen untuk menambahkan catatan tambahan</li>
+                        </ul>
                     </div>
                 </form>
             </div>
@@ -799,7 +878,19 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center">
-                <img id="previewImage" src="" alt="Preview" class="img-fluid" style="max-height: 600px;" />
+                <div class="image-preview-container">
+                    <div class="image-loading" id="imageLoader" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Memuat gambar...</p>
+                    </div>
+                    <img id="previewImage" src="" alt="Preview" class="img-fluid" style="display: none; max-height: 600px; border-radius: 8px;" />
+                    <div class="image-error" id="imageError" style="display: none; text-align: center; padding: 20px;">
+                        <i class="fas fa-exclamation-triangle text-warning" style="font-size: 2rem;"></i>
+                        <p class="mt-2">Gagal memuat gambar. Silakan download untuk melihat file.</p>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
@@ -993,6 +1084,7 @@
             let editOriginProvinceCode = '';
             let isLoadingEditOriginPorts = false;
             let isLoadingEditDestinationPorts = false;
+            let isInitializingEditMode = false; // Flag to prevent event handlers during initial load
 
             $(document).ready(function() {
                 console.log('Document ready - initializing edit mode...');
@@ -1047,6 +1139,12 @@
         function setupEditLocationHandlers() {
                 // Origin Province Change
                 $('#editOriginProvinceSelect').on('change', function() {
+                    // Skip if we're in initialization mode
+                    if (isInitializingEditMode) {
+                        console.log('Skipping origin province change handler - initialization in progress');
+                        return;
+                    }
+                    
                     const provinceId = $(this).val();
                     editOriginProvinceCode = provinceId;
 
@@ -1076,6 +1174,12 @@
 
                 // Destination Province Change
                 $('#editDestinationProvinceSelect').on('change', function() {
+                    // Skip if we're in initialization mode
+                    if (isInitializingEditMode) {
+                        console.log('Skipping destination province change handler - initialization in progress');
+                        return;
+                    }
+                    
                     const provinceId = $(this).val();
                     console.log('Edit destination province changed to:', provinceId);
 
@@ -1127,6 +1231,7 @@
         }
             function loadEditProvincesWithInitialData() {
                 console.log('Loading provinces with initial data for edit mode...');
+                isInitializingEditMode = true; // Set flag to prevent event handlers
                 
                 // Get initial values from model
                 const originProvinceId = '@Model.EditableOriginProvinceId';
@@ -1136,27 +1241,15 @@
                 const originPort = '@Model.EditableDeparturePort';
                 const destinationPort = '@Model.EditableArrivalPort';
                 
-                // Debug: Check raw location data
-                const originLocation = '@Model.EditableOriginLocation';
-                const destinationLocation = '@Model.EditableDestinationLocation';
-                
-                console.log('Raw location data - Origin Location:', originLocation);
-                console.log('Raw location data - Destination Location:', destinationLocation);
-                
-                console.log('Initial values - Origin Province ID:', originProvinceId);
-                console.log('Initial values - Destination Province ID:', destinationProvinceId);
-                console.log('Initial values - Origin Regency ID:', originRegencyId);
-                console.log('Initial values - Destination Regency ID:', destinationRegencyId);
-                console.log('Initial values - Origin Port:', originPort);
-                console.log('Initial values - Destination Port:', destinationPort);
-                
-                // Debug: Check if values are empty strings
-                console.log('Origin Province ID is empty:', originProvinceId === '');
-                console.log('Destination Province ID is empty:', destinationProvinceId === '');
-                console.log('Origin Regency ID is empty:', originRegencyId === '');
-                console.log('Destination Regency ID is empty:', destinationRegencyId === '');
-                console.log('Origin Port is empty:', originPort === '');
-                console.log('Destination Port is empty:', destinationPort === '');
+                // Debug: Check raw values from model
+                console.log('=== MODEL VALUES ===');
+                console.log('Origin Province ID:', originProvinceId);
+                console.log('Destination Province ID:', destinationProvinceId);
+                console.log('Origin Regency ID:', originRegencyId);
+                console.log('Destination Regency ID:', destinationRegencyId);
+                console.log('Origin Port:', originPort);
+                console.log('Destination Port:', destinationPort);
+                console.log('=== END MODEL VALUES ===');
                 
                 // Check if dropdowns exist
                 const $originProvince = $('#editOriginProvinceSelect');
@@ -1183,51 +1276,34 @@
                         $originProvince.trigger('change');
                         $destinationProvince.trigger('change');
                         
-                        // Set initial province values immediately
+                        // Set initial province values and load regencies immediately
                         if (originProvinceId && originProvinceId !== '') {
                             console.log('Setting origin province to:', originProvinceId);
-                            $originProvince.val(originProvinceId).trigger('change');
+                            $originProvince.val(originProvinceId);
                             
-                            // Debug: Check if value was set correctly
-                            setTimeout(() => {
-                                console.log('Origin province value after set:', $originProvince.val());
-                                console.log('Origin province Select2 data:', $originProvince.select2('data'));
-                            }, 100);
+                            // Load regencies immediately for origin
+                            console.log('Loading origin regencies for province:', originProvinceId, 'with regency:', originRegencyId);
+                            loadEditRegenciesAndSetValue(originProvinceId, '#editOriginRegencySelect', originRegencyId);
+                        } else {
+                            console.log('No origin province ID provided');
                         }
                         
                         if (destinationProvinceId && destinationProvinceId !== '') {
                             console.log('Setting destination province to:', destinationProvinceId);
-                            $destinationProvince.val(destinationProvinceId).trigger('change');
+                            $destinationProvince.val(destinationProvinceId);
                             
-                            // Debug: Check if value was set correctly
-                            setTimeout(() => {
-                                console.log('Destination province value after set:', $destinationProvince.val());
-                                console.log('Destination province Select2 data:', $destinationProvince.select2('data'));
-                            }, 100);
+                            // Load regencies immediately for destination
+                            console.log('Loading destination regencies for province:', destinationProvinceId, 'with regency:', destinationRegencyId);
+                            loadEditRegenciesAndSetValue(destinationProvinceId, '#editDestinationRegencySelect', destinationRegencyId);
+                        } else {
+                            console.log('No destination province ID provided');
                         }
                         
-                        // Load regencies for initial provinces
-                        if (originProvinceId && originProvinceId !== '') {
-                            console.log('Loading initial origin regencies for province:', originProvinceId);
-                            console.log('Origin regency ID to set:', originRegencyId);
-                            // Try to set regency based on port - Pelabuhan Lembar is in Lombok Barat
-                            const originRegencyToSet = originRegencyId || '31.73'; // Jakarta Barat as fallback
-                            console.log('Origin regency to set (with fallback):', originRegencyToSet);
-                            loadEditRegenciesWithInitialValue(originProvinceId, '#editOriginRegencySelect', originRegencyToSet);
-                        } else {
-                            console.log('Skipping origin regencies - no origin province ID');
-                        }
-                        
-                        if (destinationProvinceId && destinationProvinceId !== '') {
-                            console.log('Loading initial destination regencies for province:', destinationProvinceId);
-                            console.log('Destination regency ID to set:', destinationRegencyId);
-                            // Try to set regency based on port - Pelabuhan Lembar is in Lombok Barat
-                            const destinationRegencyToSet = destinationRegencyId || '52.01'; // Lombok Barat as fallback
-                            console.log('Destination regency to set (with fallback):', destinationRegencyToSet);
-                            loadEditRegenciesWithInitialValue(destinationProvinceId, '#editDestinationRegencySelect', destinationRegencyToSet);
-                        } else {
-                            console.log('Skipping destination regencies - no destination province ID');
-                        }
+                        // Trigger change events after setting values
+                        setTimeout(() => {
+                            $originProvince.trigger('change');
+                            $destinationProvince.trigger('change');
+                        }, 100);
                         
                         // Load ports for initial provinces with delay to avoid conflicts
                         if (originProvinceId && originProvinceId !== '') {
@@ -1235,7 +1311,7 @@
                             console.log('Origin port to set:', originPort);
                             setTimeout(() => {
                                 loadEditPortsByProvinceWithInitialValue(originProvinceId, '#editDeparturePortSelect', originPort);
-                            }, 1000);
+                            }, 800);
                         } else {
                             console.log('Skipping origin ports - no origin province ID');
                         }
@@ -1245,7 +1321,7 @@
                             console.log('Destination port to set:', destinationPort);
                             setTimeout(() => {
                                 loadEditPortsByProvinceWithInitialValue(destinationProvinceId, '#editArrivalPortSelect', destinationPort);
-                            }, 1500);
+                            }, 1200);
                         } else {
                             console.log('Skipping destination ports - no destination province ID');
                         }
@@ -1257,6 +1333,13 @@
                 }).fail(function(xhr, status, error) {
                     console.error('Failed to load edit provinces:', error);
                     showNotification('error', 'Gagal memuat data provinsi untuk edit.');
+                    isInitializingEditMode = false; // Reset flag on error
+                }).always(function() {
+                    // Reset flag after all loading is complete
+                    setTimeout(() => {
+                        isInitializingEditMode = false;
+                        console.log('Edit mode initialization completed, event handlers enabled');
+                    }, 2000); // Give enough time for all async operations
                 });
             }
             
@@ -1335,61 +1418,75 @@
                 });
             }
 
-            function loadEditRegenciesWithInitialValue(provinceId, targetSelect, initialRegencyId) {
+            function loadEditRegenciesAndSetValue(provinceId, targetSelect, initialRegencyId) {
                 const $target = $(targetSelect);
-                console.log('Loading edit regencies with initial value for province:', provinceId, 'target:', targetSelect, 'initial regency:', initialRegencyId);
+                console.log('Loading regencies for:', targetSelect, 'province:', provinceId, 'regency:', initialRegencyId);
 
                 if (!provinceId || provinceId === '') {
                     console.log('No province ID provided, skipping regency load');
                     return;
                 }
 
+                // Show loading state
                 $target.html('<option value="">Memuat...</option>').prop('disabled', true);
 
-                $.get('/Location/GetRegencies', { provinceId: provinceId }, function(response) {
-                    console.log('Regencies response for province', provinceId, ':', response);
-                    const regencies = response.data || response;
-                    
-                    if (Array.isArray(regencies)) {
-                        const options = regencies.map(regency =>
-                            `<option value="${regency.code}">${regency.name}</option>`
-                        );
+                // Load regencies from API
+                $.get('/Location/GetRegencies', { provinceId: provinceId })
+                    .done(function(response) {
+                        console.log('Regencies response for province', provinceId, ':', response);
+                        const regencies = response.data || response;
                         
-                        $target.empty()
-                            .append('<option value="">Pilih Kabupaten/Kota</option>')
-                            .append(options.join(''))
-                            .prop('disabled', false);
-                        
-                        console.log('Edit regencies loaded successfully:', regencies.length, 'regencies');
-                        
-                        // Trigger change event to update Select2
-                        $target.trigger('change');
-                        
-                        // Set initial regency value if provided
-                        if (initialRegencyId && initialRegencyId !== '') {
-                            console.log('Setting initial regency to:', initialRegencyId);
+                        if (Array.isArray(regencies)) {
+                            // Build options
+                            const options = regencies.map(regency =>
+                                `<option value="${regency.code}">${regency.name}</option>`
+                            );
                             
-                            // Force Select2 to update
-                            $target.val(initialRegencyId);
-                            $target.trigger('change.select2');
+                            // Populate dropdown
+                            $target.empty()
+                                .append('<option value="">Pilih Kabupaten/Kota</option>')
+                                .append(options.join(''))
+                                .prop('disabled', false);
                             
-                            // Debug: Check if value was set correctly
-                            setTimeout(() => {
-                                                        console.log('Regency value after set:', $target.val());
-                        console.log('Regency Select2 data:', $target.select2('data'));
-                            }, 200);
+                            console.log('Regencies loaded:', regencies.length, 'options');
+                            
+                            // Set initial value if provided
+                            if (initialRegencyId && initialRegencyId !== '') {
+                                console.log('Setting regency value to:', initialRegencyId);
+                                
+                                // Check if option exists
+                                const optionExists = $target.find(`option[value="${initialRegencyId}"]`).length > 0;
+                                console.log('Option exists:', optionExists);
+                                
+                                if (optionExists) {
+                                    $target.val(initialRegencyId);
+                                    console.log('Regency value set successfully for:', targetSelect);
+                                    
+                                    // Force Select2 update
+                                    setTimeout(() => {
+                                        $target.trigger('change.select2');
+                                        console.log('Select2 updated for:', targetSelect);
+                                    }, 100);
+                                } else {
+                                    console.log('Regency option not found for:', targetSelect);
+                                    console.log('Available options:', $target.find('option').map(function() { return $(this).val(); }).get());
+                                }
+                            } else {
+                                console.log('No regency ID provided for:', targetSelect);
+                            }
+                            
+                            // Update Select2
+                            $target.trigger('change');
+                            
                         } else {
-                            console.log('No initial regency ID provided');
+                            console.error('Invalid regencies response format');
+                            $target.html('<option value="">Error loading regencies</option>').prop('disabled', true);
                         }
-                        
-                    } else {
-                        console.error('Invalid regencies response format:', response);
+                    })
+                    .fail(function(xhr, status, error) {
+                        console.error('Failed to load regencies:', error);
                         $target.html('<option value="">Error loading regencies</option>').prop('disabled', true);
-                    }
-                }).fail(function(xhr, status, error) {
-                    console.error('Failed to load edit regencies:', error);
-                    $target.html('<option value="">Error loading regencies</option>').prop('disabled', true);
-                });
+                    });
             }
             
             function loadEditRegencies(provinceId, targetSelect) {
@@ -2176,21 +2273,127 @@
            }
 
            function editDocument(documentId, documentType, documentName) {
+               // Find the document data from the current page
+               const documentData = @Html.Raw(Json.Serialize(Model.Documents));
+               const currentDoc = documentData.find(doc => doc.id === documentId);
+               
                $('#editDocumentId').val(documentId);
                $('#editDocumentType').val(documentType);
+               
+               // Define document types that don't need number and date
+               const noNumberDateTypes = [
+                   'SKKH_KABUPATEN_ASAL',
+                   'SKKH_DINAS_PROVINSI', 
+                   'SURAT_JALAN_TERNAK',
+                   'HASIL_PEMERIKSAAN_FISIK'
+               ];
+               
+               // Show/hide number and date fields based on document type
+               if (noNumberDateTypes.includes(documentType)) {
+                   $('#editDocumentNumber').closest('.mb-3').css('display', 'none');
+                   $('#editDocumentDate').closest('.mb-3').css('display', 'none');
+               } else {
+                   $('#editDocumentNumber').closest('.mb-3').css('display', 'block');
+                   $('#editDocumentDate').closest('.mb-3').css('display', 'block');
+               }
+               
+               // Populate existing data if available
+               if (currentDoc) {
+                   $('#editDocumentNumber').val(currentDoc.documentNumber || '');
+                   $('#editDocumentDate').val(currentDoc.documentDate ? currentDoc.documentDate.split('T')[0] : '');
+                   $('#editDocumentDescription').val(currentDoc.documentDescription || '');
+               } else {
+                   $('#editDocumentNumber').val('');
+                   $('#editDocumentDate').val('');
+                   $('#editDocumentDescription').val('');
+               }
+               
                $('#currentDocumentInfo').html(`
                    <div class="mt-2">
                        <strong>Nama:</strong> ${documentName}<br>
                        <strong>Jenis:</strong> ${getDocumentTypeDisplayName(documentType)}
+                       ${currentDoc && currentDoc.documentNumber && !noNumberDateTypes.includes(documentType) ? `<br><strong>Nomor:</strong> ${currentDoc.documentNumber}` : ''}
+                       ${currentDoc && currentDoc.documentDate && !noNumberDateTypes.includes(documentType) ? `<br><strong>Tanggal:</strong> ${new Date(currentDoc.documentDate).toLocaleDateString('id-ID')}` : ''}
+                       ${currentDoc && currentDoc.documentDescription ? `<br><strong>Keterangan:</strong> ${currentDoc.documentDescription}` : ''}
                    </div>
                `);
                
                const modal = new bootstrap.Modal(document.getElementById('documentEditModal'));
                modal.show();
+               
+               // Ensure fields are hidden/shown after modal is shown
+               setTimeout(function() {
+                   if (noNumberDateTypes.includes(documentType)) {
+                       $('#editDocumentNumber').closest('.mb-3').css('display', 'none');
+                       $('#editDocumentDate').closest('.mb-3').css('display', 'none');
+                   } else {
+                       $('#editDocumentNumber').closest('.mb-3').css('display', 'block');
+                       $('#editDocumentDate').closest('.mb-3').css('display', 'block');
+                   }
+               }, 100);
+               
+               // Add event listener for document type change
+               $('#editDocumentType').off('change').on('change', function() {
+                   const selectedType = $(this).val();
+                   const noNumberDateTypes = [
+                       'SKKH_KABUPATEN_ASAL',
+                       'SKKH_DINAS_PROVINSI', 
+                       'SURAT_JALAN_TERNAK',
+                       'HASIL_PEMERIKSAAN_FISIK'
+                   ];
+                   
+
+                   
+                   if (selectedType === '') {
+                       // No document type selected, hide both fields
+                       $('#editDocumentNumber').closest('.mb-3').css('display', 'none');
+                       $('#editDocumentDate').closest('.mb-3').css('display', 'none');
+                   } else if (noNumberDateTypes.includes(selectedType)) {
+                       $('#editDocumentNumber').closest('.mb-3').css('display', 'none');
+                       $('#editDocumentDate').closest('.mb-3').css('display', 'none');
+                       // Clear the values when hiding
+                       $('#editDocumentNumber').val('');
+                       $('#editDocumentDate').val('');
+                   } else {
+                       $('#editDocumentNumber').closest('.mb-3').css('display', 'block');
+                       $('#editDocumentDate').closest('.mb-3').css('display', 'block');
+                   }
+               });
            }
 
            function showAddDocumentModal() {
                $('#addDocumentForm')[0].reset();
+               
+               // Initially hide number and date fields since no document type is selected
+               $('#addDocumentNumber').closest('.mb-3').css('display', 'none');
+               $('#addDocumentDate').closest('.mb-3').css('display', 'none');
+               
+               // Add event listener for document type change in add modal
+               $('#addDocumentType').off('change').on('change', function() {
+                   const selectedType = $(this).val();
+                   const noNumberDateTypes = [
+                       'SKKH_KABUPATEN_ASAL',
+                       'SKKH_DINAS_PROVINSI', 
+                       'SURAT_JALAN_TERNAK',
+                       'HASIL_PEMERIKSAAN_FISIK'
+                   ];
+                   
+                   if (selectedType === '') {
+                       // No document type selected, hide both fields
+                       $('#addDocumentNumber').closest('.mb-3').css('display', 'none');
+                       $('#addDocumentDate').closest('.mb-3').css('display', 'none');
+                   } else if (noNumberDateTypes.includes(selectedType)) {
+                       $('#addDocumentNumber').closest('.mb-3').css('display', 'none');
+                       $('#addDocumentDate').closest('.mb-3').css('display', 'none');
+                       // Clear the values when hiding
+                       $('#addDocumentNumber').val('');
+                       $('#addDocumentDate').val('');
+                   } else {
+                       $('#addDocumentNumber').closest('.mb-3').css('display', 'block');
+                       $('#addDocumentDate').closest('.mb-3').css('display', 'block');
+                   }
+               });
+               
                const modal = new bootstrap.Modal(document.getElementById('addDocumentModal'));
                modal.show();
            }
@@ -2289,6 +2492,69 @@
            let currentPreviewPath = '';
            let currentImagePath = '';
 
+           function previewDocumentById(documentId, documentName) {
+               currentPreviewPath = `/Permit/PreviewDocument/${documentId}`;
+               const modal = new bootstrap.Modal(document.getElementById('documentPreviewModal'));
+               
+               document.getElementById('previewDocumentName').textContent = documentName;
+               document.getElementById('previewLoader').style.display = 'flex';
+               document.getElementById('previewFrame').style.display = 'none';
+               document.getElementById('previewError').style.display = 'none';
+
+               const iframe = document.getElementById('previewFrame');
+               const previewUrl = `/Permit/PreviewDocument/${documentId}`;
+               
+               // Add timestamp to prevent caching issues
+               const timestamp = new Date().getTime();
+               const urlWithTimestamp = previewUrl + '?_t=' + timestamp;
+               iframe.src = urlWithTimestamp;
+
+               iframe.onload = function() {
+                   document.getElementById('previewLoader').style.display = 'none';
+                   iframe.style.display = 'block';
+               };
+
+               iframe.onerror = function() {
+                   document.getElementById('previewLoader').style.display = 'none';
+                   document.getElementById('previewError').style.display = 'flex';
+               };
+
+               setTimeout(() => {
+                   if (document.getElementById('previewLoader').style.display !== 'none') {
+                       document.getElementById('previewLoader').style.display = 'none';
+                       iframe.style.display = 'block';
+                   }
+               }, 5000);
+
+               modal.show();
+           }
+
+           function previewImageById(documentId, imageName) {
+               const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+               
+               document.getElementById('imageModalTitle').innerHTML = `<i class="fas fa-file-image text-primary"></i> ${imageName}`;
+               document.getElementById('imageLoader').style.display = 'flex';
+               document.getElementById('previewImage').style.display = 'none';
+               document.getElementById('imageError').style.display = 'none';
+
+               const img = document.getElementById('previewImage');
+               const previewUrl = `/Permit/PreviewDocument/${documentId}`;
+               
+               img.onload = function() {
+                   document.getElementById('imageLoader').style.display = 'none';
+                   img.style.display = 'block';
+                   currentImagePath = previewUrl;
+               };
+
+               img.onerror = function() {
+                   document.getElementById('imageLoader').style.display = 'none';
+                   document.getElementById('imageError').style.display = 'block';
+               };
+
+               img.src = previewUrl;
+               modal.show();
+           }
+
            function previewDocument(filePath, documentName) {
                currentPreviewPath = filePath;
                const modal = new bootstrap.Modal(document.getElementById('documentPreviewModal'));
@@ -2333,13 +2599,25 @@
 
            function downloadFromPreview() {
                if (currentPreviewPath) {
-                   window.open(currentPreviewPath, '_blank');
+                   // If it's already a preview URL, convert it to download URL
+                   if (currentPreviewPath.includes('/PreviewDocument/')) {
+                       const documentId = currentPreviewPath.split('/').pop().split('?')[0];
+                       window.open(`/Permit/DownloadDocument/${documentId}`, '_blank');
+                   } else {
+                       window.open(currentPreviewPath, '_blank');
+                   }
                }
            }
 
            function downloadFromImagePreview() {
                if (currentImagePath) {
-                   window.open(currentImagePath, '_blank');
+                   // If it's already a preview URL, convert it to download URL
+                   if (currentImagePath.includes('/PreviewDocument/')) {
+                       const documentId = currentImagePath.split('/').pop().split('?')[0];
+                       window.open(`/Permit/DownloadDocument/${documentId}`, '_blank');
+                   } else {
+                       window.open(currentImagePath, '_blank');
+                   }
                }
            }
 
@@ -2420,5 +2698,17 @@
 
                modal.show();
            }
+
+           // Clean up modals when closed
+           document.getElementById('documentPreviewModal').addEventListener('hidden.bs.modal', function() {
+               const iframe = document.getElementById('previewFrame');
+               iframe.src = 'about:blank';
+               currentPreviewPath = '';
+           });
+
+           document.getElementById('imagePreviewModal').addEventListener('hidden.bs.modal', function() {
+               document.getElementById('previewImage').src = '';
+               currentImagePath = '';
+           });
     </script>
 }
