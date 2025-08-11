@@ -1,0 +1,624 @@
+/* ===============================================
+   PERMIT BASE CSS - Common Permit Styles
+   ===============================================
+   
+   Shared styles for all permit-related pages.
+   Extends the base design system with permit-specific components.
+*/
+
+/* Import base design system */
+@import url('../base.css');
+
+/* ===============================================
+   PERMIT CONTAINER
+   =============================================== */
+
+.permits-container {
+    padding: var(--spacing-lg);
+    max-width: 1400px;
+    margin: 0 auto;
+    background-color: var(--light-bg);
+    min-height: 100vh;
+}
+
+.approval-container {
+    padding: var(--spacing-lg);
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.create-container {
+    padding: var(--spacing-lg);
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ===============================================
+   PERMIT HEADER COMPONENTS
+   =============================================== */
+
+.approval-header,
+.permits-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 2px solid var(--border-light);
+}
+
+.approval-title {
+    color: var(--text-dark);
+    margin-bottom: 8px;
+    font-size: var(--font-size-3xl);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.approval-title i {
+    color: var(--primary-color);
+}
+
+.approval-subtitle {
+    color: var(--text-muted);
+    margin: 0;
+    font-size: var(--font-size-base);
+}
+
+/* ===============================================
+   REVIEW SECTIONS
+   =============================================== */
+
+.review-section {
+    background: var(--white-bg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    margin-bottom: var(--spacing-lg);
+}
+
+.section-header {
+    background: var(--light-bg);
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-header h3 {
+    margin: 0;
+    color: var(--text-dark);
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.section-header i {
+    color: var(--primary-color);
+}
+
+/* ===============================================
+   REVIEW GRIDS
+   =============================================== */
+
+.review-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-lg);
+}
+
+.review-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.review-item label {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.review-item .value {
+    font-size: var(--font-size-base);
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+.review-item .value.highlight {
+    color: var(--primary-color);
+    font-size: var(--font-size-lg);
+}
+
+/* ===============================================
+   SHIPPING ROUTE COMPONENT
+   =============================================== */
+
+.shipping-route {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-lg);
+    gap: var(--spacing-xl);
+}
+
+.route-item {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    gap: var(--spacing-md);
+}
+
+.route-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--radius-circle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+}
+
+.route-icon.origin {
+    background: var(--success-color);
+}
+
+.route-icon.destination {
+    background: var(--danger-color);
+}
+
+.route-content h4 {
+    margin: 0 0 5px 0;
+    color: var(--text-dark);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+}
+
+.route-content p {
+    margin: 0;
+    color: var(--text-dark);
+    font-size: var(--font-size-sm);
+}
+
+.route-arrow {
+    font-size: 24px;
+    color: var(--primary-color);
+    margin: 0 var(--spacing-lg);
+}
+
+/* ===============================================
+   LIVESTOCK TABLE
+   =============================================== */
+
+.livestock-review {
+    padding: var(--spacing-lg);
+}
+
+.livestock-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+.livestock-table th,
+.livestock-table td {
+    padding: var(--spacing-md);
+    text-align: left;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.livestock-table th {
+    background: var(--light-bg);
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.livestock-table tbody tr:hover {
+    background: var(--light-bg);
+}
+
+.total-row {
+    background: var(--light-bg);
+    font-weight: 600;
+}
+
+/* ===============================================
+   DOCUMENT COMPONENTS
+   =============================================== */
+
+.documents-review {
+    padding: var(--spacing-lg);
+}
+
+.documents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.document-card {
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    transition: var(--transition-normal);
+    background: var(--light-bg);
+}
+
+.document-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.document-header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.document-icon {
+    font-size: 32px;
+    flex-shrink: 0;
+    margin-top: 5px;
+}
+
+.document-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.document-info h4 {
+    margin: 0 0 8px 0;
+    color: var(--text-dark);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.document-meta {
+    display: flex;
+    gap: var(--spacing-md);
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.document-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.document-actions .btn-base {
+    font-size: var(--font-size-xs);
+    padding: 6px 12px;
+}
+
+/* ===============================================
+   DOCUMENT CHECKLIST
+   =============================================== */
+
+.document-checklist {
+    background: var(--light-bg);
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+}
+
+.document-checklist h4 {
+    margin: 0 0 15px 0;
+    color: var(--text-dark);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.document-checklist h4 i {
+    color: var(--primary-color);
+}
+
+.checklist-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-sm);
+}
+
+.checklist-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    transition: var(--transition-normal);
+}
+
+.checklist-item.completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.checklist-item.completed i {
+    color: var(--success-color);
+}
+
+.checklist-item.missing {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.checklist-item.missing i {
+    color: var(--danger-color);
+}
+
+.checklist-item.optional {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.checklist-item.optional i {
+    color: var(--info-color);
+}
+
+.checklist-text {
+    flex: 1;
+    font-weight: 500;
+}
+
+.checklist-meta {
+    font-size: var(--font-size-xs);
+    opacity: 0.8;
+}
+
+/* ===============================================
+   NO DOCUMENTS STATE
+   =============================================== */
+
+.no-documents {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+}
+
+.no-documents i {
+    font-size: 48px;
+    color: var(--border-light);
+    margin-bottom: 15px;
+}
+
+.no-documents h4 {
+    margin: 0 0 10px 0;
+    color: var(--text-dark);
+}
+
+.no-documents p {
+    margin: 0;
+}
+
+/* ===============================================
+   APPROVAL FORM
+   =============================================== */
+
+.approval-form-section {
+    background: var(--white-bg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+}
+
+.approval-form {
+    padding: var(--spacing-lg);
+}
+
+.warning-message {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.warning-message i {
+    font-size: var(--font-size-lg);
+    flex-shrink: 0;
+}
+
+/* ===============================================
+   BUTTON GROUPS
+   =============================================== */
+
+.button-group {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.button-group .btn-base {
+    flex: 1;
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+}
+
+/* ===============================================
+   ACTION INFO
+   =============================================== */
+
+.action-info {
+    background: var(--light-bg);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+}
+
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-md);
+    font-size: var(--font-size-sm);
+}
+
+.info-item:last-child {
+    margin-bottom: 0;
+}
+
+.info-item i {
+    margin-right: var(--spacing-sm);
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.info-item.approve-info i {
+    color: var(--success-color);
+}
+
+.info-item.reject-info i {
+    color: var(--danger-color);
+}
+
+/* ===============================================
+   CONFIRMATION MODAL
+   =============================================== */
+
+.confirmation-content {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    margin: var(--spacing-lg) 0;
+}
+
+.confirmation-icon {
+    font-size: 48px;
+    flex-shrink: 0;
+}
+
+.confirmation-text {
+    flex: 1;
+}
+
+.confirmation-text p {
+    margin: 0 0 10px 0;
+    font-size: var(--font-size-base);
+    color: var(--text-dark);
+}
+
+.warning-text {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: var(--radius-sm);
+    color: #856404;
+    font-size: var(--font-size-sm);
+}
+
+/* ===============================================
+   RESPONSIVE DESIGN
+   =============================================== */
+
+@media (max-width: 768px) {
+    .permits-container,
+    .approval-container,
+    .create-container {
+        padding: var(--spacing-md);
+    }
+
+    .approval-header,
+    .permits-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+
+    .header-actions {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .header-actions .btn-base {
+        width: 100%;
+    }
+
+    .review-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .shipping-route {
+        flex-direction: column;
+        gap: var(--spacing-lg);
+    }
+
+    .route-arrow {
+        transform: rotate(90deg);
+        margin: var(--spacing-sm) 0;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .approval-title {
+        font-size: 24px;
+    }
+
+    .confirmation-content {
+        flex-direction: column;
+        text-align: center;
+        gap: var(--spacing-md);
+    }
+
+    .confirmation-icon {
+        font-size: 36px;
+    }
+
+    .documents-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .checklist-items {
+        grid-template-columns: 1fr;
+    }
+
+    .document-actions {
+        flex-direction: column;
+    }
+
+    .document-actions .btn-base {
+        width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    .section-header,
+    .approval-form,
+    .documents-review,
+    .livestock-review {
+        padding: var(--spacing-md);
+    }
+
+    .document-card {
+        padding: var(--spacing-sm);
+    }
+
+    .document-actions .btn-base {
+        font-size: var(--font-size-xs);
+        padding: 6px 10px;
+        min-width: 60px;
+    }
+}

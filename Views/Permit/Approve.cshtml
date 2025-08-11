@@ -291,7 +291,7 @@
                 {
                     <button type="button"
                             class="btn btn-sm btn-outline-secondary"
-                            onclick="previewDocument('@doc.FilePath', '@doc.DocumentDisplayName')">
+                            onclick="previewDocumentById(@doc.Id, '@doc.DocumentDisplayName')">
                         <i class="fas fa-eye"></i>
                         Preview
                     </button>
@@ -300,22 +300,13 @@
                 {
                     <button type="button"
                             class="btn btn-sm btn-outline-info"
-                            onclick="previewImage('@doc.FilePath', '@doc.DocumentDisplayName')">
+                            onclick="previewImageById(@doc.Id, '@doc.DocumentDisplayName')">
                         <i class="fas fa-image"></i>
                         Preview
                     </button>
                 }
 
-                @if (userRole == "Admin")
-                {
-                    <button type="button"
-                            class="btn btn-sm btn-outline-warning"
-                            onclick="editDocumentDetails(@doc.Id, '@doc.DocumentDisplayName')"
-                            title="Edit detail dokumen">
-                        <i class="fas fa-edit"></i>
-                        Edit
-                    </button>
-                }
+
             </div>
         </div>
     }
@@ -570,66 +561,7 @@
     </div>
 </div>
 
-<!-- ⭐ ADMIN: Edit Document Details Modal -->
-@if (userRole == "Admin")
-{
-    <div class="modal fade" id="editDocumentModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-edit"></i>
-                        Edit Detail Dokumen
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editDocumentForm">
-                        <input type="hidden" id="editDocumentId" />
 
-                        <div class="mb-3">
-                            <label class="form-label">Nama Dokumen</label>
-                            <input type="text" id="editDocumentName" class="form-control" readonly />
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="editDocumentDate" class="form-label">
-                                <i class="fas fa-calendar"></i>
-                                Tanggal Dokumen
-                            </label>
-                            <input type="date" id="editDocumentDate" class="form-control" />
-                            <small class="form-text text-muted">Tanggal pengajuan dokumen</small>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="editDocumentNumber" class="form-label">
-                                <i class="fas fa-hashtag"></i>
-                                Nomor Dokumen
-                            </label>
-                            <input type="text" id="editDocumentNumber" class="form-control" placeholder="Contoh: 001/SP/2025" />
-                            <small class="form-text text-muted">Nomor resmi dokumen</small>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="editDocumentDescription" class="form-label">
-                                <i class="fas fa-comment"></i>
-                                Keterangan Dokumen
-                            </label>
-                            <textarea id="editDocumentDescription" class="form-control" rows="3" placeholder="Keterangan tambahan (opsional)"></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-primary" onclick="saveDocumentDetails()">
-                        <i class="fas fa-save"></i>
-                        Simpan
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-}
 
 <!-- Confirmation Modal -->
 <div class="modal fade" id="confirmationModal" tabindex="-1">
@@ -668,7 +600,34 @@
         let selectedAction = '';
         let currentPreviewPath = '';
          let currentImagePath = '';
-        let currentEditDocumentId = 0;
+
+        function previewImageById(documentId, imageName) {
+            const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+
+            // Reset modal state
+            document.getElementById('imageModalTitle').innerHTML = `<i class="fas fa-file-image text-primary"></i> ${imageName}`;
+            document.getElementById('imageLoader').style.display = 'flex';
+            document.getElementById('previewImage').style.display = 'none';
+            document.getElementById('imageError').style.display = 'none';
+
+            // Load image using the preview endpoint
+            const img = document.getElementById('previewImage');
+            const previewUrl = `/Permit/PreviewDocument/${documentId}`;
+            
+            img.onload = function() {
+                document.getElementById('imageLoader').style.display = 'none';
+                img.style.display = 'block';
+                currentImagePath = previewUrl;
+            };
+
+            img.onerror = function() {
+                document.getElementById('imageLoader').style.display = 'none';
+                document.getElementById('imageError').style.display = 'block';
+            };
+
+            img.src = previewUrl;
+            modal.show();
+        }
 
         function previewImage(imagePath, imageName) {
             currentImagePath = imagePath;
@@ -698,125 +657,17 @@
 
         function downloadFromImagePreview() {
             if (currentImagePath) {
-                window.open(currentImagePath, '_blank');
-            }
-        }
-
-         @if (userRole == "Admin")
-        {
-            <text>
-            function editDocumentDetails(documentId, documentName) {
-                currentEditDocumentId = documentId;
-                
-                // Reset form
-                document.getElementById('editDocumentId').value = documentId;
-                document.getElementById('editDocumentName').value = documentName;
-                document.getElementById('editDocumentDate').value = '';
-                document.getElementById('editDocumentNumber').value = '';
-                document.getElementById('editDocumentDescription').value = '';
-
-                // Load existing data
-                loadDocumentDetails(documentId);
-
-                
-                const modal = new bootstrap.Modal(document.getElementById('editDocumentModal'));
-                modal.show();
-            }
-
-            function loadDocumentDetails(documentId) {
-                // Find document in current model data
-                const documents = @Html.Raw(Json.Serialize(Model.Documents.Select(d => new { 
-                    Id = d.Id, 
-                    DocumentDate = d.DocumentDate?.ToString("yyyy-MM-dd"),
-                    DocumentNumber = d.DocumentNumber,
-                    DocumentDescription = d.DocumentDescription 
-                })));
-
-                const doc = documents.find(d => d.Id === documentId);
-                if (doc) {
-                    if (doc.DocumentDate) {
-                        document.getElementById('editDocumentDate').value = doc.DocumentDate;
-                    }
-                    if (doc.DocumentNumber) {
-                        document.getElementById('editDocumentNumber').value = doc.DocumentNumber;
-                    }
-                    if (doc.DocumentDescription) {
-                        document.getElementById('editDocumentDescription').value = doc.DocumentDescription;
-                    }
+                // If it's already a preview URL, convert it to download URL
+                if (currentImagePath.includes('/PreviewDocument/')) {
+                    const documentId = currentImagePath.split('/').pop().split('?')[0];
+                    window.open(`/Permit/DownloadDocument/${documentId}`, '_blank');
+                } else {
+                    window.open(currentImagePath, '_blank');
                 }
             }
-
-            // ⭐ REPLACE function saveDocumentDetails() di script section dengan kode berikut:
-
-function saveDocumentDetails() {
-    const documentId = document.getElementById('editDocumentId').value;
-    const documentDate = document.getElementById('editDocumentDate').value;
-    const documentNumber = document.getElementById('editDocumentNumber').value;
-    const documentDescription = document.getElementById('editDocumentDescription').value;
-
-    // Validate
-    if (documentDate && new Date(documentDate) > new Date()) {
-        alert('Tanggal dokumen tidak boleh di masa depan');
-        return;
-    }
-
-    // Show loading
-    const saveBtn = document.querySelector('#editDocumentModal .btn-primary');
-    const originalText = saveBtn.innerHTML;
-    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
-    saveBtn.disabled = true;
-
-    // Get token
-    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-
-    // ⭐ FIX: Use the correct endpoint URL
-    fetch('/Permit/UpdateDocumentDetails', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'RequestVerificationToken': token
-        },
-        body: JSON.stringify({
-            DocumentId: parseInt(documentId),
-            DocumentDate: documentDate || null,
-            DocumentNumber: documentNumber || null,
-            DocumentDescription: documentDescription || null
-        })
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.text().then(text => {
-                throw new Error(`HTTP ${response.status}: ${text.substring(0, 100)}...`);
-            });
         }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            alert('Detail dokumen berhasil disimpan');
-            
-            // Close modal
-            bootstrap.Modal.getInstance(document.getElementById('editDocumentModal')).hide();
-            
-            // Reload page to show updated data
-            window.location.reload();
-        } else {
-            alert('Gagal menyimpan detail dokumen: ' + (data.message || 'Unknown error'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Terjadi kesalahan saat menyimpan detail dokumen: ' + error.message);
-    })
-    .finally(() => {
-        // Restore button state
-        saveBtn.innerHTML = originalText;
-        saveBtn.disabled = false;
-    });
-}
-            </text>
-        }
+
+
 
         function submitApproval(action) {
             selectedAction = action;
@@ -896,8 +747,8 @@ function saveDocumentDetails() {
             document.getElementById('approvalForm').submit();
         }
 
-        function previewDocument(filePath, documentName) {
-            currentPreviewPath = filePath;
+        function previewDocumentById(documentId, documentName) {
+            currentPreviewPath = `/Permit/PreviewDocument/${documentId}`;
             const modal = new bootstrap.Modal(document.getElementById('documentPreviewModal'));
             
             // Reset modal state
@@ -906,9 +757,14 @@ function saveDocumentDetails() {
             document.getElementById('previewFrame').style.display = 'none';
             document.getElementById('previewError').style.display = 'none';
 
-            // Load document in iframe
+            // Load document in iframe using the preview endpoint
             const iframe = document.getElementById('previewFrame');
-            iframe.src = filePath;
+            const previewUrl = `/Permit/PreviewDocument/${documentId}`;
+            
+            // Add timestamp to prevent caching issues
+            const timestamp = new Date().getTime();
+            const urlWithTimestamp = previewUrl + '?_t=' + timestamp;
+            iframe.src = urlWithTimestamp;
 
             // Handle iframe load
             iframe.onload = function() {
@@ -927,7 +783,49 @@ function saveDocumentDetails() {
                     document.getElementById('previewLoader').style.display = 'none';
                     iframe.style.display = 'block';
                 }
-            }, 3000);
+            }, 5000);
+
+            modal.show();
+        }
+
+        function previewDocument(filePath, documentName) {
+            // Extract document ID from the filePath or use a different approach
+            // For now, we'll use the direct file path but with proper error handling
+            currentPreviewPath = filePath;
+            const modal = new bootstrap.Modal(document.getElementById('documentPreviewModal'));
+            
+            // Reset modal state
+            document.getElementById('previewDocumentName').textContent = documentName;
+            document.getElementById('previewLoader').style.display = 'flex';
+            document.getElementById('previewFrame').style.display = 'none';
+            document.getElementById('previewError').style.display = 'none';
+
+            // Load document in iframe
+            const iframe = document.getElementById('previewFrame');
+            
+            // Add timestamp to prevent caching issues
+            const timestamp = new Date().getTime();
+            const urlWithTimestamp = filePath + (filePath.includes('?') ? '&' : '?') + '_t=' + timestamp;
+            iframe.src = urlWithTimestamp;
+
+            // Handle iframe load
+            iframe.onload = function() {
+                document.getElementById('previewLoader').style.display = 'none';
+                iframe.style.display = 'block';
+            };
+
+            iframe.onerror = function() {
+                document.getElementById('previewLoader').style.display = 'none';
+                document.getElementById('previewError').style.display = 'flex';
+            };
+
+            // Fallback timeout
+            setTimeout(() => {
+                if (document.getElementById('previewLoader').style.display !== 'none') {
+                    document.getElementById('previewLoader').style.display = 'none';
+                    iframe.style.display = 'block';
+                }
+            }, 5000);
 
             modal.show();
         }
@@ -945,7 +843,13 @@ function saveDocumentDetails() {
 
         function downloadFromPreview() {
             if (currentPreviewPath) {
-                window.open(currentPreviewPath, '_blank');
+                // If it's already a preview URL, convert it to download URL
+                if (currentPreviewPath.includes('/PreviewDocument/')) {
+                    const documentId = currentPreviewPath.split('/').pop().split('?')[0];
+                    window.open(`/Permit/DownloadDocument/${documentId}`, '_blank');
+                } else {
+                    window.open(currentPreviewPath, '_blank');
+                }
             }
         }
 

@@ -4563,10 +4563,12 @@ namespace PerizinanPeternakan.Controllers
                 }
 
                 // Cek apakah user mencoba mengubah status sendiri
+             
                 if (userId == currentUserId)
                 {
                     return Json(new { success = false, message = "Tidak dapat mengubah status sendiri" });
                 }
+
 
                 var user = await _context.Users.FindAsync(userId);
                 if (user == null)
@@ -4947,6 +4949,110 @@ namespace PerizinanPeternakan.Controllers
             {
                 ModelState.AddModelError("", "Terjadi kesalahan saat menyimpan perubahan. Silakan coba lagi.");
                 return View("ApproveWithEdit", model);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> TestApplicationNumber()
+        {
+            try
+            {
+                var applicationNumber = await _applicationNumberService.GenerateApplicationNumberAsync();
+                return Json(new { success = true, applicationNumber = applicationNumber });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = ex.Message, stackTrace = ex.StackTrace });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CheckDatabaseData()
+        {
+            try
+            {
+                var year = DateTime.Now.Year;
+                var month = DateTime.Now.Month;
+                
+                var existingApplications = await _context.PermitApplications
+                    .Where(p => p.SubmissionDate.Year == year && p.SubmissionDate.Month == month)
+                    .Select(p => new { p.ApplicationNumber, p.SubmissionDate })
+                    .ToListAsync();
+
+                var allApplications = await _context.PermitApplications
+                    .OrderByDescending(p => p.SubmissionDate)
+                    .Take(10)
+                    .Select(p => new { p.ApplicationNumber, p.SubmissionDate })
+                    .ToListAsync();
+
+                var totalCount = await _context.PermitApplications.CountAsync();
+                
+                return Json(new { 
+                    success = true, 
+                    year = year,
+                    month = month,
+                    existingApplications = existingApplications,
+                    allApplications = allApplications,
+                    totalCount = totalCount
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = ex.Message, stackTrace = ex.StackTrace });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> PreviewDocument(int id)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return RedirectToAction("Login", "Auth");
+
+            var userRole = HttpContext.Session.GetString("Role");
+            var document = await _documentService.GetDocumentWithAuthorizationAsync(id, userId.Value, userRole);
+
+            if (document == null)
+            {
+                TempData["ErrorMessage"] = "Dokumen tidak ditemukan atau Anda tidak memiliki akses";
+                return NotFound();
+            }
+
+            bool canPreview = false;
+            if (userRole == "User" && document.PermitApplication.UserId == userId.Value)
+            {
+                canPreview = true;
+            }
+            else if (userRole == "Admin" || userRole == "Verifikator" || userRole == "KepalaDinas")
+            {
+                canPreview = true;
+            }
+
+            if (!canPreview)
+            {
+                TempData["ErrorMessage"] = "Anda tidak memiliki akses untuk melihat dokumen ini";
+                return Forbid();
+            }
+
+            var filePath = Path.Combine(_environment.WebRootPath, document.FilePath.TrimStart('/'));
+
+            if (!System.IO.File.Exists(filePath))
+            {
+                TempData["ErrorMessage"] = "File tidak ditemukan di server";
+                return NotFound();
+            }
+
+            try
+            {
+                var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+                var contentType = _documentService.GetContentType(document.FileExtension);
+                
+                // Return file for preview (browser will handle display)
+                return File(fileBytes, contentType);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Terjadi kesalahan saat memuat dokumen";
+                return NotFound();
             }
         }
     }

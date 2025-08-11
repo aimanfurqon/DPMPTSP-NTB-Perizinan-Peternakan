@@ -1,462 +1,298 @@
-﻿/* File: wwwroot/css/permit/edit-approve.css */
+﻿/* ===============================================
+   PERMIT EDIT APPROVE - Edit Approval Mode Styles
+   ===============================================
+   
+   Specific styles for the edit approval mode functionality.
+   Extends the permit base styles with edit-specific components.
+*/
+
+/* Import permit base styles */
+@import url('./permit-base.css');
+
+/* ===============================================
+   EDIT MODE CONTAINER
+   =============================================== */
 
 .approval-container.edit-mode {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: linear-gradient(135deg, var(--light-bg) 0%, var(--border-light) 100%);
     min-height: 100vh;
-    padding: 20px 0;
+    padding: var(--spacing-lg) 0;
 }
 
 .edit-notice {
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-lg);
 }
 
-    .edit-notice .alert {
-        border-left: 4px solid #17a2b8;
-        background: linear-gradient(90deg, rgba(23,162,184,0.1) 0%, rgba(23,162,184,0.05) 100%);
-    }
+.edit-notice .alert {
+    border-left: 4px solid var(--info-color);
+    background: linear-gradient(90deg, rgba(23,162,184,0.1) 0%, rgba(23,162,184,0.05) 100%);
+}
 
-/* Edit Section Styling */
+/* ===============================================
+   EDIT SECTIONS
+   =============================================== */
+
 .edit-section {
-    background: white;
-    border-radius: 12px;
+    background: var(--white-bg);
+    border-radius: var(--radius-lg);
     padding: 24px;
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-lg);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border-light);
 }
 
-    .edit-section .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 12px;
-        border-bottom: 2px solid #f8f9fa;
-    }
+.edit-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--light-bg);
+}
 
-        .edit-section .section-header h3 {
-            margin: 0;
-            color: #2c3e50;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+.edit-section .section-header h3 {
+    margin: 0;
+    color: #2c3e50;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
 
-            .edit-section .section-header h3 i {
-                color: #3498db;
-            }
+.edit-section .section-header h3 i {
+    color: #3498db;
+}
 
-/* Badges */
+/* ===============================================
+   EDIT BADGES
+   =============================================== */
+
 .edit-badge {
-    background: linear-gradient(135deg, #28a745, #20c997);
+    background: var(--success-gradient);
     color: white;
     padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.75rem;
+    border-radius: var(--radius-xl);
+    font-size: var(--font-size-xs);
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .readonly-badge {
-    background: linear-gradient(135deg, #6c757d, #495057);
+    background: linear-gradient(135deg, var(--secondary-color), #495057);
     color: white;
     padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.75rem;
+    border-radius: var(--radius-xl);
+    font-size: var(--font-size-xs);
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-/* Edit Grid */
+/* ===============================================
+   EDIT GRIDS
+   =============================================== */
+
 .edit-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
+    gap: var(--spacing-lg);
 }
 
 .shipping-edit-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 16px;
+    gap: var(--spacing-lg);
 }
 
 .edit-item {
     margin-bottom: 0;
 }
 
-    .edit-item .form-label {
-        font-weight: 600;
-        color: #495057;
-        margin-bottom: 8px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
+.edit-item .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
 
-        .edit-item .form-label.required::after {
-            content: "*";
-            color: #dc3545;
-            margin-left: 4px;
-        }
+.edit-item .form-label.required::after {
+    content: "*";
+    color: var(--danger-color);
+    margin-left: 4px;
+}
 
-        .edit-item .form-label i {
-            color: #6c757d;
-            width: 16px;
-            text-align: center;
-        }
+.edit-item .form-label i {
+    color: var(--text-muted);
+    width: 16px;
+    text-align: center;
+}
 
-/* Editable Fields */
+/* ===============================================
+   EDITABLE FIELDS
+   =============================================== */
+
 .editable-field {
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    padding: 12px;
-    transition: all 0.3s ease;
-    background: #fff;
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    transition: var(--transition-normal);
+    background: var(--white-bg);
 }
 
-    .editable-field:focus {
-        border-color: #3498db;
-        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
-        background: #f8f9ff;
-    }
-
-    .editable-field.field-changed {
-        border-color: #28a745;
-        background: linear-gradient(to right, #f8fff8, #ffffff);
-        position: relative;
-    }
-
-        .editable-field.field-changed::before {
-            content: "✓";
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #28a745;
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-    .editable-field.is-invalid {
-        border-color: #dc3545;
-        background: linear-gradient(to right, #fff8f8, #ffffff);
-    }
-
-    .editable-field.is-valid {
-        border-color: #28a745;
-        background: linear-gradient(to right, #f8fff8, #ffffff);
-    }
-
-/* Original Value Display */
-.original-value {
-    color: #6c757d;
-    font-style: italic;
-    font-size: 0.875rem;
-}
-
-/* Change Tracker */
-.change-tracker {
-    margin-top: 20px;
-    animation: slideIn 0.3s ease-out;
-}
-
-    .change-tracker .alert {
-        border-left: 4px solid #ffc107;
-        background: linear-gradient(90deg, rgba(255,193,7,0.1) 0%, rgba(255,193,7,0.05) 100%);
-    }
-
-    .change-tracker h6 {
-        color: #856404;
-        margin-bottom: 10px;
-    }
-
-    .change-tracker ul {
-        margin-bottom: 0;
-        padding-left: 20px;
-    }
-
-    .change-tracker li {
-        margin-bottom: 5px;
-        color: #495057;
-    }
-
-/* Documents Summary */
-.documents-summary {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 12px;
-}
-
-.document-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: #f8f9fa;
-    border-radius: 6px;
-    font-size: 0.875rem;
-}
-
-    .document-item i {
-        width: 16px;
-        text-align: center;
-    }
-
-.document-count {
-    background: #e9ecef;
-    color: #495057;
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 500;
-}
-
-/* Action Buttons */
-.action-buttons {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 2px solid #f8f9fa;
-}
-
-.button-group {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-}
-
-    .button-group .btn {
-        padding: 12px 24px;
-        font-weight: 600;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        flex: 1;
-        min-width: 200px;
-    }
-
-        .button-group .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-.btn-success {
-    background: linear-gradient(135deg, #28a745, #20c997);
-    border: none;
-}
-
-.btn-danger {
-    background: linear-gradient(135deg, #dc3545, #e74c3c);
-    border: none;
-}
-
-/* Action Info */
-.action-info {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 16px;
-    border: 1px solid #e9ecef;
-}
-
-.info-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: #495057;
-    font-size: 0.9rem;
-    margin-bottom: 8px;
-}
-
-    .info-item:last-child {
-        margin-bottom: 0;
-    }
-
-    .info-item i {
-        color: #17a2b8;
-        width: 16px;
-        text-align: center;
-    }
-
-/* Animations */
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Validation Feedback */
-.invalid-feedback {
-    display: block;
-    width: 100%;
-    margin-top: 0.25rem;
-    font-size: 0.875rem;
-    color: #dc3545;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .edit-grid,
-    .shipping-edit-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .button-group {
-        flex-direction: column;
-    }
-
-        .button-group .btn {
-            min-width: auto;
-        }
-
-    .approval-container.edit-mode {
-        padding: 10px;
-    }
-
-    .edit-section {
-        padding: 16px;
-        margin-bottom: 16px;
-    }
-}
-
-/* Loading States */
-.btn:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-}
-
-.btn .fa-spinner {
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-/* Form Enhancements */
-.form-control:focus {
+.editable-field:focus {
     border-color: #3498db;
     box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+    background: #f8f9ff;
 }
 
-textarea.form-control {
-    resize: vertical;
-    min-height: 80px;
+.editable-field.field-changed {
+    border-color: var(--success-color);
+    background: linear-gradient(to right, #f8fff8, #ffffff);
+    position: relative;
 }
 
-/* Field Status Indicators */
-.field-status {
+.editable-field.field-changed::before {
+    content: "✓";
     position: absolute;
     right: 8px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 16px;
+    color: var(--success-color);
     font-weight: bold;
+    font-size: var(--font-size-base);
 }
 
-    .field-status.changed {
-        color: #28a745;
-    }
+.editable-field.is-invalid {
+    border-color: var(--danger-color);
+    background: linear-gradient(to right, #fff8f8, #ffffff);
+}
 
-    .field-status.error {
-        color: #dc3545;
-    }
+.editable-field.is-valid {
+    border-color: var(--success-color);
+    background: linear-gradient(to right, #f8fff8, #ffffff);
+}
 
-    .field-status.valid {
-        color: #28a745;
-    }
-/* File: wwwroot/css/permit/edit-approve.css */
-/* Tambahkan styling berikut ke file yang sudah ada */
+.editable-location {
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    transition: var(--transition-normal);
+}
 
-/* Shipping Edit Container */
+.editable-location:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+.editable-location:disabled {
+    background-color: var(--light-bg);
+    border-color: var(--border-light);
+    color: var(--text-muted);
+}
+
+/* ===============================================
+   ORIGINAL VALUE DISPLAY
+   =============================================== */
+
+.original-value {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: var(--font-size-sm);
+}
+
+/* ===============================================
+   CHANGE TRACKER
+   =============================================== */
+
+.change-tracker {
+    margin-top: var(--spacing-lg);
+    animation: slideIn 0.3s ease-out;
+}
+
+.change-tracker .alert {
+    border-left: 4px solid var(--warning-color);
+    background: linear-gradient(90deg, rgba(255,193,7,0.1) 0%, rgba(255,193,7,0.05) 100%);
+}
+
+.change-tracker h6 {
+    color: #856404;
+    margin-bottom: var(--spacing-sm);
+}
+
+.change-tracker ul {
+    margin-bottom: 0;
+    padding-left: var(--spacing-lg);
+}
+
+.change-tracker li {
+    margin-bottom: 5px;
+    color: #495057;
+}
+
+/* ===============================================
+   SHIPPING EDIT COMPONENTS
+   =============================================== */
+
 .shipping-edit-container {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: var(--spacing-lg);
 }
 
 .location-edit-group {
-    background: #f8f9fa;
-    border-radius: 10px;
-    padding: 20px;
-    border: 1px solid #e9ecef;
+    background: var(--light-bg);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--border-light);
 }
 
-    .location-edit-group h5 {
-        margin: 0 0 20px 0;
-        color: #495057;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
+.location-edit-group h5 {
+    margin: 0 0 var(--spacing-lg) 0;
+    color: #495057;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
 
 .location-edit-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 16px;
+    gap: var(--spacing-lg);
 }
 
-.editable-location {
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    padding: 12px;
-    transition: all 0.3s ease;
-}
-
-    .editable-location:focus {
-        border-color: #3498db;
-        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
-    }
-
-    .editable-location:disabled {
-        background-color: #f8f9fa;
-        border-color: #e9ecef;
-        color: #6c757d;
-    }
-
-/* Route Summary Enhanced */
+/* Enhanced shipping summary */
 .shipping-summary .summary-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--primary-gradient);
     color: white;
-    border-radius: 12px;
-    padding: 20px;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
 .shipping-summary .summary-header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
     font-weight: 600;
-    font-size: 16px;
+    font-size: var(--font-size-base);
 }
 
 .route-info {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 20px;
+    gap: var(--spacing-lg);
 }
 
 .route-point {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--spacing-md);
     flex: 1;
 }
 
@@ -471,7 +307,7 @@ textarea.form-control {
 }
 
 .point-label {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     opacity: 0.8;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -479,11 +315,11 @@ textarea.form-control {
 
 .point-location {
     font-weight: 600;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 
 .point-port {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     opacity: 0.9;
 }
 
@@ -493,109 +329,118 @@ textarea.form-control {
     animation: pulse 2s infinite;
 }
 
-@keyframes pulse {
-    0%, 100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.7;
-    }
+/* Enhanced port selection styling */
+.shipping-summary .point-port {
+    font-size: var(--font-size-xs);
+    opacity: 0.9;
+    font-weight: 500;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 8px;
+    border-radius: var(--radius-md);
+    margin-top: 4px;
+    display: inline-block;
 }
 
-/* Livestock Edit Container */
+/* ===============================================
+   LIVESTOCK EDIT COMPONENTS
+   =============================================== */
+
 .livestock-edit-container {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: var(--spacing-lg);
 }
 
 .livestock-item.editable {
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    border: 2px solid #e9ecef;
-    border-radius: 12px;
-    padding: 25px;
-    transition: all 0.3s ease;
+    background: linear-gradient(135deg, var(--light-bg) 0%, var(--white-bg) 100%);
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    transition: var(--transition-normal);
 }
 
-    .livestock-item.editable:hover {
-        border-color: #3498db;
-        box-shadow: 0 4px 15px rgba(52, 152, 219, 0.1);
-        transform: translateY(-2px);
-    }
+.livestock-item.editable:hover {
+    border-color: #3498db;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.1);
+    transform: translateY(-2px);
+}
 
-    .livestock-item.editable .livestock-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid #f1f3f4;
-    }
+.livestock-item.editable .livestock-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid #f1f3f4;
+}
 
-        .livestock-item.editable .livestock-header h4 {
-            margin: 0;
-            color: #2c3e50;
-            font-size: 18px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+.livestock-item.editable .livestock-header h4 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
 
-    .livestock-item.editable .livestock-form {
-        display: grid;
-        grid-template-columns: 1fr 150px 1fr;
-        gap: 20px;
-        align-items: start;
-    }
+.livestock-item.editable .livestock-form {
+    display: grid;
+    grid-template-columns: 1fr 150px 1fr;
+    gap: var(--spacing-lg);
+    align-items: start;
+}
 
-/* Quota Info Panel */
+/* ===============================================
+   QUOTA COMPONENTS
+   =============================================== */
+
 .quota-info-panel {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--primary-gradient);
     color: white;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 25px;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
-    .quota-info-panel .panel-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-    }
+.quota-info-panel .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
 
-        .quota-info-panel .panel-header span {
-            font-weight: 600;
-            font-size: 16px;
-        }
+.quota-info-panel .panel-header span {
+    font-weight: 600;
+    font-size: var(--font-size-base);
+}
 
 .quota-card {
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 10px;
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
     backdrop-filter: blur(10px);
 }
 
 .quota-info {
     display: flex;
     align-items: center;
-    gap: 15px;
-    margin-bottom: 10px;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
 }
 
 .quota-icon {
     width: 40px;
     height: 40px;
-    border-radius: 50%;
+    border-radius: var(--radius-circle);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 16px;
+    font-size: var(--font-size-base);
 }
 
 .quota-details h6 {
@@ -606,7 +451,7 @@ textarea.form-control {
 
 .quota-details p {
     margin: 0;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     opacity: 0.9;
 }
 
@@ -623,7 +468,7 @@ textarea.form-control {
 }
 
 .quota-label {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     opacity: 0.8;
     margin: 0;
 }
@@ -642,121 +487,249 @@ textarea.form-control {
     transition: width 0.3s ease;
 }
 
-/* Livestock Summary Enhanced */
-.livestock-summary {
+/* Livestock quantity validation */
+.livestock-quantity.success {
+    border-color: var(--success-color);
+    background: linear-gradient(to right, #f8fff8, #ffffff);
+}
+
+.livestock-quantity.warning {
+    border-color: var(--warning-color);
+    background: linear-gradient(to right, #fffbf0, #ffffff);
+}
+
+.livestock-quantity.error {
+    border-color: var(--danger-color);
+    background: linear-gradient(to right, #fff8f8, #ffffff);
+}
+
+/* ===============================================
+   ENHANCED PORT DROPDOWN STYLING
+   =============================================== */
+
+.select2-container--bootstrap-5 .select2-selection--single {
+    height: calc(2.375rem + 2px);
+    padding: 0.375rem 0.75rem;
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-md);
+    transition: var(--transition-normal);
+}
+
+.select2-container--bootstrap-5 .select2-selection--single:focus-within {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+.select2-container--bootstrap-5 .select2-selection__rendered {
+    color: #495057;
+    padding-left: 0;
+    padding-right: 20px;
+}
+
+.select2-container--bootstrap-5 .select2-selection__placeholder {
+    color: var(--text-muted);
+}
+
+.select2-container--bootstrap-5 .select2-results__option {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: 1px solid var(--light-bg);
+}
+
+.select2-container--bootstrap-5 .select2-results__option--highlighted {
+    background-color: #3498db;
+    color: white;
+}
+
+.select2-container--bootstrap-5 .select2-results__option[aria-selected="true"] {
+    background-color: var(--border-light);
+    color: #495057;
+}
+
+.select2-container--bootstrap-5 .select2-results__option--loading {
+    padding: var(--spacing-md);
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.select2-container--bootstrap-5 .select2-results__option--loading:after {
+    content: "";
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-left: var(--spacing-sm);
+    border: 2px solid var(--text-muted);
+    border-radius: var(--radius-circle);
+    border-top-color: transparent;
+    animation: spin 1s ease-in-out infinite;
+}
+
+/* Port selection feedback */
+.port-selection-feedback {
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    display: none;
+}
+
+.port-selection-feedback.success {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.port-selection-feedback.error {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.port-selection-feedback.warning {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+}
+
+/* Port validation indicators */
+.port-valid {
+    border-color: var(--success-color) !important;
+    background: linear-gradient(to right, #f8fff8, #ffffff);
+}
+
+.port-invalid {
+    border-color: var(--danger-color) !important;
+    background: linear-gradient(to right, #fff8f8, #ffffff);
+}
+
+/* ===============================================
+   DOCUMENTS SUMMARY
+   =============================================== */
+
+.documents-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.document-item {
     display: flex;
-    gap: 25px;
-    padding: 20px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-radius: 10px;
-    border: 1px solid #dee2e6;
-}
-
-.summary-item {
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 5px;
-    flex: 1;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--light-bg);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
 }
 
-    .summary-item .label {
-        font-size: 12px;
-        color: #6c757d;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 600;
-    }
-
-    .summary-item .value {
-        font-size: 20px;
-        font-weight: 700;
-        color: #2c3e50;
-    }
-
-.quota-usage .value {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 14px;
+.document-item i {
+    width: 16px;
+    text-align: center;
 }
 
-/* Quota Indicators */
-.quota-indicator {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    margin-left: 8px;
-    padding: 2px 8px;
-    background: rgba(52, 152, 219, 0.1);
-    border-radius: 12px;
-    font-size: 11px;
+.document-count {
+    background: var(--border-light);
+    color: #495057;
+    padding: 4px 10px;
+    border-radius: var(--radius-md);
+    font-size: 0.8rem;
+    font-weight: 500;
 }
 
-.quota-limit {
-    margin-top: 4px;
-}
+/* ===============================================
+   VALIDATION FEEDBACK
+   =============================================== */
 
 .quantity-feedback {
     margin-top: 6px;
 }
 
 .feedback-text.success {
-    color: #28a745;
+    color: var(--success-color);
 }
 
 .feedback-text.warning {
-    color: #ffc107;
+    color: var(--warning-color);
 }
 
 .feedback-text.error {
-    color: #dc3545;
+    color: var(--danger-color);
 }
 
-/* Livestock Quantity Field States */
-.livestock-quantity.success {
-    border-color: #28a745;
-    background: linear-gradient(to right, #f8fff8, #ffffff);
-}
-
-.livestock-quantity.warning {
-    border-color: #ffc107;
-    background: linear-gradient(to right, #fffbf0, #ffffff);
-}
-
-.livestock-quantity.error {
-    border-color: #dc3545;
-    background: linear-gradient(to right, #fff8f8, #ffffff);
-}
-
-/* Validation Summary */
 .quota-validation-summary {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 10px;
-    padding: 20px;
-    margin-top: 20px;
+    background: var(--light-bg);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
 }
 
 .validation-header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
     font-weight: 600;
     color: #495057;
 }
 
-/* Responsive Design for Edit Mode */
+/* ===============================================
+   ANIMATIONS
+   =============================================== */
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===============================================
+   FIELD STATUS INDICATORS
+   =============================================== */
+
+.field-status {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: var(--font-size-base);
+    font-weight: bold;
+}
+
+.field-status.changed {
+    color: var(--success-color);
+}
+
+.field-status.error {
+    color: var(--danger-color);
+}
+
+.field-status.valid {
+    color: var(--success-color);
+}
+
+/* ===============================================
+   RESPONSIVE DESIGN
+   =============================================== */
+
 @media (max-width: 768px) {
+    .edit-grid,
+    .shipping-edit-grid {
+        grid-template-columns: 1fr;
+    }
+
     .location-edit-grid {
         grid-template-columns: 1fr;
-        gap: 12px;
+        gap: var(--spacing-md);
     }
 
     .route-info {
         flex-direction: column;
-        gap: 15px;
+        gap: var(--spacing-md);
     }
 
     .route-arrow {
@@ -766,41 +739,69 @@ textarea.form-control {
 
     .livestock-item.editable .livestock-form {
         grid-template-columns: 1fr;
-        gap: 15px;
-    }
-
-    .livestock-summary {
-        flex-direction: column;
-        gap: 15px;
+        gap: var(--spacing-md);
     }
 
     .shipping-edit-container {
-        gap: 20px;
+        gap: var(--spacing-lg);
     }
 
     .location-edit-group {
-        padding: 15px;
+        padding: var(--spacing-md);
+    }
+
+    .approval-container.edit-mode {
+        padding: var(--spacing-sm);
+    }
+
+    .edit-section {
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--single {
+        height: calc(2.25rem + 2px);
+        font-size: var(--font-size-sm);
+    }
+
+    .select2-dropdown {
+        font-size: var(--font-size-sm);
+    }
+
+    .select2-container--bootstrap-5 .select2-results__option {
+        padding: var(--spacing-sm) var(--spacing-md);
     }
 }
 
-/* Loading States */
-.quota-loading {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    border: 2px solid #ffffff;
-    border-radius: 50%;
-    border-top-color: transparent;
-    animation: spin 1s ease-in-out infinite;
+/* ===============================================
+   ENHANCED SEARCH INPUT
+   =============================================== */
+
+.select2-search--dropdown .select2-search__field {
+    border: 1px solid #dee2e6;
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    margin: 8px;
+    width: calc(100% - 16px) !important;
 }
 
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+.select2-search--dropdown .select2-search__field:focus {
+    border-color: #3498db;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.25);
 }
 
-/* Hover Effects */
+.select2-results__option--no-results {
+    color: var(--text-muted);
+    text-align: center;
+    padding: var(--spacing-lg);
+    font-style: italic;
+}
+
+/* ===============================================
+   HOVER EFFECTS
+   =============================================== */
+
 .editable-location:hover:not(:disabled) {
     border-color: #3498db;
     transform: translateY(-1px);
@@ -811,160 +812,22 @@ textarea.form-control {
     transform: translateY(-1px);
 }
 
-/* Focus States */
 .livestock-item.editable .form-control:focus {
     border-color: #3498db;
     box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
     transform: translateY(-1px);
 }
-/* File: wwwroot/css/permit/edit-approve.css */
-/* Tambahkan styling untuk enhanced port dropdowns */
 
-/* Enhanced Port Dropdown Styling */
-.select2-container--bootstrap-5 .select2-selection--single {
-    height: calc(2.375rem + 2px);
-    padding: 0.375rem 0.75rem;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
+/* ===============================================
+   LOADING STATES
+   =============================================== */
 
-    .select2-container--bootstrap-5 .select2-selection--single:focus-within {
-        border-color: #3498db;
-        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
-    }
-
-.select2-container--bootstrap-5 .select2-selection__rendered {
-    color: #495057;
-    padding-left: 0;
-    padding-right: 20px;
-}
-
-.select2-container--bootstrap-5 .select2-selection__placeholder {
-    color: #6c757d;
-}
-
-/* Enhanced dropdown results */
-.select2-container--bootstrap-5 .select2-results__option {
-    padding: 8px 12px;
-    border-bottom: 1px solid #f8f9fa;
-}
-
-.select2-container--bootstrap-5 .select2-results__option--highlighted {
-    background-color: #3498db;
-    color: white;
-}
-
-.select2-container--bootstrap-5 .select2-results__option[aria-selected="true"] {
-    background-color: #e9ecef;
-    color: #495057;
-}
-
-/* Loading state for ports */
-.select2-container--bootstrap-5 .select2-results__option--loading {
-    padding: 12px;
-    text-align: center;
-    color: #6c757d;
-}
-
-    .select2-container--bootstrap-5 .select2-results__option--loading:after {
-        content: "";
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        margin-left: 8px;
-        border: 2px solid #6c757d;
-        border-radius: 50%;
-        border-top-color: transparent;
-        animation: spin 1s ease-in-out infinite;
-    }
-
-/* Enhanced port selection feedback */
-.port-selection-feedback {
-    margin-top: 8px;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    display: none;
-}
-
-    .port-selection-feedback.success {
-        background-color: #d4edda;
-        border: 1px solid #c3e6cb;
-        color: #155724;
-    }
-
-    .port-selection-feedback.error {
-        background-color: #f8d7da;
-        border: 1px solid #f5c6cb;
-        color: #721c24;
-    }
-
-    .port-selection-feedback.warning {
-        background-color: #fff3cd;
-        border: 1px solid #ffeaa7;
-        color: #856404;
-    }
-
-/* Port validation indicators */
-.port-valid {
-    border-color: #28a745 !important;
-    background: linear-gradient(to right, #f8fff8, #ffffff);
-}
-
-.port-invalid {
-    border-color: #dc3545 !important;
-    background: linear-gradient(to right, #fff8f8, #ffffff);
-}
-
-/* Enhanced shipping summary for ports */
-.shipping-summary .point-port {
-    font-size: 13px;
-    opacity: 0.9;
-    font-weight: 500;
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 2px 8px;
-    border-radius: 12px;
-    margin-top: 4px;
+.quota-loading {
     display: inline-block;
-}
-
-/* Mobile responsiveness for port dropdowns */
-@media (max-width: 768px) {
-    .select2-container--bootstrap-5 .select2-selection--single {
-        height: calc(2.25rem + 2px);
-        font-size: 14px;
-    }
-
-    .select2-dropdown {
-        font-size: 14px;
-    }
-
-    .select2-container--bootstrap-5 .select2-results__option {
-        padding: 10px 12px;
-    }
-}
-
-/* Enhanced search input in dropdown */
-.select2-search--dropdown .select2-search__field {
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    padding: 6px 12px;
-    margin: 8px;
-    width: calc(100% - 16px) !important;
-}
-
-    .select2-search--dropdown .select2-search__field:focus {
-        border-color: #3498db;
-        outline: none;
-        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.25);
-    }
-
-/* No results styling */
-.select2-results__option--no-results {
-    color: #6c757d;
-    text-align: center;
-    padding: 16px;
-    font-style: italic;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ffffff;
+    border-radius: var(--radius-circle);
+    border-top-color: transparent;
+    animation: spin 1s ease-in-out infinite;
 }

@@ -1173,23 +1173,7 @@
                 });
             }
 
-            function loadProvinces() {
-                console.log('Loading provinces...');
-                $.get('/Location/GetProvinces', function(response) {
-                    console.log('Provinces response:', response);
-                    const provinces = response.data || response;
-                    if (Array.isArray(provinces)) {
-                        const options = provinces.map(province =>
-                            `<option value="${province.code}">${province.name}</option>`
-                        );
-                        $('#originProvinceSelect, #destinationProvinceSelect').append(options.join(''));
-                        console.log('Provinces loaded successfully');
-                    }
-                }).fail(function(xhr, status, error) {
-                    console.error('Failed to load provinces:', error);
-                    showNotification('error', 'Gagal memuat data provinsi. Silakan refresh halaman.');
-                });
-            }
+
 
             function loadRegencies(provinceId, targetSelect) {
                 const $target = $(targetSelect);
@@ -1202,7 +1186,7 @@
                     let options = '<option value="">Pilih Kabupaten/Kota</option>';
                     if (Array.isArray(regencies)) {
                         options += regencies.map(regency =>
-                            `<option value="${regency.code}">${regency.name}</option>`
+                            `<option value="${regency.code}|${regency.name}">${regency.name}</option>`
                         ).join('');
                     }
                     $target.html(options).prop('disabled', false).trigger('change');
@@ -1413,7 +1397,8 @@
             function setupEventListeners() {
                 let originProvinceTimeout;
                 $('#originProvinceSelect').on('change', function() {
-                    const provinceId = $(this).val();
+                    const selectedProvince = $(this).val();
+                    const provinceId = selectedProvince ? selectedProvince.split('|')[0] : '';
                     console.log('Origin province changed to:', provinceId);
 
                     clearTimeout(originProvinceTimeout);
@@ -1437,7 +1422,8 @@
 
                 let destinationProvinceTimeout;
                 $('#destinationProvinceSelect').on('change', function() {
-                    const provinceId = $(this).val();
+                    const selectedProvince = $(this).val();
+                    const provinceId = selectedProvince ? selectedProvince.split('|')[0] : '';
                     console.log('Destination province changed to:', provinceId);
 
                     clearTimeout(destinationProvinceTimeout);
@@ -1490,7 +1476,8 @@
 
             function monitorOriginProvince() {
                 $('#originProvinceSelect').on('change', function() {
-                    originProvinceCode = $(this).val();
+                    const selectedProvince = $(this).val();
+                    originProvinceCode = selectedProvince ? selectedProvince.split('|')[0] : '';
                     if (originProvinceCode) {
                         loadQuotaInfo(originProvinceCode);
                         refreshAllQuotaValidations();
@@ -2002,24 +1989,7 @@
             }, 5000);
         }
 
-        // ===============================================
-        // INTEGRATION WITH MAIN FORM INITIALIZATION
-        // ===============================================
 
-        function loadProvincesForBothForms() {
-            $.get('/Location/GetProvinces', function(response) {
-                const provinces = response.data || response;
-                if (Array.isArray(provinces)) {
-                    const options = provinces.map(province =>
-                        `<option value="${province.code}|${province.name}">${province.name}</option>`
-                    );
-
-                    $('#originProvinceSelect, #destinationProvinceSelect, #companyProvinceSelect, #individualProvinceSelect').append(options.join(''));
-                }
-            }).fail(function(xhr, status, error) {
-                showNotification('error', 'Gagal memuat data provinsi. Silakan refresh halaman.');
-            });
-        }
 
             function showQuantityFeedback(index, type, message) {
                 const $feedback = $(`.quantity-feedback[data-index="${index}"]`);
@@ -2229,6 +2199,26 @@
             // ===============================================
             // INITIALIZATION CALLS
             // ===============================================
+            // Consolidated province loading to prevent duplicates
+            function loadAllProvinces() {
+                console.log('Loading provinces for all dropdowns...');
+                $.get('/Location/GetProvinces', function(response) {
+                    console.log('Provinces response:', response);
+                    const provinces = response.data || response;
+                    if (Array.isArray(provinces)) {
+                        const options = provinces.map(province =>
+                            `<option value="${province.code}|${province.name}">${province.name}</option>`
+                        );
+                        
+                        // Load provinces for all dropdowns in one call
+                        $('#originProvinceSelect, #destinationProvinceSelect, #companyProvinceSelect, #individualProvinceSelect').append(options.join(''));
+                        console.log('Provinces loaded successfully for all dropdowns');
+                    }
+                }).fail(function(xhr, status, error) {
+                    console.error('Failed to load provinces:', error);
+                    showNotification('error', 'Gagal memuat data provinsi. Silakan refresh halaman.');
+                });
+            }
 
             initializeAllSelect2();
             setupEventListeners();
@@ -2236,22 +2226,12 @@
             setupLivestockTypeHandler();
             setupQuantityHandler();
             updateSummary();
-            loadProvincesForBothForms();
+            
+            // Single call to load all provinces
+            loadAllProvinces();
 
             initializeApplicantTypeSelection();
             setupIndividualFormHandlers();
-
-            loadProvinces();
-
-            $.get('/Location/GetProvinces', function(response) {
-                const provinces = response.data || response;
-                if (Array.isArray(provinces)) {
-                    const options = provinces.map(province =>
-                        `<option value="${province.code}|${province.name}">${province.name}</option>`
-                    );
-                    $('#companyProvinceSelect').append(options.join(''));
-                }
-            });
         });
     </script>
 }
