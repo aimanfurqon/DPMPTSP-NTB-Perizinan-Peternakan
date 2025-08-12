@@ -1040,18 +1040,6 @@ namespace PerizinanPeternakan.Controllers
                         Console.WriteLine("✅ IndividualAddress validation passed");
                     }
 
-                    // If individual validation passes, map to company fields
-                    if (string.IsNullOrWhiteSpace(model.IndividualName) == false && 
-                        string.IsNullOrWhiteSpace(model.IndividualProvince) == false && 
-                        string.IsNullOrWhiteSpace(model.IndividualRegency) == false && 
-                        string.IsNullOrWhiteSpace(model.IndividualAddress) == false)
-                    {
-                        model.CompanyName = model.IndividualName.Trim();
-                        model.CompanyAddress = $"{model.IndividualAddress.Trim()}, {model.IndividualRegency.Trim()}, {model.IndividualProvince.Trim()}";
-                        model.CompanyProvince = model.IndividualProvince.Trim();
-                        model.CompanyRegency = model.IndividualRegency.Trim();
-                        Console.WriteLine($"✅ Individual data mapped - Name: '{model.CompanyName}', Address: '{model.CompanyAddress}'");
-                    }
                 }
                 else if (model.ApplicantType == "Company")
                 {
@@ -1185,8 +1173,12 @@ namespace PerizinanPeternakan.Controllers
                 {
                     ApplicationNumber = applicationNumber,
                     UserId = userId.Value,
-                    CompanyName = model.CompanyName.Trim(),
-                    CompanyAddress = model.CompanyAddress.Trim(),
+                    CompanyName = model.ApplicantType == "Individual"
+                        ? model.IndividualName?.Trim()
+                        : model.CompanyName?.Trim(),
+                    CompanyAddress = model.ApplicantType == "Individual"
+                        ? model.IndividualAddress?.Trim()
+                        : model.CompanyAddress?.Trim(),
                     OriginLocation = model.OriginLocation.Trim(),
                     DestinationLocation = model.DestinationLocation.Trim(),
                     DeparturePort = model.DeparturePort.Trim(),
@@ -1302,8 +1294,8 @@ namespace PerizinanPeternakan.Controllers
                         ToStatus = PermitStatus.Submitted,
                         Action = "Submit",
                         Comments = model.ApplicantType == "Individual"
-                            ? $"Permohonan izin diajukan oleh pemohon perorangan: {model.IndividualName}"
-                            : $"Permohonan izin diajukan oleh perusahaan: {model.CompanyName}",
+                            ? $"Permohonan izin diajukan oleh pemohon perorangan: {model.IndividualName?.Trim()}"
+                            : $"Permohonan izin diajukan oleh perusahaan: {model.CompanyName?.Trim()}",
                         ActionDate = DateTime.Now
                     };
 
@@ -1335,7 +1327,9 @@ namespace PerizinanPeternakan.Controllers
                 // STEP 13: SUCCESS
                 // ===============================================
                 var applicantTypeText = model.ApplicantType == "Individual" ? "perorangan" : "perusahaan";
-                var applicantName = model.ApplicantType == "Individual" ? model.IndividualName : model.CompanyName;
+                var applicantName = model.ApplicantType == "Individual"
+                    ? model.IndividualName?.Trim()
+                    : model.CompanyName?.Trim();
 
                 TempData["SuccessMessage"] = $"Permohonan izin berhasil diajukan dengan nomor {applicationNumber}. " +
                                            $"Pemohon: {applicantName} ({applicantTypeText}). " +
