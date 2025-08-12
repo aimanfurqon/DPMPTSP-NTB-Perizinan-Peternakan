@@ -925,7 +925,7 @@ namespace PerizinanPeternakan.Controllers
                 // ===============================================
                 if (string.IsNullOrEmpty(model.ApplicantType))
                 {
-                    model.ApplicantType = "Company";
+                    ModelState.AddModelError("ApplicantType", "Tipe pemohon harus dipilih");
                 }
 
                 Console.WriteLine($"🔍 ApplicantType: '{model.ApplicantType}'");
