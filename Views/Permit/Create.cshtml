@@ -104,7 +104,7 @@
                             <div class="applicant-type-selection">
                                 <div class="radio-group">
                                     <div class="radio-item">
-                                        <input type="radio" id="individual" name="ApplicantType" value="Individual" class="form-radio" />
+                                        <input asp-for="ApplicantType" type="radio" id="individual" value="Individual" class="form-radio" />
                                         <label for="individual" class="radio-label">
                                             <div class="radio-content">
                                                 <i class="fas fa-user"></i>
@@ -114,7 +114,7 @@
                                         </label>
                                     </div>
                                     <div class="radio-item">
-                                        <input type="radio" id="company" name="ApplicantType" value="Company" class="form-radio" checked />
+                                        <input asp-for="ApplicantType" type="radio" id="company" value="Company" class="form-radio" />
                                         <label for="company" class="radio-label">
                                             <div class="radio-content">
                                                 <i class="fas fa-building"></i>
@@ -124,6 +124,7 @@
                                         </label>
                                     </div>
                                 </div>
+                                <span asp-validation-for="ApplicantType" class="text-danger"></span>
                             </div>
                         </div>
 

@@ -19,8 +19,9 @@ namespace PerizinanPeternakan.ViewModels
         [Display(Name = "Nama Dokumen Opsional")]
         public string? DokumenOpsionalNama { get; set; }
 
+        [Required(ErrorMessage = "Tipe pemohon harus dipilih")]
         [Display(Name = "Tipe Pemohon")]
-        public string ApplicantType { get; set; } = "Company"; 
+        public string? ApplicantType { get; set; }
 
         [Display(Name = "Provinsi Asal")]
         public int? OriginProvinceId { get; set; }
