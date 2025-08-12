@@ -36,15 +36,28 @@ namespace PerizinanPeternakan.Services
             {
                 _logger.LogInformation("Starting document upload process for permit ID: {PermitId}", permitId);
 
-                var documentsToUpload = GetDocumentsToUpload(model);
-
-                // Create upload directory if it doesn't exist
+                // Ensure upload directory exists
                 var uploadsPath = Path.Combine(_environment.WebRootPath, "documents", "supporting");
-                if (!Directory.Exists(uploadsPath))
+                try
                 {
-                    Directory.CreateDirectory(uploadsPath);
-                    _logger.LogInformation("Created upload directory: {UploadsPath}", uploadsPath);
+                    if (!Directory.Exists(uploadsPath))
+                    {
+                        Directory.CreateDirectory(uploadsPath);
+                        _logger.LogInformation("Created upload directory: {UploadsPath}", uploadsPath);
+                    }
                 }
+                catch (Exception dirEx)
+                {
+                    _logger.LogError(dirEx, "Failed to create upload directory: {UploadsPath}", uploadsPath);
+                    return new DocumentUploadResult
+                    {
+                        Success = false,
+                        ErrorMessage = "Gagal membuat direktori upload. Pastikan aplikasi memiliki izin menulis ke direktori.",
+                        UploadedCount = 0
+                    };
+                }
+
+                var documentsToUpload = GetDocumentsToUpload(model);
 
                 int uploadedCount = 0;
                 var uploadedDocuments = new List<PermitDocument>();
@@ -231,46 +244,67 @@ namespace PerizinanPeternakan.Services
         public DocumentValidationResult ValidateAllRequiredDocuments(PermitApplicationViewModel model)
         {
             var errors = new List<string>();
-            var requiredDocuments = new[]
+            
+            try
             {
-                (model.SuratPermohonan, "Surat Permohonan"),
-                (model.RekomendasiDinasProv, "Rekomendasi Dinas Peternakan Provinsi NTB"),
-                (model.RekomendasiDaerahTujuan, "Rekomendasi Pemasukan Ternak dari Daerah Tujuan"),
-                (model.SKKHKabupatenAsal, "SKKH dari Kabupaten Asal"),
-                (model.SKKHDinasProvinsi, "SKKH dari Dinas Peternakan Provinsi NTB"),
-                (model.SuratJalanTernak, "Surat Keterangan Jalan Ternak/Rekomendasi Asal"),
-                (model.HasilPemeriksaanFisik, "Hasil Pemeriksaan Fisik (Holding Ground)")
-            };
-
-            int missingCount = 0;
-
-            foreach (var (file, documentName) in requiredDocuments)
-            {
-                if (file == null || file.Length == 0)
+                var requiredDocuments = new[]
                 {
-                    errors.Add($"{documentName} wajib diupload");
-                    missingCount++;
-                }
-                else
+                    (model.SuratPermohonan, "Surat Permohonan"),
+                    (model.RekomendasiDinasProv, "Rekomendasi Dinas Peternakan Provinsi NTB"),
+                    (model.RekomendasiDaerahTujuan, "Rekomendasi Pemasukan Ternak dari Daerah Tujuan"),
+                    (model.SKKHKabupatenAsal, "SKKH dari Kabupaten Asal"),
+                    (model.SKKHDinasProvinsi, "SKKH dari Dinas Peternakan Provinsi NTB"),
+                    (model.SuratJalanTernak, "Surat Keterangan Jalan Ternak/Rekomendasi Asal"),
+                    (model.HasilPemeriksaanFisik, "Hasil Pemeriksaan Fisik (Holding Ground)")
+                };
+
+                int missingCount = 0;
+
+                foreach (var (file, documentName) in requiredDocuments)
                 {
-                    var fileValidation = ValidateUploadedFile(file);
-                    if (!fileValidation.IsValid)
+                    if (file == null || file.Length == 0)
                     {
-                        errors.Add($"{documentName}: {string.Join(", ", fileValidation.Errors)}");
+                        errors.Add($"{documentName} wajib diupload");
+                        missingCount++;
+                    }
+                    else
+                    {
+                        try
+                        {
+                            var fileValidation = ValidateUploadedFile(file);
+                            if (!fileValidation.IsValid)
+                            {
+                                errors.Add($"{documentName}: {string.Join(", ", fileValidation.Errors)}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Error validating file {DocumentName}", documentName);
+                            errors.Add($"{documentName}: Terjadi kesalahan saat validasi file");
+                        }
                     }
                 }
-            }
 
-            if (missingCount > 0)
-            {
-                errors.Insert(0, $"Total dokumen yang belum diupload: {missingCount} dari {requiredDocuments.Length}");
-            }
+                if (missingCount > 0)
+                {
+                    errors.Insert(0, $"Total dokumen yang belum diupload: {missingCount} dari {requiredDocuments.Length}");
+                }
 
-            return new DocumentValidationResult
+                return new DocumentValidationResult
+                {
+                    IsValid = errors.Count == 0,
+                    Errors = errors
+                };
+            }
+            catch (Exception ex)
             {
-                IsValid = errors.Count == 0,
-                Errors = errors
-            };
+                _logger.LogError(ex, "Error in ValidateAllRequiredDocuments");
+                return new DocumentValidationResult
+                {
+                    IsValid = false,
+                    Errors = new List<string> { "Terjadi kesalahan saat validasi dokumen" }
+                };
+            }
         }
 
         public DocumentValidationResult ValidateDocumentDetails(PermitApplicationViewModel model)

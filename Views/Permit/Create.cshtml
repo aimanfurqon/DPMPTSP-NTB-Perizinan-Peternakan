@@ -137,6 +137,8 @@
                                     </label>
                                     <input asp-for="CompanyName" class="form-control" placeholder="Contoh: CV. DENA BERSAUDARA" />
                                     <span asp-validation-for="CompanyName" class="text-danger"></span>
+                                    <!-- Debug info -->
+                                    <small class="form-text text-muted" id="companyNameDebug">Debug: Field ID = "CompanyName", Name = "CompanyName"</small>
                                 </div>
 
                                 <!-- ALAMAT PERUSAHAAN LENGKAP dengan dropdown spesifik -->
@@ -290,10 +292,10 @@
                                     Asal Ternak
                                 </label>
                                 <div class="location-dropdown">
-                                    <select id="originProvinceSelect" class="form-control select2-province" style="margin-bottom: 10px; width: 100%;">
+                                    <select id="originProvinceSelect" class="form-control select2-province">
                                         <option value="">Pilih Provinsi</option>
                                     </select>
-                                    <select id="originRegencySelect" class="form-control select2-regency" disabled style="width: 100%;">
+                                    <select id="originRegencySelect" class="form-control select2-regency" disabled>
                                         <option value="">Pilih Kabupaten/Kota</option>
                                     </select>
                                 </div>
@@ -308,10 +310,10 @@
                                     Tujuan Pengiriman
                                 </label>
                                 <div class="location-dropdown">
-                                    <select id="destinationProvinceSelect" class="form-control select2-province" style="margin-bottom: 10px; width: 100%;">
+                                    <select id="destinationProvinceSelect" class="form-control select2-province">
                                         <option value="">Pilih Provinsi</option>
                                     </select>
-                                    <select id="destinationRegencySelect" class="form-control select2-regency" disabled style="width: 100%;">
+                                    <select id="destinationRegencySelect" class="form-control select2-regency" disabled>
                                         <option value="">Pilih Kabupaten/Kota</option>
                                     </select>
                                 </div>

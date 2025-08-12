@@ -24,6 +24,408 @@
 }
 
 /* ===============================================
+   LOCATION DROPDOWN STYLES (STEP 2)
+   =============================================== */
+
+.location-dropdown {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem !important;
+}
+
+.location-dropdown select {
+    margin-bottom: 0 !important;
+}
+
+.location-dropdown select:first-child {
+    margin-bottom: 1rem !important;
+}
+
+/* Ensure proper spacing between form groups in step 2 */
+.form-step[data-step="2"] .form-group {
+    margin-bottom: 2rem !important;
+}
+
+.form-step[data-step="2"] .form-group:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Add spacing between form groups in the grid */
+.form-step[data-step="2"] .form-grid {
+    gap: 2rem !important;
+}
+
+/* Ensure proper spacing for port selection dropdowns */
+.form-step[data-step="2"] .form-group .form-control {
+    margin-bottom: 0.5rem !important;
+}
+
+/* Add visual separation between location and port sections */
+.form-step[data-step="2"] .form-group:nth-child(3),
+.form-step[data-step="2"] .form-group:nth-child(4) {
+    margin-top: 1.5rem !important;
+    padding-top: 1.5rem !important;
+    border-top: 1px solid var(--border-light);
+}
+
+/* Improve spacing for help text */
+.form-step[data-step="2"] .form-text {
+    margin-top: 0.5rem !important;
+    padding-top: 0.5rem !important;
+}
+
+/* Select2 dropdown styling for step 2 */
+.form-step[data-step="2"] .select2-container {
+    width: 100% !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.form-step[data-step="2"] .select2-container--bootstrap-5 .select2-selection {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+}
+
+.form-step[data-step="2"] .select2-container--bootstrap-5 .select2-selection--single {
+    padding: 0.5rem 0.75rem;
+}
+
+.form-step[data-step="2"] .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+    padding: 0;
+    line-height: 1.5;
+}
+
+.form-step[data-step="2"] .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+    height: 100%;
+    right: 0.75rem;
+}
+
+/* Ensure proper spacing between form sections */
+.form-step[data-step="2"] .form-body {
+    padding: 1.5rem !important;
+}
+
+/* Add visual grouping for location fields */
+.form-step[data-step="2"] .form-group:nth-child(1),
+.form-step[data-step="2"] .form-group:nth-child(2) {
+    background: var(--light-bg);
+    padding: 1.5rem !important;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
+}
+
+/* Override any conflicting Select2 styles */
+.form-step[data-step="2"] .select2-container + .select2-container {
+    margin-top: 1rem !important;
+}
+
+/* Ensure proper spacing for form labels */
+.form-step[data-step="2"] .form-label {
+    margin-bottom: 0.75rem !important;
+    display: block !important;
+}
+
+/* Add extra spacing for validation messages */
+.form-step[data-step="2"] .text-danger {
+    margin-top: 0.25rem !important;
+    display: block !important;
+}
+
+/* Additional Select2 spacing fixes */
+.form-step[data-step="2"] .location-dropdown .select2-container {
+    margin-bottom: 1rem !important;
+}
+
+.form-step[data-step="2"] .location-dropdown .select2-container:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Override Bootstrap form-control spacing */
+.form-step[data-step="2"] .form-control {
+    margin-bottom: 0 !important;
+}
+
+/* Ensure proper spacing for form groups */
+.form-step[data-step="2"] .form-group {
+    padding-bottom: 1rem !important;
+}
+
+.form-step[data-step="2"] .form-group:last-child {
+    padding-bottom: 0 !important;
+}
+
+/* Force spacing between dropdowns */
+.form-step[data-step="2"] .location-dropdown > * {
+    margin-bottom: 1rem !important;
+}
+
+.form-step[data-step="2"] .location-dropdown > *:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Ensure proper spacing for help text */
+.form-step[data-step="2"] .form-text {
+    margin-top: 0.75rem !important;
+    padding-top: 0.5rem !important;
+    border-top: 1px solid #f0f0f0;
+}
+
+/* Add visual separation for port sections */
+.form-step[data-step="2"] .form-group:nth-child(3) {
+    margin-top: 2rem !important;
+    padding-top: 2rem !important;
+    border-top: 2px solid #e9ecef;
+}
+
+.form-step[data-step="2"] .form-group:nth-child(4) {
+    margin-top: 1rem !important;
+}
+
+/* High specificity overrides for step 2 */
+div.form-step[data-step="2"] .location-dropdown {
+    gap: 1rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+div.form-step[data-step="2"] .location-dropdown select {
+    margin-bottom: 1rem !important;
+}
+
+div.form-step[data-step="2"] .location-dropdown select:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Override any Bootstrap or Select2 margin resets */
+div.form-step[data-step="2"] .form-group .form-control,
+div.form-step[data-step="2"] .form-group .select2-container {
+    margin-bottom: 0.5rem !important;
+}
+
+div.form-step[data-step="2"] .form-group .form-control:last-child,
+div.form-step[data-step="2"] .form-group .select2-container:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Ensure proper spacing for the entire step 2 form */
+div.form-step[data-step="2"] .form-body .form-grid {
+    gap: 2rem !important;
+}
+
+div.form-step[data-step="2"] .form-body .form-grid .form-group {
+    margin-bottom: 2rem !important;
+}
+
+div.form-step[data-step="2"] .form-body .form-grid .form-group:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Force spacing with maximum specificity */
+div.form-step[data-step="2"] .form-body .form-grid .form-group .location-dropdown {
+    gap: 1rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+div.form-step[data-step="2"] .form-body .form-grid .form-group .location-dropdown > * {
+    margin-bottom: 1rem !important;
+}
+
+div.form-step[data-step="2"] .form-body .form-grid .form-group .location-dropdown > *:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Override any potential margin resets */
+div.form-step[data-step="2"] .form-body .form-grid .form-group .location-dropdown select,
+div.form-step[data-step="2"] .form-body .form-grid .form-group .location-dropdown .select2-container {
+    margin-bottom: 1rem !important;
+}
+
+div.form-step[data-step="2"] .form-body .form-grid .form-group .location-dropdown select:last-child,
+div.form-step[data-step="2"] .form-body .form-grid .form-group .location-dropdown .select2-container:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Ensure form groups have proper spacing */
+div.form-step[data-step="2"] .form-body .form-grid .form-group {
+    padding-bottom: 1rem !important;
+    margin-bottom: 2rem !important;
+}
+
+div.form-step[data-step="2"] .form-body .form-grid .form-group:last-child {
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Add visual separation for port sections */
+div.form-step[data-step="2"] .form-body .form-grid .form-group:nth-child(3) {
+    margin-top: 2rem !important;
+    padding-top: 2rem !important;
+    border-top: 2px solid #e9ecef !important;
+}
+
+div.form-step[data-step="2"] .form-body .form-grid .form-group:nth-child(4) {
+    margin-top: 1rem !important;
+}
+
+/* Prevent any global resets from affecting step 2 spacing */
+div.form-step[data-step="2"] * {
+    box-sizing: border-box !important;
+}
+
+/* Ensure location dropdowns maintain spacing */
+div.form-step[data-step="2"] .location-dropdown {
+    gap: 1rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+div.form-step[data-step="2"] .location-dropdown > * {
+    margin: 0 0 1rem 0 !important;
+    padding: 0 !important;
+}
+
+div.form-step[data-step="2"] .location-dropdown > *:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Override any potential CSS resets */
+div.form-step[data-step="2"] .form-group {
+    margin: 0 0 2rem 0 !important;
+    padding: 0 0 1rem 0 !important;
+}
+
+div.form-step[data-step="2"] .form-group:last-child {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* Ensure form controls don't have conflicting margins */
+div.form-step[data-step="2"] .form-control,
+div.form-step[data-step="2"] .select2-container {
+    margin: 0 !important;
+}
+
+/* Add specific spacing for help text */
+div.form-step[data-step="2"] .form-text {
+    margin: 0.75rem 0 0 0 !important;
+    padding: 0.5rem 0 0 0 !important;
+    border-top: 1px solid #f0f0f0 !important;
+}
+
+/* Force spacing between dropdowns with maximum specificity */
+div.form-step[data-step="2"] .form-body .form-grid .form-group .location-dropdown select,
+div.form-step[data-step="2"] .form-body .form-grid .form-group .location-dropdown .select2-container {
+    margin-bottom: 1rem !important;
+    display: block !important;
+}
+
+div.form-step[data-step="2"] .form-body .form-grid .form-group .location-dropdown select:last-child,
+div.form-step[data-step="2"] .form-body .form-grid .form-group .location-dropdown .select2-container:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Ensure proper spacing for form labels */
+div.form-step[data-step="2"] .form-body .form-grid .form-group .form-label {
+    margin-bottom: 0.75rem !important;
+    display: block !important;
+}
+
+/* Add spacing for validation messages */
+div.form-step[data-step="2"] .form-body .form-grid .form-group .text-danger {
+    margin-top: 0.25rem !important;
+    display: block !important;
+}
+
+/* Ensure proper spacing for hidden inputs */
+div.form-step[data-step="2"] .form-body .form-grid .form-group input[type="hidden"] {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Debug styles for CompanyName field */
+#companyNameDebug {
+    font-size: 0.75rem !important;
+    color: #6c757d !important;
+    margin-top: 0.25rem !important;
+    display: block !important;
+}
+
+/* Ensure CompanyName field is visible and properly styled */
+[name="CompanyName"] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 38px !important;
+}
+
+/* Highlight CompanyName field for debugging */
+[name="CompanyName"]:focus {
+    border-color: #007bff !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+}
+
+/* Ensure form validation styles are applied */
+[name="CompanyName"].is-valid {
+    border-color: #28a745 !important;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+}
+
+[name="CompanyName"].is-invalid {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+/* Override any global Select2 styles that might affect spacing */
+div.form-step[data-step="2"] .select2-container {
+    margin-bottom: 1rem !important;
+    display: block !important;
+    width: 100% !important;
+}
+
+div.form-step[data-step="2"] .select2-container:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Ensure Select2 dropdowns in location dropdowns have proper spacing */
+div.form-step[data-step="2"] .location-dropdown .select2-container {
+    margin-bottom: 1rem !important;
+}
+
+div.form-step[data-step="2"] .location-dropdown .select2-container:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Override any Bootstrap or other framework styles */
+div.form-step[data-step="2"] .form-control,
+div.form-step[data-step="2"] select,
+div.form-step[data-step="2"] .select2-container {
+    margin-bottom: 0.5rem !important;
+}
+
+div.form-step[data-step="2"] .form-control:last-child,
+div.form-step[data-step="2"] select:last-child,
+div.form-step[data-step="2"] .select2-container:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Force proper spacing for all elements in location dropdowns */
+div.form-step[data-step="2"] .location-dropdown > * {
+    margin-bottom: 1rem !important;
+}
+
+div.form-step[data-step="2"] .location-dropdown > *:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* ===============================================
    APPLICANT TYPE SELECTION
    =============================================== */
 

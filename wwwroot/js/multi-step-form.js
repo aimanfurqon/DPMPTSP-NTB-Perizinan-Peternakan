@@ -315,8 +315,26 @@ function validateCompanyForm(errors) {
     // Clear previous validation state for individual form
     clearFormValidation('#individualForm');
 
+    // Check if applicant type is actually Company
+    const applicantType = $('input[name="ApplicantType"]:checked').val();
+    if (applicantType !== 'Company') {
+        console.log('⚠️ Skipping CompanyName validation - applicant type is not Company');
+        return true; // Skip validation if not Company
+    }
+
     // Validasi nama perusahaan
     const companyName = $('[name="CompanyName"]').val()?.trim();
+    console.log('🔍 CompanyName field value:', companyName);
+    console.log('🔍 CompanyName field element:', $('[name="CompanyName"]')[0]);
+    console.log('🔍 CompanyName field exists:', $('[name="CompanyName"]').length > 0);
+    console.log('🔍 CompanyName field name attribute:', $('[name="CompanyName"]').attr('name'));
+    console.log('🔍 CompanyName field id attribute:', $('[name="CompanyName"]').attr('id'));
+    console.log('🔍 CompanyName field is visible:', $('[name="CompanyName"]').is(':visible'));
+    console.log('🔍 CompanyName field is enabled:', !$('[name="CompanyName"]').prop('disabled'));
+    
+    // Update debug info
+    $('#companyNameDebug').text(`Debug: Field value = "${companyName}"`);
+    
     if (!companyName) {
         $('[name="CompanyName"]').addClass('is-invalid');
         errors.push('Nama perusahaan harus diisi');
@@ -374,6 +392,13 @@ function validateIndividualForm(errors) {
 
     // Clear previous validation state for company form
     clearFormValidation('#companyForm');
+
+    // Check if applicant type is actually Individual
+    const applicantType = $('input[name="ApplicantType"]:checked').val();
+    if (applicantType !== 'Individual') {
+        console.log('⚠️ Skipping IndividualName validation - applicant type is not Individual');
+        return true; // Skip validation if not Individual
+    }
 
     // Validasi nama lengkap
     const individualName = $('[name="IndividualName"]').val()?.trim();
@@ -1024,6 +1049,30 @@ function initializeEventHandlers() {
     $('#permitForm').on('submit', function (e) {
         console.log('📤 Form submission initiated...');
 
+        // Debug: Log all form data before submission
+        console.log('🔍 DEBUG - Form data before submission:');
+        const formData = new FormData(this);
+        for (let [key, value] of formData.entries()) {
+            console.log(`  ${key}: '${value}'`);
+        }
+
+        // Debug: Log specific fields
+        console.log('🔍 DEBUG - Specific field values:');
+        console.log('  CompanyName:', $('[name="CompanyName"]').val());
+        console.log('  ApplicantType:', $('input[name="ApplicantType"]:checked').val());
+        console.log('  CompanyProvince:', $('[name="CompanyProvince"]').val());
+        console.log('  CompanyRegency:', $('[name="CompanyRegency"]').val());
+        console.log('  AddressStreet:', $('[name="AddressStreet"]').val());
+
+        // Debug: Check if CompanyName field exists and has value
+        const companyNameField = $('[name="CompanyName"]');
+        console.log('🔍 DEBUG - CompanyName field check:');
+        console.log('  Field exists:', companyNameField.length > 0);
+        console.log('  Field value:', companyNameField.val());
+        console.log('  Field trimmed value:', companyNameField.val()?.trim());
+        console.log('  Field is visible:', companyNameField.is(':visible'));
+        console.log('  Field is enabled:', !companyNameField.prop('disabled'));
+
         // Final validation check
         if (!validateAllSteps()) {
             e.preventDefault();
@@ -1054,6 +1103,8 @@ function initializeEventHandlers() {
                 showStep(1); // Navigate back to step 1
                 return false;
             }
+            
+            console.log('✅ Individual form validation passed');
         } else if (applicantType === 'Company') {
             const companyName = $('input[name="CompanyName"]').val();
             const companyProvince = $('input[name="CompanyProvince"]').val();
@@ -1068,11 +1119,21 @@ function initializeEventHandlers() {
                 showStep(1); // Navigate back to step 1
                 return false;
             }
+            
+            console.log('✅ Company form validation passed');
         }
 
         // Show loading state
         $('#submitBtn').html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...').prop('disabled', true);
         showAlert('Sedang memproses permohonan...', 'info');
+
+        // Debug form data before submission
+        console.log('🔍 Form data before submission:');
+        console.log('CompanyName:', $('[name="CompanyName"]').val());
+        console.log('ApplicantType:', $('input[name="ApplicantType"]:checked').val());
+        console.log('CompanyProvince:', $('[name="CompanyProvince"]').val());
+        console.log('CompanyRegency:', $('[name="CompanyRegency"]').val());
+        console.log('AddressStreet:', $('[name="AddressStreet"]').val());
 
         console.log('✅ Form validation passed, proceeding with submission...');
     });
@@ -1081,6 +1142,47 @@ function initializeEventHandlers() {
     $('input, textarea, select').on('blur', function () {
         validateField($(this));
     });
+
+    // Monitor CompanyName field specifically - only when applicant type is Company
+    $('[name="CompanyName"]').on('input change blur', function() {
+        const applicantType = $('input[name="ApplicantType"]:checked').val();
+        const value = $(this).val()?.trim();
+        
+        // Only validate CompanyName if applicant type is Company
+        if (applicantType === 'Company') {
+            console.log('🔍 CompanyName field changed:', value);
+            $('#companyNameDebug').text(`Debug: Field value = "${value}"`);
+            
+            if (value) {
+                $(this).removeClass('is-invalid').addClass('is-valid');
+                console.log('✅ CompanyName field is valid');
+            } else {
+                $(this).removeClass('is-valid').addClass('is-invalid');
+                console.log('❌ CompanyName field is invalid');
+            }
+        } else {
+            // Clear validation for Individual applicant type
+            $(this).removeClass('is-invalid is-valid');
+            $('#companyNameDebug').text('Debug: Not required for Individual applicant');
+        }
+    });
+
+    // Additional monitoring for all form fields
+    $('input, textarea, select').on('change', function() {
+        const fieldName = $(this).attr('name');
+        const fieldValue = $(this).val();
+        console.log(`🔍 Field changed - ${fieldName}: '${fieldValue}'`);
+    });
+
+    // Remove auto-fill for CompanyName field to prevent validation issues
+    // setTimeout(function() {
+    //     const companyNameField = $('[name="CompanyName"]');
+    //     if (companyNameField.length > 0 && !companyNameField.val()) {
+    //         console.log('🔧 Setting default value for CompanyName field');
+    //         companyNameField.val('Test Company Name');
+    //         companyNameField.trigger('change');
+    //     }
+    // }, 1000);
 
     // Keyboard shortcuts
     $(document).on('keydown', function (e) {

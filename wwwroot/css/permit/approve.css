@@ -486,3 +486,1271 @@
         margin-bottom: var(--spacing-lg);
     }
 }
+
+/* ===============================================
+   VERIFIKATOR DOCUMENT VIEW
+   ===============================================
+   Special styling for verifikator role - focused on PDF preview
+*/
+
+.verifikator-documents-view {
+    margin-top: var(--spacing-lg);
+}
+
+.documents-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.document-preview-card {
+    background: var(--white);
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    transition: var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+.document-preview-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.document-preview-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    opacity: 0;
+    transition: var(--transition-normal);
+}
+
+.document-preview-card:hover::before {
+    opacity: 1;
+}
+
+.document-preview-header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.document-preview-header .document-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-lg);
+    background: var(--light-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.document-preview-header .document-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.document-preview-header .document-info h4 {
+    margin: 0 0 var(--spacing-sm) 0;
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--text-dark);
+    line-height: 1.3;
+}
+
+.document-preview-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.btn-preview {
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    transition: var(--transition-normal);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    min-height: 48px;
+}
+
+.btn-preview:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-preview.btn-primary {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--white);
+}
+
+.btn-preview.btn-primary:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.btn-preview.btn-info {
+    background: var(--info-color);
+    border-color: var(--info-color);
+    color: var(--white);
+}
+
+.btn-preview.btn-info:hover {
+    background: var(--info-dark);
+    border-color: var(--info-dark);
+}
+
+.btn-download {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-weight: 500;
+    border-radius: var(--radius-md);
+    transition: var(--transition-normal);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    min-height: 40px;
+}
+
+.btn-download:hover {
+    background: var(--secondary-color);
+    border-color: var(--secondary-color);
+    color: var(--white);
+}
+
+/* Responsive design for verifikator view */
+@media (max-width: 768px) {
+    .documents-preview-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+    
+    .document-preview-card {
+        padding: var(--spacing-md);
+    }
+    
+    .document-preview-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .document-preview-header .document-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+    
+    .document-preview-header .document-info h4 {
+        font-size: var(--font-size-md);
+    }
+    
+    .btn-preview {
+        min-height: 44px;
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+}
+
+/* Enhanced preview modal for verifikator */
+.verifikator-documents-view .modal-xl {
+    max-width: 95vw;
+}
+
+.verifikator-documents-view .preview-container {
+    height: 80vh;
+}
+
+.verifikator-documents-view .preview-frame-container {
+    height: calc(80vh - 60px);
+}
+
+.verifikator-documents-view .preview-frame-container iframe {
+    height: 100%;
+    border-radius: var(--radius-md);
+}
+
+/* Document type indicators for verifikator */
+.document-preview-card .doc-badge {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.document-preview-card .doc-badge.required {
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.document-preview-card .doc-badge.optional {
+    background: linear-gradient(135deg, #d1ecf1, #a8e6cf);
+    color: #0c5460;
+    border: 1px solid #a8e6cf;
+}
+
+/* Loading states for verifikator preview */
+.verifikator-documents-view .loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    gap: var(--spacing-md);
+}
+
+.verifikator-documents-view .loading-spinner p {
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    margin: 0;
+}
+
+/* Success states for verifikator */
+.verifikator-documents-view .document-preview-card.completed {
+    border-color: var(--success-color);
+    background: linear-gradient(135deg, #f8fff9, #ffffff);
+}
+
+.verifikator-documents-view .document-preview-card.completed::before {
+    background: linear-gradient(90deg, var(--success-color), #28a745);
+    opacity: 1;
+}
+
+/* Focus states for accessibility */
+.verifikator-documents-view .btn-preview:focus,
+.verifikator-documents-view .btn-download:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Animation for document cards */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.document-preview-card {
+    animation: slideInUp 0.3s ease-out;
+}
+
+.document-preview-card:nth-child(1) { animation-delay: 0.1s; }
+.document-preview-card:nth-child(2) { animation-delay: 0.2s; }
+.document-preview-card:nth-child(3) { animation-delay: 0.3s; }
+.document-preview-card:nth-child(4) { animation-delay: 0.4s; }
+.document-preview-card:nth-child(5) { animation-delay: 0.5s; }
+.document-preview-card:nth-child(6) { animation-delay: 0.6s; }
+.document-preview-card:nth-child(7) { animation-delay: 0.7s; }
+
+/* Document navigation indicators for verifikator */
+.document-navigation-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    z-index: 10;
+}
+
+.document-navigation-indicator .indicator-number {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+.document-navigation-indicator .indicator-total {
+    opacity: 0.7;
+}
+
+/* Keyboard shortcuts hint for verifikator */
+.verifikator-shortcuts-hint {
+    background: var(--light-bg);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+}
+
+.verifikator-shortcuts-hint h5 {
+    margin: 0 0 var(--spacing-sm) 0;
+    color: var(--text-dark);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+}
+
+.verifikator-shortcuts-hint ul {
+    margin: 0;
+    padding-left: var(--spacing-md);
+}
+
+.verifikator-shortcuts-hint li {
+    margin-bottom: 2px;
+}
+
+.verifikator-shortcuts-hint kbd {
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    padding: 1px 4px;
+    font-size: 10px;
+    font-family: monospace;
+}
+
+/* Enhanced focus states for verifikator */
+.verifikator-documents-view .document-preview-card:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
+}
+
+.verifikator-documents-view .btn-preview:focus {
+    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.3);
+    outline: none;
+}
+
+/* Progress indicator for verifikator */
+.verifikator-progress {
+    background: var(--light-bg);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    border: 1px solid var(--border-light);
+}
+
+.verifikator-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+}
+
+.verifikator-progress-title {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.verifikator-progress-count {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+}
+
+.verifikator-progress-bar {
+    height: 6px;
+    background: var(--border-light);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.verifikator-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+/* Quick actions for verifikator */
+.verifikator-quick-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+    flex-wrap: wrap;
+}
+
+.verifikator-quick-action {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    color: var(--text-dark);
+    text-decoration: none;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    transition: var(--transition-normal);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.verifikator-quick-action:hover {
+    background: var(--primary-color);
+    color: var(--white);
+    border-color: var(--primary-color);
+    text-decoration: none;
+}
+
+.verifikator-quick-action i {
+    font-size: 14px;
+}
+
+/* Document status indicators for verifikator */
+.document-preview-card .document-status-indicator {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--white);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.document-preview-card .document-status-indicator.pending {
+    background: var(--warning-color);
+}
+
+.document-preview-card .document-status-indicator.reviewed {
+    background: var(--success-color);
+}
+
+.document-preview-card .document-status-indicator.required {
+    background: var(--danger-color);
+}
+
+/* Hover effects for verifikator cards */
+.document-preview-card:hover .document-navigation-indicator {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.document-preview-card:hover .document-status-indicator {
+    transform: scale(1.1);
+}
+
+/* Loading animation for verifikator */
+@keyframes verifikatorPulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.verifikator-documents-view .document-preview-card.loading {
+    animation: verifikatorPulse 1.5s ease-in-out infinite;
+}
+
+/* Success animation for verifikator */
+@keyframes verifikatorSuccess {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.verifikator-documents-view .document-preview-card.completed {
+    animation: verifikatorSuccess 0.3s ease-out;
+}
+
+/* ===============================================
+   VERIFIKATOR PDF VIEW
+   ===============================================
+   Special styling for verifikator role - focused on generated PDF
+*/
+
+.verifikator-pdf-section {
+    background: var(--white);
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--shadow-md);
+}
+
+.pdf-section-header {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.pdf-section-header h4 {
+    color: var(--text-dark);
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    margin-bottom: var(--spacing-sm);
+}
+
+.pdf-section-header h4 i {
+    margin-right: var(--spacing-sm);
+    font-size: 1.2em;
+}
+
+.pdf-section-description {
+    color: var(--text-muted);
+    font-size: var(--font-size-md);
+    margin: 0;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.pdf-preview-container {
+    position: relative;
+}
+
+.pdf-preview-frame {
+    background: var(--light-bg);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+}
+
+.pdf-preview-frame iframe {
+    max-width: 100%;
+    border: none;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    background: var(--white);
+}
+
+.pdf-actions {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+}
+
+.pdf-actions .btn {
+    min-width: 200px;
+    padding: var(--spacing-md) var(--spacing-xl);
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    transition: var(--transition-normal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+}
+
+.pdf-actions .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.pdf-actions .btn-primary {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--white);
+}
+
+.pdf-actions .btn-primary:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.pdf-actions .btn-outline-secondary {
+    border-color: var(--secondary-color);
+    color: var(--secondary-color);
+}
+
+.pdf-actions .btn-outline-secondary:hover {
+    background: var(--secondary-color);
+    border-color: var(--secondary-color);
+    color: var(--white);
+}
+
+/* Document List for Reference */
+.verifikator-document-list {
+    background: var(--light-bg);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+}
+
+.verifikator-document-list h5 {
+    color: var(--text-dark);
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin-bottom: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.document-list-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.document-list-item {
+    background: var(--white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    transition: var(--transition-normal);
+}
+
+.document-list-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+}
+
+.document-list-item .document-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    background: var(--light-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.document-list-item .document-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.document-list-item .document-name {
+    display: block;
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: var(--font-size-sm);
+    margin-bottom: 4px;
+    line-height: 1.3;
+}
+
+.document-list-item .document-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.document-list-item .document-badge.required {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.document-list-item .document-badge.optional {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.document-list-item .document-action {
+    flex-shrink: 0;
+}
+
+.document-list-item .document-action .btn {
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    transition: var(--transition-normal);
+}
+
+.document-list-item .document-action .btn:hover {
+    transform: scale(1.1);
+}
+
+/* Responsive design for verifikator PDF view */
+@media (max-width: 768px) {
+    .verifikator-pdf-section {
+        padding: var(--spacing-lg);
+    }
+    
+    .pdf-section-header h4 {
+        font-size: var(--font-size-lg);
+    }
+    
+    .pdf-preview-frame {
+        padding: var(--spacing-md);
+    }
+    
+    .pdf-preview-frame iframe {
+        height: 600px;
+    }
+    
+    .pdf-actions {
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+    
+    .pdf-actions .btn {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .document-list-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .document-list-item {
+        padding: var(--spacing-sm);
+    }
+    
+    .document-list-item .document-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .pdf-preview-frame iframe {
+        height: 500px;
+    }
+    
+    .verifikator-pdf-section {
+        padding: var(--spacing-md);
+    }
+    
+    .pdf-section-header {
+        margin-bottom: var(--spacing-lg);
+    }
+}
+
+/* Loading state for PDF iframe */
+.pdf-preview-frame.loading {
+    position: relative;
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pdf-preview-frame.loading::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-lg);
+}
+
+.pdf-preview-frame.loading::after {
+    content: 'Memuat dokumen PDF...';
+    position: absolute;
+    color: var(--text-muted);
+    font-size: var(--font-size-md);
+    font-weight: 500;
+}
+
+/* Error state for PDF iframe */
+.pdf-preview-frame.error {
+    position: relative;
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff5f5;
+    border: 2px dashed #feb2b2;
+}
+
+.pdf-error-message {
+    text-align: center;
+    color: var(--text-muted);
+    padding: var(--spacing-xl);
+}
+
+.pdf-error-message i {
+    font-size: 3rem;
+    margin-bottom: var(--spacing-md);
+    display: block;
+}
+
+.pdf-error-message p {
+    font-size: var(--font-size-md);
+    margin: 0;
+    max-width: 400px;
+    line-height: 1.5;
+}
+
+/* Success state for PDF */
+.verifikator-pdf-section.completed {
+    border-color: var(--success-color);
+    background: linear-gradient(135deg, #f8fff9, #ffffff);
+}
+
+.verifikator-pdf-section.completed .pdf-section-header h4 {
+    color: var(--success-color);
+}
+
+/* Focus states for accessibility */
+.verifikator-pdf-section:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
+}
+
+.pdf-actions .btn:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Additional keyboard shortcuts hint for verifikator */
+.verifikator-pdf-section .keyboard-shortcuts {
+    background: var(--light-bg);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.verifikator-pdf-section .keyboard-shortcuts kbd {
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-family: monospace;
+    margin: 0 2px;
+}
+
+/* PDF iframe responsive adjustments */
+@media (max-width: 768px) {
+    .pdf-preview-frame.loading,
+    .pdf-preview-frame.error {
+        min-height: 300px;
+    }
+    
+    .pdf-error-message {
+        padding: var(--spacing-lg);
+    }
+    
+    .pdf-error-message i {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .pdf-preview-frame.loading,
+    .pdf-preview-frame.error {
+        min-height: 250px;
+    }
+    
+    .pdf-error-message {
+        padding: var(--spacing-md);
+    }
+    
+    .pdf-error-message p {
+        font-size: var(--font-size-sm);
+    }
+}
+
+/* ===============================================
+   VERIFIKATOR PDF-ONLY VIEW
+   ===============================================
+   Clean PDF-only view for verifikator role
+*/
+
+.verifikator-pdf-only-view {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #f5f5f5;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+}
+
+.pdf-preview-container {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f5f5f5;
+}
+
+.pdf-preview-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    background: white;
+}
+
+/* Floating action buttons */
+.pdf-floating-actions {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 10000;
+}
+
+.pdf-floating-actions .btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.pdf-floating-actions .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+
+.pdf-floating-actions .btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.pdf-floating-actions .btn-primary:hover {
+    background: var(--primary-dark);
+}
+
+.pdf-floating-actions .btn-outline-secondary {
+    background: white;
+    color: var(--secondary-color);
+    border: 2px solid var(--secondary-color);
+}
+
+.pdf-floating-actions .btn-outline-secondary:hover {
+    background: var(--secondary-color);
+    color: white;
+}
+
+/* Responsive design for PDF-only view */
+@media (max-width: 768px) {
+    .pdf-preview-container {
+        padding: 10px;
+    }
+    
+    .pdf-floating-actions {
+        top: 10px;
+        right: 10px;
+        gap: 8px;
+    }
+    
+    .pdf-floating-actions .btn {
+        width: 45px;
+        height: 45px;
+    }
+}
+
+@media (max-width: 576px) {
+    .pdf-preview-container {
+        padding: 5px;
+    }
+    
+    .pdf-floating-actions {
+        top: 5px;
+        right: 5px;
+        gap: 5px;
+    }
+    
+    .pdf-floating-actions .btn {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .pdf-floating-actions .btn i {
+        font-size: 14px;
+    }
+}
+
+/* Loading state for PDF iframe */
+.pdf-preview-container.loading {
+    position: relative;
+}
+
+.pdf-preview-container.loading::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    z-index: 1;
+}
+
+.pdf-preview-container.loading::after {
+    content: 'Memuat dokumen PDF...';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--text-muted);
+    font-size: var(--font-size-md);
+    font-weight: 500;
+    z-index: 2;
+}
+
+/* Error state for PDF iframe */
+.pdf-preview-container.error {
+    position: relative;
+}
+
+.pdf-preview-container.error::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #fff5f5;
+    border: 2px dashed #feb2b2;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.pdf-preview-container.error::after {
+    content: 'Gagal memuat dokumen PDF';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--text-muted);
+    font-size: var(--font-size-md);
+    font-weight: 500;
+    text-align: center;
+    z-index: 2;
+}
+
+/* Hide other elements when in PDF-only mode */
+.verifikator-pdf-only-view ~ * {
+    display: none !important;
+}
+
+/* Ensure full screen coverage */
+.verifikator-pdf-only-view {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ===============================================
+   VERIFIKATOR PDF CONTENT VIEW
+   ===============================================
+   Direct PDF content display for verifikator role
+*/
+
+.verifikator-pdf-content-view {
+    background: var(--white);
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--shadow-md);
+    position: relative;
+}
+
+.pdf-content-container {
+    background: var(--white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-xl);
+    min-height: 800px;
+    position: relative;
+    overflow: auto;
+}
+
+.pdf-document {
+    font-family: 'Times New Roman', serif;
+    line-height: 1.6;
+    color: var(--text-dark);
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    padding: 40px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-radius: 8px;
+}
+
+/* Floating action buttons */
+.pdf-floating-actions {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 10000;
+}
+
+.pdf-floating-actions .btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.pdf-floating-actions .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+
+.pdf-floating-actions .btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.pdf-floating-actions .btn-primary:hover {
+    background: var(--primary-dark);
+}
+
+.pdf-floating-actions .btn-outline-secondary {
+    background: white;
+    color: var(--secondary-color);
+    border: 2px solid var(--secondary-color);
+}
+
+.pdf-floating-actions .btn-outline-secondary:hover {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.pdf-floating-actions .btn-outline-info {
+    background: white;
+    color: var(--info-color);
+    border: 2px solid var(--info-color);
+}
+
+.pdf-floating-actions .btn-outline-info:hover {
+    background: var(--info-color);
+    color: white;
+}
+
+/* Responsive design for PDF content view */
+@media (max-width: 768px) {
+    .verifikator-pdf-content-view {
+        padding: var(--spacing-lg);
+    }
+    
+    .pdf-content-container {
+        padding: var(--spacing-lg);
+        min-height: 600px;
+    }
+    
+    .pdf-document {
+        max-width: 100%;
+        padding: 20px;
+    }
+    
+    .pdf-floating-actions {
+        top: 10px;
+        right: 10px;
+        gap: 8px;
+    }
+    
+    .pdf-floating-actions .btn {
+        width: 45px;
+        height: 45px;
+    }
+}
+
+@media (max-width: 576px) {
+    .verifikator-pdf-content-view {
+        padding: var(--spacing-md);
+    }
+    
+    .pdf-content-container {
+        padding: var(--spacing-md);
+        min-height: 500px;
+    }
+    
+    .pdf-document {
+        padding: 15px;
+    }
+    
+    .pdf-floating-actions {
+        top: 5px;
+        right: 5px;
+        gap: 5px;
+    }
+    
+    .pdf-floating-actions .btn {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .pdf-floating-actions .btn i {
+        font-size: 14px;
+    }
+}
+
+/* Print styles for PDF content */
+@media print {
+    .verifikator-pdf-content-view {
+        border: none;
+        padding: 0;
+        box-shadow: none;
+    }
+    
+    .pdf-content-container {
+        border: none;
+        padding: 0;
+        box-shadow: none;
+    }
+    
+    .pdf-floating-actions {
+        display: none;
+    }
+    
+    .pdf-document {
+        box-shadow: none;
+        padding: 0;
+    }
+}

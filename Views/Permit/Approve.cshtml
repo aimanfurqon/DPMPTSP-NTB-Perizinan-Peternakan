@@ -185,174 +185,204 @@
                     var totalDocsUploaded = requiredDocsCount + optionalDocsCount;
                 }
 
-                @if (requiredDocsCount >= 7)
+                @if (userRole != "Verifikator")
                 {
-                    <span class="document-status complete">
-                        <i class="fas fa-check-circle"></i>
-                        Lengkap (@requiredDocsCount/7 wajib
-                        @if (optionalDocsCount > 0)
-                        {
-                            <text> + @optionalDocsCount opsional</text>
-                        }
-                        )
-                    </span>
-                }
-                else
-                {
-                    <span class="document-status incomplete">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        Tidak Lengkap (@requiredDocsCount/7 wajib
-                        @if (optionalDocsCount > 0)
-                        {
-                            <text> + @optionalDocsCount opsional</text>
-                        }
-                        )
-                    </span>
+                    @if (requiredDocsCount >= 7)
+                    {
+                        <span class="document-status complete">
+                            <i class="fas fa-check-circle"></i>
+                            Lengkap (@requiredDocsCount/7 wajib
+                            @if (optionalDocsCount > 0)
+                            {
+                                <text> + @optionalDocsCount opsional</text>
+                            }
+                            )
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="document-status incomplete">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Tidak Lengkap (@requiredDocsCount/7 wajib
+                            @if (optionalDocsCount > 0)
+                            {
+                                <text> + @optionalDocsCount opsional</text>
+                            }
+                            )
+                        </span>
+                    }
                 }
             </div>
 
             <div class="documents-review">
                 @if (Model.Documents.Any())
                 {
-                   <!-- Section Documents-grid yang benar -->
-<div class="documents-grid">
-    @foreach (var doc in Model.Documents)
-    {
-        <div class="document-card @(optionalDocs.ContainsKey(doc.DocumentType) ? "optional-doc" : "required-doc")">
-            <div class="document-header">
-                <div class="document-icon">
-                    @switch (doc.FileExtension.ToLower())
+                    @if (userRole == "Verifikator")
                     {
-                        case ".pdf":
-                            <i class="fas fa-file-pdf text-danger"></i>
-                            break;
-                        case ".jpg":
-                        case ".jpeg":
-                        case ".png":
-                            <i class="fas fa-file-image text-primary"></i>
-                            break;
-                        default:
-                            <i class="fas fa-file text-secondary"></i>
-                            break;
-                    }
-                </div>
-                <div class="document-info">
-                    <h4>@doc.DocumentDisplayName</h4>
-
-                    <!-- Badge Tipe Dokumen -->
-                    <div class="document-badges">
-                        @if (optionalDocs.ContainsKey(doc.DocumentType))
-                        {
-                            <span class="doc-badge optional">Opsional</span>
-                        }
-                        else
-                        {
-                            <span class="doc-badge required">Wajib</span>
-                        }
-                    </div>
-
-                    <!-- Detail Dokumen -->
-                    @if (!string.IsNullOrEmpty(doc.DocumentNumber) || doc.DocumentDate.HasValue)
-                    {
-                        <div class="document-details">
-                            @if (doc.DocumentDate.HasValue)
-                            {
-                                <div class="detail-item">
-                                    <i class="fas fa-calendar"></i>
-                                    <span>@doc.DocumentDate.Value.ToString("dd/MM/yyyy")</span>
+                        <!-- Tampilan khusus untuk Verifikator - PDF Content Langsung -->
+                        <div class="verifikator-pdf-content-view">
+                            <div class="pdf-content-container">
+                                <!-- PDF Content akan di-render langsung di sini -->
+                                <div class="pdf-document">
+                                    @Html.Raw(Model.DocumentContent)
                                 </div>
-                            }
-                            @if (!string.IsNullOrEmpty(doc.DocumentNumber))
+                            </div>
+                            
+                            <!-- Floating action buttons -->
+                            <div class="pdf-floating-actions">
+                                <button type="button" class="btn btn-primary" onclick="printDocument()" title="Print Dokumen">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                                <a href="@Url.Action("DownloadPdf", "Permit", new { id = Model.Id })" 
+                                   class="btn btn-outline-secondary" title="Download PDF">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                                <a href="@Url.Action("ViewDocument", "Permit", new { id = Model.Id })" 
+                                   class="btn btn-outline-info" target="_blank" title="Buka di Tab Baru">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Tampilan untuk Admin dan Kepala Dinas - Tetap dengan checklist -->
+                        <div class="documents-grid">
+                            @foreach (var doc in Model.Documents)
                             {
-                                <div class="detail-item">
-                                    <i class="fas fa-hashtag"></i>
-                                    <span>@doc.DocumentNumber</span>
+                                <div class="document-card @(optionalDocs.ContainsKey(doc.DocumentType) ? "optional-doc" : "required-doc")">
+                                    <div class="document-header">
+                                        <div class="document-icon">
+                                            @switch (doc.FileExtension.ToLower())
+                                            {
+                                                case ".pdf":
+                                                    <i class="fas fa-file-pdf text-danger"></i>
+                                                    break;
+                                                case ".jpg":
+                                                case ".jpeg":
+                                                case ".png":
+                                                    <i class="fas fa-file-image text-primary"></i>
+                                                    break;
+                                                default:
+                                                    <i class="fas fa-file text-secondary"></i>
+                                                    break;
+                                            }
+                                        </div>
+                                        <div class="document-info">
+                                            <h4>@doc.DocumentDisplayName</h4>
+
+                                            <!-- Badge Tipe Dokumen -->
+                                            <div class="document-badges">
+                                                @if (optionalDocs.ContainsKey(doc.DocumentType))
+                                                {
+                                                    <span class="doc-badge optional">Opsional</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="doc-badge required">Wajib</span>
+                                                }
+                                            </div>
+
+                                            <!-- Detail Dokumen -->
+                                            @if (!string.IsNullOrEmpty(doc.DocumentNumber) || doc.DocumentDate.HasValue)
+                                            {
+                                                <div class="document-details">
+                                                    @if (doc.DocumentDate.HasValue)
+                                                    {
+                                                        <div class="detail-item">
+                                                            <i class="fas fa-calendar"></i>
+                                                            <span>@doc.DocumentDate.Value.ToString("dd/MM/yyyy")</span>
+                                                        </div>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(doc.DocumentNumber))
+                                                    {
+                                                        <div class="detail-item">
+                                                            <i class="fas fa-hashtag"></i>
+                                                            <span>@doc.DocumentNumber</span>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+
+                                            <p class="document-meta">
+                                                <span class="file-size">@doc.FormattedFileSize</span>
+                                                <span class="upload-date">@doc.UploadDate.ToString("dd/MM/yyyy HH:mm")</span>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="document-actions">
+                                        <a href="@Url.Action("DownloadDocument", "Permit", new { id = doc.Id })" 
+                                           class="btn btn-sm btn-outline-primary" 
+                                           target="_blank">
+                                            <i class="fas fa-download"></i>
+                                            Download
+                                        </a>
+
+                                        @if (doc.FileExtension.ToLower() == ".pdf")
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-secondary"
+                                                    onclick="previewDocumentById(@doc.Id, '@doc.DocumentDisplayName')">
+                                                <i class="fas fa-eye"></i>
+                                                Preview
+                                            </button>
+                                        }
+                                        else if (doc.FileExtension.ToLower() == ".jpg" || doc.FileExtension.ToLower() == ".jpeg" || doc.FileExtension.ToLower() == ".png")
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-info"
+                                                    onclick="previewImageById(@doc.Id, '@doc.DocumentDisplayName')">
+                                                <i class="fas fa-image"></i>
+                                                Preview
+                                            </button>
+                                        }
+                                    </div>
                                 </div>
                             }
                         </div>
-                    }
 
-                    <p class="document-meta">
-                        <span class="file-size">@doc.FormattedFileSize</span>
-                        <span class="upload-date">@doc.UploadDate.ToString("dd/MM/yyyy HH:mm")</span>
-                    </p>
-                </div>
-            </div>
+                        <!-- Document Requirements Checklist - Hanya untuk Admin dan Kepala Dinas -->
+                        <div class="document-checklist">
+                            <h4>
+                                <i class="fas fa-clipboard-check"></i>
+                                Checklist Dokumen Wajib
+                            </h4>
+                            
+                            <div class="checklist-items">
+                                @foreach (var requiredDoc in requiredDocs)
+                                {
+                                    var hasDoc = Model.Documents.Any(d => d.DocumentType == requiredDoc.Key);
+                                    <div class="checklist-item @(hasDoc ? "completed" : "missing")">
+                                        <i class="fas @(hasDoc ? "fa-check-circle" : "fa-times-circle")"></i>
+                                        <span class="checklist-text">@requiredDoc.Value</span>
+                                        <span class="doc-type-badge required">Wajib</span>
+                                        @if (hasDoc)
+                                        {
+                                            var doc = Model.Documents.First(d => d.DocumentType == requiredDoc.Key);
+                                            <span class="checklist-meta">(@doc.FormattedFileSize)</span>
+                                        }
+                                    </div>
+                                }
 
-            <div class="document-actions">
-                <a href="@Url.Action("DownloadDocument", "Permit", new { id = doc.Id })" 
-                   class="btn btn-sm btn-outline-primary" 
-                   target="_blank">
-                    <i class="fas fa-download"></i>
-                    Download
-                </a>
-
-                @if (doc.FileExtension.ToLower() == ".pdf")
-                {
-                    <button type="button"
-                            class="btn btn-sm btn-outline-secondary"
-                            onclick="previewDocumentById(@doc.Id, '@doc.DocumentDisplayName')">
-                        <i class="fas fa-eye"></i>
-                        Preview
-                    </button>
-                }
-                else if (doc.FileExtension.ToLower() == ".jpg" || doc.FileExtension.ToLower() == ".jpeg" || doc.FileExtension.ToLower() == ".png")
-                {
-                    <button type="button"
-                            class="btn btn-sm btn-outline-info"
-                            onclick="previewImageById(@doc.Id, '@doc.DocumentDisplayName')">
-                        <i class="fas fa-image"></i>
-                        Preview
-                    </button>
-                }
-
-
-            </div>
-        </div>
-    }
-</div>
-
-                    <!-- Document Requirements Checklist -->
-                    <div class="document-checklist">
-                        <h4>
-                            <i class="fas fa-clipboard-check"></i>
-                            Checklist Dokumen Wajib
-                        </h4>
-                        
-                  
-                        <div class="checklist-items">
-                            @foreach (var requiredDoc in requiredDocs)
-                            {
-                                var hasDoc = Model.Documents.Any(d => d.DocumentType == requiredDoc.Key);
-                                <div class="checklist-item @(hasDoc ? "completed" : "missing")">
-                                    <i class="fas @(hasDoc ? "fa-check-circle" : "fa-times-circle")"></i>
-                                    <span class="checklist-text">@requiredDoc.Value</span>
-                                    <span class="doc-type-badge required">Wajib</span>
-                                    @if (hasDoc)
-                                    {
-                                        var doc = Model.Documents.First(d => d.DocumentType == requiredDoc.Key);
-                                        <span class="checklist-meta">(@doc.FormattedFileSize)</span>
-                                    }
-                                </div>
-                            }
-
-                            <!-- ⭐ DOKUMEN OPSIONAL -->
-                            @foreach (var optionalDoc in optionalDocs)
-                            {
-                                var hasDoc = Model.Documents.Any(d => d.DocumentType == optionalDoc.Key);
-                                <div class="checklist-item @(hasDoc ? "completed" : "optional")">
-                                    <i class="fas @(hasDoc ? "fa-check-circle" : "fa-circle")"></i>
-                                    <span class="checklist-text">@optionalDoc.Value</span>
-                                    <span class="doc-type-badge optional">Opsional</span>
-                                    @if (hasDoc)
-                                    {
-                                        var doc = Model.Documents.First(d => d.DocumentType == optionalDoc.Key);
-                                        <span class="checklist-meta">(@doc.FormattedFileSize)</span>
-                                    }
-                                </div>
-                            }
+                                <!-- ⭐ DOKUMEN OPSIONAL -->
+                                @foreach (var optionalDoc in optionalDocs)
+                                {
+                                    var hasDoc = Model.Documents.Any(d => d.DocumentType == optionalDoc.Key);
+                                    <div class="checklist-item @(hasDoc ? "completed" : "optional")">
+                                        <i class="fas @(hasDoc ? "fa-check-circle" : "fa-circle")"></i>
+                                        <span class="checklist-text">@optionalDoc.Value</span>
+                                        <span class="doc-type-badge optional">Opsional</span>
+                                        @if (hasDoc)
+                                        {
+                                            var doc = Model.Documents.First(d => d.DocumentType == optionalDoc.Key);
+                                            <span class="checklist-meta">(@doc.FormattedFileSize)</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
                         </div>
-                    </div>
+                    }
                 }
                 else
                 {
@@ -747,6 +777,7 @@
             document.getElementById('approvalForm').submit();
         }
 
+        // Enhanced preview function for verifikator
         function previewDocumentById(documentId, documentName) {
             currentPreviewPath = `/Permit/PreviewDocument/${documentId}`;
             const modal = new bootstrap.Modal(document.getElementById('documentPreviewModal'));
@@ -770,6 +801,16 @@
             iframe.onload = function() {
                 document.getElementById('previewLoader').style.display = 'none';
                 iframe.style.display = 'block';
+                
+                // For verifikator, add success indicator and update progress
+                if ('@userRole' === 'Verifikator') {
+                    const documentCard = document.querySelector(`[onclick*="${documentId}"]`).closest('.document-preview-card');
+                    if (documentCard) {
+                        documentCard.classList.add('completed');
+                        updateVerifikatorProgress();
+                        console.log('✅ Document preview loaded successfully for verifikator');
+                    }
+                }
             };
 
             iframe.onerror = function() {
@@ -894,6 +935,264 @@
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';
         });
+
+        // Initialize verifikator experience when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            enhanceVerifikatorExperience();
+            updateVerifikatorProgress();
+            initializeVerifikatorPdfContentView();
+        });
+
+        // Initialize PDF view for verifikator
+        function initializeVerifikatorPdfView() {
+            if ('@userRole' === 'Verifikator') {
+                console.log('📄 Initializing verifikator PDF view...');
+                
+                const pdfFrame = document.querySelector('.pdf-preview-frame iframe');
+                const pdfContainer = document.querySelector('.pdf-preview-frame');
+                
+                if (pdfFrame && pdfContainer) {
+                    // Add loading state
+                    pdfContainer.classList.add('loading');
+                    
+                    // Handle iframe load
+                    pdfFrame.onload = function() {
+                        console.log('✅ PDF loaded successfully');
+                        pdfContainer.classList.remove('loading');
+                        pdfContainer.classList.add('loaded');
+                        
+                        // Mark as completed
+                        const pdfSection = document.querySelector('.verifikator-pdf-section');
+                        if (pdfSection) {
+                            pdfSection.classList.add('completed');
+                        }
+                    };
+                    
+                    // Handle iframe error
+                    pdfFrame.onerror = function() {
+                        console.log('❌ PDF failed to load');
+                        pdfContainer.classList.remove('loading');
+                        pdfContainer.classList.add('error');
+                        
+                        // Show error message
+                        const errorMsg = document.createElement('div');
+                        errorMsg.className = 'pdf-error-message';
+                        errorMsg.innerHTML = `
+                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                            <p>Gagal memuat dokumen PDF. Silakan coba buka di tab baru atau download.</p>
+                        `;
+                        pdfContainer.appendChild(errorMsg);
+                    };
+                    
+                    // Add keyboard shortcuts for PDF navigation
+                    document.addEventListener('keydown', function(e) {
+                        if (e.ctrlKey || e.metaKey) {
+                            switch(e.key) {
+                                case 'KeyO':
+                                    e.preventDefault();
+                                    document.querySelector('.pdf-actions .btn-primary').click();
+                                    break;
+                                case 'KeyD':
+                                    e.preventDefault();
+                                    document.querySelector('.pdf-actions .btn-outline-secondary').click();
+                                    break;
+                            }
+                        }
+                    });
+                }
+            }
+        }
+
+        // Enhanced functions for verifikator experience
+        function enhanceVerifikatorExperience() {
+            if ('@userRole' === 'Verifikator') {
+                console.log('🔍 Enhancing verifikator experience...');
+                
+                // Auto-focus on first PDF document
+                const firstPdfButton = document.querySelector('.verifikator-documents-view .btn-preview.btn-primary');
+                if (firstPdfButton) {
+                    setTimeout(() => {
+                        firstPdfButton.focus();
+                        console.log('🎯 Auto-focused on first PDF document');
+                    }, 500);
+                }
+                
+                // Add keyboard shortcuts for verifikator
+                document.addEventListener('keydown', function(e) {
+                    if (e.ctrlKey || e.metaKey) {
+                        switch(e.key) {
+                            case 'ArrowRight':
+                                e.preventDefault();
+                                navigateToNextDocument();
+                                break;
+                            case 'ArrowLeft':
+                                e.preventDefault();
+                                navigateToPreviousDocument();
+                                break;
+                            case 'Enter':
+                                e.preventDefault();
+                                openCurrentFocusedDocument();
+                                break;
+                        }
+                    }
+                });
+                
+                // Add document navigation indicators
+                addDocumentNavigationIndicators();
+            }
+        }
+        
+        function updateVerifikatorProgress() {
+            if ('@userRole' === 'Verifikator') {
+                const totalDocuments = @Model.Documents.Count;
+                const reviewedDocuments = document.querySelectorAll('.verifikator-documents-view .document-preview-card.completed').length;
+                const progressPercentage = totalDocuments > 0 ? (reviewedDocuments / totalDocuments) * 100 : 0;
+                
+                const progressCount = document.querySelector('.verifikator-progress-count');
+                const progressFill = document.querySelector('.verifikator-progress-fill');
+                
+                if (progressCount) {
+                    progressCount.textContent = `${reviewedDocuments} / ${totalDocuments} dokumen`;
+                }
+                
+                if (progressFill) {
+                    progressFill.style.width = `${progressPercentage}%`;
+                }
+                
+                console.log(`📊 Verifikator progress: ${reviewedDocuments}/${totalDocuments} (${progressPercentage.toFixed(1)}%)`);
+            }
+        }
+        
+        function navigateToNextDocument() {
+            const currentFocused = document.querySelector('.verifikator-documents-view .btn-preview:focus');
+            if (currentFocused) {
+                const nextButton = currentFocused.closest('.document-preview-card').nextElementSibling?.querySelector('.btn-preview');
+                if (nextButton) {
+                    nextButton.focus();
+                    nextButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }
+        
+        function navigateToPreviousDocument() {
+            const currentFocused = document.querySelector('.verifikator-documents-view .btn-preview:focus');
+            if (currentFocused) {
+                const prevButton = currentFocused.closest('.document-preview-card').previousElementSibling?.querySelector('.btn-preview');
+                if (prevButton) {
+                    prevButton.focus();
+                    prevButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }
+        
+        function openCurrentFocusedDocument() {
+            const currentFocused = document.querySelector('.verifikator-documents-view .btn-preview:focus');
+            if (currentFocused) {
+                currentFocused.click();
+            }
+        }
+        
+        function addDocumentNavigationIndicators() {
+            const documentCards = document.querySelectorAll('.verifikator-documents-view .document-preview-card');
+            documentCards.forEach((card, index) => {
+                const indicator = document.createElement('div');
+                indicator.className = 'document-navigation-indicator';
+                indicator.innerHTML = `
+                    <span class="indicator-number">${index + 1}</span>
+                    <span class="indicator-total">/ ${documentCards.length}</span>
+                `;
+                card.appendChild(indicator);
+            });
+        }
+
+        // Initialize PDF-only view for verifikator
+        function initializeVerifikatorPdfOnlyView() {
+            if ('@userRole' === 'Verifikator') {
+                console.log('📄 Initializing verifikator PDF-only view...');
+                
+                const pdfContainer = document.querySelector('.pdf-preview-container');
+                const pdfFrame = document.querySelector('.pdf-preview-container iframe');
+                
+                if (pdfContainer && pdfFrame) {
+                    // Add loading state
+                    pdfContainer.classList.add('loading');
+                    
+                    // Handle iframe load
+                    pdfFrame.onload = function() {
+                        console.log('✅ PDF loaded successfully in full-screen view');
+                        pdfContainer.classList.remove('loading');
+                        pdfContainer.classList.add('loaded');
+                    };
+                    
+                    // Handle iframe error
+                    pdfFrame.onerror = function() {
+                        console.log('❌ PDF failed to load in full-screen view');
+                        pdfContainer.classList.remove('loading');
+                        pdfContainer.classList.add('error');
+                    };
+                    
+                    // Add keyboard shortcuts for PDF navigation
+                    document.addEventListener('keydown', function(e) {
+                        if (e.ctrlKey || e.metaKey) {
+                            switch(e.key) {
+                                case 'KeyO':
+                                    e.preventDefault();
+                                    document.querySelector('.pdf-floating-actions .btn-primary').click();
+                                    break;
+                                case 'KeyD':
+                                    e.preventDefault();
+                                    document.querySelector('.pdf-floating-actions .btn-outline-secondary').click();
+                                    break;
+                                case 'Escape':
+                                    e.preventDefault();
+                                    // Optionally add a way to exit full-screen mode
+                                    break;
+                            }
+                        }
+                    });
+                    
+                    // Auto-focus on PDF iframe for better UX
+                    setTimeout(() => {
+                        pdfFrame.focus();
+                    }, 1000);
+                }
+            }
+        }
+
+        // Initialize PDF content view for verifikator
+        function initializeVerifikatorPdfContentView() {
+            if ('@userRole' === 'Verifikator') {
+                console.log('📄 Initializing verifikator PDF content view...');
+                
+                // Add keyboard shortcuts for PDF actions
+                document.addEventListener('keydown', function(e) {
+                    if (e.ctrlKey || e.metaKey) {
+                        switch(e.key) {
+                            case 'KeyP':
+                                e.preventDefault();
+                                printDocument();
+                                break;
+                            case 'KeyD':
+                                e.preventDefault();
+                                downloadPDF();
+                                break;
+                        }
+                    }
+                });
+            }
+        }
+
+        // Print document function
+        function printDocument() {
+            console.log('🖨️ Printing document...');
+            window.print();
+        }
+
+        // Download PDF function
+        function downloadPDF() {
+            console.log('📥 Downloading PDF...');
+            window.open('@Url.Action("DownloadPdf", "Permit", new { id = Model.Id })', '_blank');
+        }
 
     </script>
 }

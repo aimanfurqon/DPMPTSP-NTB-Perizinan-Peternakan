@@ -478,6 +478,9 @@ namespace PerizinanPeternakan.ViewModels
 
         public bool IsEditingData { get; set; }
         public List<string> ChangedFields { get; set; } = new();
+        
+        [Display(Name = "Konten Dokumen")]
+        public string DocumentContent { get; set; } = string.Empty;
     }
 
     public class PermitListViewModel

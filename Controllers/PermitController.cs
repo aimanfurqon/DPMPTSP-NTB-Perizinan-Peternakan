@@ -854,106 +854,109 @@ namespace PerizinanPeternakan.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(PermitApplicationViewModel model)
         {
+            Console.WriteLine("🚀 Create action started");
+            Console.WriteLine($"🔍 DEBUG - ApplicantType: '{model.ApplicantType}'");
+            Console.WriteLine($"🔍 DEBUG - CompanyName: '{model.CompanyName}'");
+            Console.WriteLine($"🔍 DEBUG - IndividualName: '{model.IndividualName}'");
+            Console.WriteLine($"🔍 DEBUG - CompanyProvince: '{model.CompanyProvince}'");
+            Console.WriteLine($"🔍 DEBUG - CompanyRegency: '{model.CompanyRegency}'");
+            Console.WriteLine($"🔍 DEBUG - AddressStreet: '{model.AddressStreet}'");
+            
+            // Log all form data for debugging
+            Console.WriteLine("🔍 DEBUG - All form data:");
+            foreach (var property in typeof(PermitApplicationViewModel).GetProperties())
+            {
+                var value = property.GetValue(model);
+                Console.WriteLine($"  {property.Name}: '{value}'");
+            }
+
             var userId = GetCurrentUserId();
             if (userId == null) return RedirectToAction("Login", "Auth");
+            
             if (HttpContext.Session.GetString("Role") != "User")
             {
                 TempData["ErrorMessage"] = "Hanya user yang dapat membuat permohonan";
                 return RedirectToAction("Index");
             }
 
+            // Validate model is not null
+            if (model == null)
+            {
+                TempData["ErrorMessage"] = "Data permohonan tidak valid";
+                return RedirectToAction("Index");
+            }
+
+            // Ensure LivestockDetails is initialized
+            if (model.LivestockDetails == null)
+            {
+                model.LivestockDetails = new List<LivestockDetailViewModel>();
+            }
+
             try
             {
-                // ===============================================
-                // STEP 1: NORMALIZE APPLICANT TYPE
-                // ===============================================
+                Console.WriteLine($"🚀 Starting permit creation for user {userId.Value}");
 
+                // Test database connection
+                try
+                {
+                    await _context.Database.CanConnectAsync();
+                    Console.WriteLine("✅ Database connection test passed");
+                }
+                catch (Exception dbEx)
+                {
+                    Console.WriteLine($"❌ Database connection failed: {dbEx.Message}");
+                    ModelState.AddModelError("", "Koneksi database tidak tersedia. Silakan coba lagi dalam beberapa saat.");
+                    return View(model);
+                }
+
+                // ===============================================
+                // STEP 1: VALIDATE USER EXISTS
+                // ===============================================
+                var user = await _context.Users.FindAsync(userId.Value);
+                if (user == null)
+                {
+                    ModelState.AddModelError("", "User tidak ditemukan");
+                    Console.WriteLine("❌ User not found in database");
+                    return View(model);
+                }
+
+                // ===============================================
+                // STEP 2: PROCESS APPLICANT DATA
+                // ===============================================
                 if (string.IsNullOrEmpty(model.ApplicantType))
                 {
                     model.ApplicantType = "Company";
                 }
 
-                Console.WriteLine($"🔍 ApplicantType received: '{model.ApplicantType}'");
+                Console.WriteLine($"🔍 ApplicantType: '{model.ApplicantType}'");
 
-                // ===============================================
-                // STEP 2: REMOVE PROBLEMATIC MODELSTATE KEYS FIRST
-                // ===============================================
-
-                // Remove keys that will cause validation issues before mapping
-                var keysToRemove = new[] {
-            "OriginLocation",
-            "DestinationLocation",
-            "DeparturePort",
-            "ArrivalPort",
-            "CompanyName",        // Remove this temporarily for Individual
-            "CompanyAddress",     // Remove this temporarily for Individual
-            "CompanyProvince",    // Remove this temporarily for Individual
-            "CompanyRegency"      // Remove this temporarily for Individual
-        };
-
-                foreach (var key in keysToRemove)
-                {
-                    ModelState.Remove(key);
-                }
-
-                // ===============================================
-                // STEP 3: VALIDATE AND MAP BASED ON APPLICANT TYPE
-                // ===============================================
-
+                // Process applicant data based on type
                 if (model.ApplicantType == "Individual")
                 {
                     Console.WriteLine("👤 Processing Individual applicant...");
-
-                    // Validate individual fields FIRST
-                    var individualErrors = new List<string>();
-
-                    if (string.IsNullOrWhiteSpace(model.IndividualName))
-                    {
-                        individualErrors.Add("Nama lengkap wajib diisi");
-                        ModelState.AddModelError("IndividualName", "Nama lengkap wajib diisi");
-                    }
-
-                    if (string.IsNullOrWhiteSpace(model.IndividualProvince))
-                    {
-                        individualErrors.Add("Provinsi wajib diisi");
-                        ModelState.AddModelError("IndividualProvince", "Provinsi wajib diisi");
-                    }
-
-                    if (string.IsNullOrWhiteSpace(model.IndividualRegency))
-                    {
-                        individualErrors.Add("Kabupaten wajib diisi");
-                        ModelState.AddModelError("IndividualRegency", "Kabupaten wajib diisi");
-                    }
-
-                    if (string.IsNullOrWhiteSpace(model.IndividualAddress))
-                    {
-                        individualErrors.Add("Alamat lengkap wajib diisi");
-                        ModelState.AddModelError("IndividualAddress", "Alamat lengkap wajib diisi");
-                    }
-
-                    // If individual validation passes, map to company fields
-                    if (individualErrors.Count == 0)
-                    {
-                        model.CompanyName = model.IndividualName.Trim();
-                        model.CompanyAddress = $"{model.IndividualAddress.Trim()}, {model.IndividualRegency.Trim()}, {model.IndividualProvince.Trim()}";
-                        model.CompanyProvince = model.IndividualProvince.Trim();
-                        model.CompanyRegency = model.IndividualRegency.Trim();
-
-                        Console.WriteLine($"✅ Individual data mapped - Name: '{model.CompanyName}', Address: '{model.CompanyAddress}'");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"❌ Individual validation failed: {string.Join(", ", individualErrors)}");
-                    }
+                    // Individual validation and mapping will be done in STEP 3
                 }
                 else if (model.ApplicantType == "Company")
                 {
                     Console.WriteLine("🏢 Processing Company applicant...");
 
-                    // Validate company fields
+                    // Debug logging for CompanyName
+                    Console.WriteLine($"🔍 DEBUG - CompanyName value: '{model.CompanyName}'");
+                    Console.WriteLine($"🔍 DEBUG - CompanyName length: {model.CompanyName?.Length ?? 0}");
+                    Console.WriteLine($"🔍 DEBUG - CompanyName is null: {model.CompanyName == null}");
+                    Console.WriteLine($"🔍 DEBUG - CompanyName is empty: {string.IsNullOrEmpty(model.CompanyName)}");
+                    Console.WriteLine($"🔍 DEBUG - CompanyName is whitespace: {string.IsNullOrWhiteSpace(model.CompanyName)}");
+                    Console.WriteLine($"🔍 DEBUG - CompanyName trimmed: '{model.CompanyName?.Trim()}'");
+
+                    // Validate company fields - ONLY for Company applicant type
                     if (string.IsNullOrWhiteSpace(model.CompanyName))
                     {
-                        ModelState.AddModelError("CompanyName", "Nama perusahaan wajib diisi");
+                        ModelState.AddModelError("CompanyName", "The Nama Perusahaan field is required.");
+                        Console.WriteLine("❌ CompanyName validation failed - field is empty or whitespace");
+                    }
+                    else
+                    {
+                        Console.WriteLine("✅ CompanyName validation passed");
                     }
 
                     if (string.IsNullOrWhiteSpace(model.CompanyProvince))
@@ -990,41 +993,133 @@ namespace PerizinanPeternakan.Controllers
                 }
 
                 // ===============================================
-                // STEP 4: FINAL VALIDATION AFTER MAPPING
+                // STEP 3: VALIDATE BASIC FIELDS
                 // ===============================================
-
-                // Now validate the mapped/processed data
-                if (string.IsNullOrWhiteSpace(model.CompanyName))
+                // For Individual, validate individual fields first, then map to company fields
+                if (model.ApplicantType == "Individual")
                 {
-                    var fieldName = model.ApplicantType == "Individual" ? "nama lengkap" : "nama perusahaan";
-                    ModelState.AddModelError("CompanyName", $"Field {fieldName} harus diisi");
-                    Console.WriteLine($"❌ Final validation failed: CompanyName is empty after mapping");
+                    Console.WriteLine("👤 Processing Individual applicant...");
+                    
+                    if (string.IsNullOrWhiteSpace(model.IndividualName))
+                    {
+                        ModelState.AddModelError("IndividualName", "Nama lengkap wajib diisi");
+                        Console.WriteLine("❌ IndividualName validation failed");
+                    }
+                    else
+                    {
+                        Console.WriteLine("✅ IndividualName validation passed");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(model.IndividualProvince))
+                    {
+                        ModelState.AddModelError("IndividualProvince", "Provinsi wajib diisi");
+                        Console.WriteLine("❌ IndividualProvince validation failed");
+                    }
+                    else
+                    {
+                        Console.WriteLine("✅ IndividualProvince validation passed");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(model.IndividualRegency))
+                    {
+                        ModelState.AddModelError("IndividualRegency", "Kabupaten wajib diisi");
+                        Console.WriteLine("❌ IndividualRegency validation failed");
+                    }
+                    else
+                    {
+                        Console.WriteLine("✅ IndividualRegency validation passed");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(model.IndividualAddress))
+                    {
+                        ModelState.AddModelError("IndividualAddress", "Alamat lengkap wajib diisi");
+                        Console.WriteLine("❌ IndividualAddress validation failed");
+                    }
+                    else
+                    {
+                        Console.WriteLine("✅ IndividualAddress validation passed");
+                    }
+
+                    // If individual validation passes, map to company fields
+                    if (string.IsNullOrWhiteSpace(model.IndividualName) == false && 
+                        string.IsNullOrWhiteSpace(model.IndividualProvince) == false && 
+                        string.IsNullOrWhiteSpace(model.IndividualRegency) == false && 
+                        string.IsNullOrWhiteSpace(model.IndividualAddress) == false)
+                    {
+                        model.CompanyName = model.IndividualName.Trim();
+                        model.CompanyAddress = $"{model.IndividualAddress.Trim()}, {model.IndividualRegency.Trim()}, {model.IndividualProvince.Trim()}";
+                        model.CompanyProvince = model.IndividualProvince.Trim();
+                        model.CompanyRegency = model.IndividualRegency.Trim();
+                        Console.WriteLine($"✅ Individual data mapped - Name: '{model.CompanyName}', Address: '{model.CompanyAddress}'");
+                    }
+                }
+                else if (model.ApplicantType == "Company")
+                {
+                    if (string.IsNullOrWhiteSpace(model.CompanyName))
+                    {
+                        ModelState.AddModelError("CompanyName", "Nama perusahaan wajib diisi");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(model.CompanyAddress))
+                    {
+                        ModelState.AddModelError("CompanyAddress", "Alamat perusahaan wajib diisi");
+                    }
                 }
 
-                if (string.IsNullOrWhiteSpace(model.CompanyAddress))
+                if (string.IsNullOrWhiteSpace(model.OriginLocation))
                 {
-                    var fieldName = model.ApplicantType == "Individual" ? "alamat lengkap" : "alamat perusahaan";
-                    ModelState.AddModelError("CompanyAddress", $"Field {fieldName} harus diisi");
-                    Console.WriteLine($"❌ Final validation failed: CompanyAddress is empty after mapping");
+                    ModelState.AddModelError("OriginLocation", "Asal ternak harus diisi");
+                }
+
+                if (string.IsNullOrWhiteSpace(model.DestinationLocation))
+                {
+                    ModelState.AddModelError("DestinationLocation", "Tujuan pengiriman harus diisi");
+                }
+
+                if (string.IsNullOrWhiteSpace(model.DeparturePort))
+                {
+                    ModelState.AddModelError("DeparturePort", "Pelabuhan asal harus diisi");
+                }
+
+                if (string.IsNullOrWhiteSpace(model.ArrivalPort))
+                {
+                    ModelState.AddModelError("ArrivalPort", "Pelabuhan tujuan harus diisi");
                 }
 
                 // ===============================================
-                // STEP 5: VALIDATE LIVESTOCK AND DOCUMENTS
+                // STEP 4: VALIDATE LIVESTOCK DETAILS
                 // ===============================================
+                Console.WriteLine("🐄 Validating livestock details...");
+                var validLivestockDetails = model.LivestockDetails
+                    .Where(d => !string.IsNullOrEmpty(d.LivestockType?.Trim()) && d.Quantity > 0)
+                    .ToList();
 
-                // Validate livestock details
-                if (model.LivestockDetails == null || !model.LivestockDetails.Any(d => !string.IsNullOrEmpty(d.LivestockType) && d.Quantity > 0))
+                if (!validLivestockDetails.Any())
                 {
                     ModelState.AddModelError("", "Minimal harus ada satu detail ternak yang valid");
+                    Console.WriteLine("❌ Livestock validation failed - no valid livestock details");
+                }
+                else
+                {
+                    Console.WriteLine($"✅ Livestock validation passed - {validLivestockDetails.Count} valid entries");
                 }
 
+                // ===============================================
+                // STEP 5: VALIDATE DOCUMENTS
+                // ===============================================
+                Console.WriteLine("📄 Validating documents...");
                 var documentValidation = _documentService.ValidateAllRequiredDocuments(model);
                 if (!documentValidation.IsValid)
                 {
                     foreach (var error in documentValidation.Errors)
                     {
                         ModelState.AddModelError("", error);
+                        Console.WriteLine($"❌ Document validation error: {error}");
                     }
+                }
+                else
+                {
+                    Console.WriteLine("✅ Document validation passed");
                 }
 
                 var detailsValidation = _documentService.ValidateDocumentDetails(model);
@@ -1033,13 +1128,17 @@ namespace PerizinanPeternakan.Controllers
                     foreach (var error in detailsValidation.Errors)
                     {
                         ModelState.AddModelError("", error);
+                        Console.WriteLine($"❌ Document details validation error: {error}");
                     }
+                }
+                else
+                {
+                    Console.WriteLine("✅ Document details validation passed");
                 }
 
                 // ===============================================
                 // STEP 6: CHECK MODELSTATE AND RETURN IF ERRORS
                 // ===============================================
-
                 if (!ModelState.IsValid)
                 {
                     Console.WriteLine("❌ ModelState validation failed:");
@@ -1061,46 +1160,48 @@ namespace PerizinanPeternakan.Controllers
                 }
 
                 // ===============================================
-                // STEP 7: PROCESS SUCCESSFUL SUBMISSION
+                // STEP 7: GENERATE APPLICATION NUMBER
                 // ===============================================
-
-                var user = await _context.Users.FindAsync(userId.Value);
-                if (user == null)
+                Console.WriteLine("🔢 Generating application number...");
+                string applicationNumber;
+                try
                 {
-                    ModelState.AddModelError("", "User tidak ditemukan");
+                    applicationNumber = await _applicationNumberService.GenerateApplicationNumberAsync();
+                    Console.WriteLine($"✅ Application number generated: {applicationNumber}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"❌ Failed to generate application number: {ex.Message}");
+                    ModelState.AddModelError("", "Gagal menghasilkan nomor aplikasi. Silakan coba lagi.");
                     return View(model);
                 }
 
-                //var applicationNumber = await GenerateApplicationNumber();
-                var applicationNumber = await _applicationNumberService.GenerateApplicationNumberAsync();
-
-                Console.WriteLine($"✅ Creating permit application - Number: {applicationNumber}");
-
+                // ===============================================
+                // STEP 8: CREATE PERMIT APPLICATION
+                // ===============================================
+                Console.WriteLine("📝 Creating permit application object...");
+                
                 var permitApplication = new LivestockPermitApplication
                 {
                     ApplicationNumber = applicationNumber,
                     UserId = userId.Value,
-
                     CompanyName = model.CompanyName.Trim(),
-                    CompanyAddress = model.CompanyAddress,
-
-                    OriginLocation = model.OriginLocation?.Trim() ?? "",
-                    DestinationLocation = model.DestinationLocation?.Trim() ?? "",
-                    DeparturePort = model.DeparturePort?.Trim() ?? "",
-                    ArrivalPort = model.ArrivalPort?.Trim() ?? "",
-
+                    CompanyAddress = model.CompanyAddress.Trim(),
+                    OriginLocation = model.OriginLocation.Trim(),
+                    DestinationLocation = model.DestinationLocation.Trim(),
+                    DeparturePort = model.DeparturePort.Trim(),
+                    ArrivalPort = model.ArrivalPort.Trim(),
                     Status = PermitStatus.Submitted,
                     SubmissionDate = DateTime.Now,
                     CurrentApprovalLevel = 1,
-
-                    OriginProvinceId = model.OriginProvinceId,
-                    OriginRegencyId = model.OriginRegencyId,
-                    DestinationProvinceId = model.DestinationProvinceId,
-                    DestinationRegencyId = model.DestinationRegencyId
+                    OriginProvinceId = model.OriginProvinceId > 0 ? model.OriginProvinceId : null,
+                    OriginRegencyId = model.OriginRegencyId > 0 ? model.OriginRegencyId : null,
+                    DestinationProvinceId = model.DestinationProvinceId > 0 ? model.DestinationProvinceId : null,
+                    DestinationRegencyId = model.DestinationRegencyId > 0 ? model.DestinationRegencyId : null
                 };
 
                 // Add livestock details
-                foreach (var livestockDetail in model.LivestockDetails.Where(d => !string.IsNullOrEmpty(d.LivestockType) && d.Quantity > 0))
+                foreach (var livestockDetail in validLivestockDetails)
                 {
                     permitApplication.LivestockDetails.Add(new LivestockDetail
                     {
@@ -1110,58 +1211,129 @@ namespace PerizinanPeternakan.Controllers
                     });
                 }
 
-                // Save permit application
-                _context.PermitApplications.Add(permitApplication);
-                await _context.SaveChangesAsync();
-
-                Console.WriteLine($"✅ Permit application saved with ID: {permitApplication.Id}");
-
-                var uploadResult = await _documentService.UploadSupportingDocumentsAsync(permitApplication.Id, model, userId.Value);
-
-                if (!uploadResult.Success)
-                {
-                    _context.PermitApplications.Remove(permitApplication);
-                    await _context.SaveChangesAsync();
-
-                    ModelState.AddModelError("", uploadResult.ErrorMessage);
-
-                    if (model.LivestockDetails == null || !model.LivestockDetails.Any())
-                    {
-                        model.LivestockDetails.Add(new LivestockDetailViewModel());
-                    }
-
-                    return View(model);
-                }
-
-                // Add approval history
-                var approvalHistory = new PermitApprovalHistory
-                {
-                    PermitApplicationId = permitApplication.Id,
-                    UserId = userId.Value,
-                    FromStatus = PermitStatus.Draft,
-                    ToStatus = PermitStatus.Submitted,
-                    Action = "Submit",
-                    Comments = model.ApplicantType == "Individual"
-                        ? $"Permohonan izin diajukan oleh pemohon perorangan: {model.IndividualName}"
-                        : $"Permohonan izin diajukan oleh perusahaan: {model.CompanyName}",
-                    ActionDate = DateTime.Now
-                };
-
-                _context.PermitApprovalHistories.Add(approvalHistory);
-                await _context.SaveChangesAsync();
-
-                // Send email notification for new permit
+                // ===============================================
+                // STEP 9: SAVE TO DATABASE
+                // ===============================================
+                Console.WriteLine($"📝 Saving permit application to database...");
                 try
                 {
-                    await _approvalService.SendNewPermitNotificationsAsync(permitApplication.Id);
+                    using var transaction = await _context.Database.BeginTransactionAsync();
+                    
+                    try
+                    {
+                        _context.PermitApplications.Add(permitApplication);
+                        await _context.SaveChangesAsync();
+                        
+                        await transaction.CommitAsync();
+                        Console.WriteLine($"✅ Permit application saved with ID: {permitApplication.Id}");
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync();
+                        throw;
+                    }
                 }
                 catch (Exception ex)
                 {
-                    // Log the error but don't fail the permit creation
+                    Console.WriteLine($"❌ Failed to save permit application: {ex.Message}");
+                    ModelState.AddModelError("", $"Gagal menyimpan permohonan ke database: {ex.Message}");
+                    return View(model);
+                }
+
+                // ===============================================
+                // STEP 10: UPLOAD DOCUMENTS
+                // ===============================================
+                Console.WriteLine("📎 Uploading supporting documents...");
+                DocumentUploadResult uploadResult;
+                try
+                {
+                    uploadResult = await _documentService.UploadSupportingDocumentsAsync(permitApplication.Id, model, userId.Value);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"❌ Document upload service error: {ex.Message}");
+                    
+                    // Cleanup: remove the permit application if document upload fails
+                    try
+                    {
+                        _context.PermitApplications.Remove(permitApplication);
+                        await _context.SaveChangesAsync();
+                    }
+                    catch (Exception cleanupEx)
+                    {
+                        Console.WriteLine($"⚠️ Failed to cleanup permit application: {cleanupEx.Message}");
+                    }
+
+                    ModelState.AddModelError("", "Gagal mengupload dokumen pendukung. Silakan coba lagi.");
+                    return View(model);
+                }
+
+                if (!uploadResult.Success)
+                {
+                    Console.WriteLine($"❌ Document upload failed: {uploadResult.ErrorMessage}");
+                    
+                    // Cleanup: remove the permit application if document upload fails
+                    try
+                    {
+                        _context.PermitApplications.Remove(permitApplication);
+                        await _context.SaveChangesAsync();
+                    }
+                    catch (Exception cleanupEx)
+                    {
+                        Console.WriteLine($"⚠️ Failed to cleanup permit application: {cleanupEx.Message}");
+                    }
+
+                    ModelState.AddModelError("", uploadResult.ErrorMessage);
+                    return View(model);
+                }
+
+                Console.WriteLine($"✅ Documents uploaded successfully: {uploadResult.UploadedCount} files");
+
+                // ===============================================
+                // STEP 11: ADD APPROVAL HISTORY
+                // ===============================================
+                try
+                {
+                    var approvalHistory = new PermitApprovalHistory
+                    {
+                        PermitApplicationId = permitApplication.Id,
+                        UserId = userId.Value,
+                        FromStatus = PermitStatus.Draft,
+                        ToStatus = PermitStatus.Submitted,
+                        Action = "Submit",
+                        Comments = model.ApplicantType == "Individual"
+                            ? $"Permohonan izin diajukan oleh pemohon perorangan: {model.IndividualName}"
+                            : $"Permohonan izin diajukan oleh perusahaan: {model.CompanyName}",
+                        ActionDate = DateTime.Now
+                    };
+
+                    _context.PermitApprovalHistories.Add(approvalHistory);
+                    await _context.SaveChangesAsync();
+                    Console.WriteLine("✅ Approval history added");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Failed to add approval history: {ex.Message}");
+                    // Don't fail the entire process for this
+                }
+
+                // ===============================================
+                // STEP 12: SEND EMAIL NOTIFICATIONS
+                // ===============================================
+                try
+                {
+                    Console.WriteLine("📧 Sending email notifications...");
+                    await _approvalService.SendNewPermitNotificationsAsync(permitApplication.Id);
+                    Console.WriteLine("✅ Email notifications sent");
+                }
+                catch (Exception ex)
+                {
                     Console.WriteLine($"⚠️ Error sending email notification: {ex.Message}");
                 }
 
-                // Success message
+                // ===============================================
+                // STEP 13: SUCCESS
+                // ===============================================
                 var applicantTypeText = model.ApplicantType == "Individual" ? "perorangan" : "perusahaan";
                 var applicantName = model.ApplicantType == "Individual" ? model.IndividualName : model.CompanyName;
 
@@ -1181,9 +1353,9 @@ namespace PerizinanPeternakan.Controllers
 
                 ModelState.AddModelError("", "Terjadi kesalahan saat menyimpan permohonan. Silakan coba lagi.");
 
-                if (model.LivestockDetails == null || !model.LivestockDetails.Any())
+                if (model?.LivestockDetails == null || !model.LivestockDetails.Any())
                 {
-                    model.LivestockDetails.Add(new LivestockDetailViewModel());
+                    model?.LivestockDetails.Add(new LivestockDetailViewModel());
                 }
 
                 return View(model);
@@ -1645,7 +1817,8 @@ namespace PerizinanPeternakan.Controllers
                     DocumentDate = d.DocumentDate,
                     DocumentNumber = d.DocumentNumber,
                     DocumentDescription = d.DocumentDescription
-                }).OrderBy(d => d.DocumentType).ToList()
+                }).OrderBy(d => d.DocumentType).ToList(),
+                DocumentContent = await GetDocumentContent(permit)
             };
 
             return View(model);
