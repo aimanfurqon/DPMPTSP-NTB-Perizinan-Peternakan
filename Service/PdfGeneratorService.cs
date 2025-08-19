@@ -4,14 +4,36 @@ using System.Globalization;
 
 namespace PerizinanPeternakan.Services
 {
+    /// <summary>
+    /// Service interface for generating PDF documents for livestock permit applications.
+    /// </summary>
     public interface IPdfGeneratorService
     {
+        /// <summary>
+        /// Generates a PDF document for a livestock permit application.
+        /// </summary>
+        /// <param name="permit">The livestock permit application to generate PDF for.</param>
+        /// <returns>A byte array containing the PDF content.</returns>
         Task<byte[]> GeneratePermitPdf(LivestockPermitApplication permit);
+        
+        /// <summary>
+        /// Generates a PDF document with signature for a livestock permit application.
+        /// </summary>
+        /// <param name="permit">The livestock permit application to generate PDF for.</param>
+        /// <returns>A byte array containing the PDF content with signature.</returns>
         Task<byte[]> GeneratePermitPdfWithSignature(LivestockPermitApplication permit);
     }
 
+    /// <summary>
+    /// Service for generating PDF documents for livestock permit applications.
+    /// </summary>
     public class PdfGeneratorService : IPdfGeneratorService
     {
+        /// <summary>
+        /// Generates a PDF document for a livestock permit application.
+        /// </summary>
+        /// <param name="permit">The livestock permit application to generate PDF for.</param>
+        /// <returns>A byte array containing the PDF content.</returns>
         public async Task<byte[]> GeneratePermitPdf(LivestockPermitApplication permit)
         {
             // Generate HTML content
@@ -31,6 +53,11 @@ namespace PerizinanPeternakan.Services
             }
         }
 
+        /// <summary>
+        /// Generates a PDF document with signature for a livestock permit application.
+        /// </summary>
+        /// <param name="permit">The livestock permit application to generate PDF for.</param>
+        /// <returns>A byte array containing the PDF content with signature.</returns>
         public async Task<byte[]> GeneratePermitPdfWithSignature(LivestockPermitApplication permit)
         {
             // Generate HTML content with signature

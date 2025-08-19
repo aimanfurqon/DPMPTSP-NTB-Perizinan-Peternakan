@@ -9,6 +9,9 @@ using System.Linq;
 
 namespace PerizinanPeternakan.Service
 {
+    /// <summary>
+    /// Service for generating and managing application numbers for livestock permit applications.
+    /// </summary>
     public class ApplicationNumberService : IApplicationNumberService
     {
         private readonly ApplicationDbContext _context;
@@ -19,12 +22,21 @@ namespace PerizinanPeternakan.Service
         private const string APPLICATION_NUMBER_SUFFIX = "/03-260/DPM&PTSP";
         private const int MAX_RETRY_ATTEMPTS = 20; // Increased from 10 to 20
 
+        /// <summary>
+        /// Initializes a new instance of the ApplicationNumberService class.
+        /// </summary>
+        /// <param name="context">The application database context.</param>
+        /// <param name="logger">The logger instance.</param>
         public ApplicationNumberService(ApplicationDbContext context, ILogger<ApplicationNumberService> logger)
         {
             _context = context;
             _logger = logger;
         }
 
+        /// <summary>
+        /// Generates a unique application number for the current month and year.
+        /// </summary>
+        /// <returns>A unique application number string.</returns>
         public async Task<string> GenerateApplicationNumberAsync()
         {
             var year = DateTime.Now.Year;

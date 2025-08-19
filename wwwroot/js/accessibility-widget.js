@@ -132,6 +132,7 @@
     setFontSize(value) {
         this.settings.fontSize = parseInt(value);
         document.body.style.fontSize = `${value}%`;
+        document.documentElement.style.fontSize = `${value}%`;
         const fontSizeValue = document.getElementById('fontSizeValue');
         if (fontSizeValue) {
             fontSizeValue.textContent = `${value}%`;
@@ -203,24 +204,31 @@
         switch (settingKey) {
             case 'highContrast':
                 document.body.classList.toggle('high-contrast', isActive);
+                // Also apply to html element for better coverage
+                document.documentElement.classList.toggle('high-contrast', isActive);
                 break;
             case 'largeText':
                 document.body.classList.toggle('large-text', isActive);
+                document.documentElement.classList.toggle('large-text', isActive);
                 break;
             case 'bigCursor':
                 document.body.classList.toggle('big-cursor', isActive);
+                document.documentElement.classList.toggle('big-cursor', isActive);
                 break;
             case 'readingGuide':
                 this.toggleReadingGuide(isActive);
                 break;
             case 'dyslexiaFont':
                 document.body.classList.toggle('dyslexia-font', isActive);
+                document.documentElement.classList.toggle('dyslexia-font', isActive);
                 break;
             case 'grayscale':
                 document.body.classList.toggle('grayscale', isActive);
+                document.documentElement.classList.toggle('grayscale', isActive);
                 break;
             case 'invertColors':
                 document.body.classList.toggle('invert-colors', isActive);
+                document.documentElement.classList.toggle('invert-colors', isActive);
                 break;
         }
     }
@@ -272,6 +280,10 @@
             grayscale: false,
             invertColors: false
         };
+
+        // Remove all accessibility classes from body and html
+        document.body.classList.remove('high-contrast', 'large-text', 'big-cursor', 'dyslexia-font', 'grayscale', 'invert-colors');
+        document.documentElement.classList.remove('high-contrast', 'large-text', 'big-cursor', 'dyslexia-font', 'grayscale', 'invert-colors');
 
         // Apply defaults
         this.applyAllSettings();
@@ -333,6 +345,7 @@
             if (fontSizeRange) fontSizeRange.value = this.settings.fontSize;
             if (fontSizeValue) fontSizeValue.textContent = `${this.settings.fontSize}%`;
             document.body.style.fontSize = `${this.settings.fontSize}%`;
+            document.documentElement.style.fontSize = `${this.settings.fontSize}%`;
         } catch (e) {
             console.warn('Could not load accessibility settings:', e);
         }

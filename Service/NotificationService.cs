@@ -4,12 +4,21 @@ using PerizinanPeternakan.Models;
 
 namespace PerizinanPeternakan.Services
 {
+    /// <summary>
+    /// Service for sending notifications related to permit applications.
+    /// </summary>
     public class NotificationService : INotificationService
     {
         private readonly IEmailSender _emailSender;
         private readonly ApplicationDbContext _context;
         private readonly ILogger<NotificationService> _logger;
 
+        /// <summary>
+        /// Initializes a new instance of the NotificationService class.
+        /// </summary>
+        /// <param name="emailSender">The email sender service.</param>
+        /// <param name="context">The application database context.</param>
+        /// <param name="logger">The logger instance.</param>
         public NotificationService(
             IEmailSender emailSender,
             ApplicationDbContext context,
@@ -20,6 +29,12 @@ namespace PerizinanPeternakan.Services
             _logger = logger;
         }
 
+        /// <summary>
+        /// Sends a notification for a new permit application.
+        /// </summary>
+        /// <param name="permit">The livestock permit application.</param>
+        /// <param name="userRole">The role of the user.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
         public async Task SendNewPermitNotificationAsync(LivestockPermitApplication permit, string userRole)
         {
             try
@@ -43,6 +58,14 @@ namespace PerizinanPeternakan.Services
             }
         }
 
+        /// <summary>
+        /// Sends an approval notification for a permit application.
+        /// </summary>
+        /// <param name="permit">The livestock permit application.</param>
+        /// <param name="action">The approval action taken.</param>
+        /// <param name="comments">The comments for the approval.</param>
+        /// <param name="userRole">The role of the user.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
         public async Task SendApprovalNotificationAsync(LivestockPermitApplication permit, string action, string comments, string userRole)
         {
             try
@@ -66,6 +89,13 @@ namespace PerizinanPeternakan.Services
             }
         }
 
+        /// <summary>
+        /// Sends a rejection notification for a permit application.
+        /// </summary>
+        /// <param name="permit">The livestock permit application.</param>
+        /// <param name="comments">The rejection comments.</param>
+        /// <param name="userRole">The role of the user.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
         public async Task SendRejectionNotificationAsync(LivestockPermitApplication permit, string comments, string userRole)
         {
             try
@@ -83,6 +113,12 @@ namespace PerizinanPeternakan.Services
             }
         }
 
+        /// <summary>
+        /// Sends a final approval notification for a permit application.
+        /// </summary>
+        /// <param name="permit">The livestock permit application.</param>
+        /// <param name="comments">The approval comments.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
         public async Task SendFinalApprovalNotificationAsync(LivestockPermitApplication permit, string comments)
         {
             try

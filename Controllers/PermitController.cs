@@ -869,6 +869,23 @@ namespace PerizinanPeternakan.Controllers
                 var value = property.GetValue(model);
                 Console.WriteLine($"  {property.Name}: '{value}'");
             }
+            
+            // Check if ModelState already has errors for CompanyName/CompanyAddress
+            Console.WriteLine("🔍 DEBUG - Checking ModelState for CompanyName/CompanyAddress errors:");
+            if (ModelState.ContainsKey("CompanyName"))
+            {
+                foreach (var error in ModelState["CompanyName"].Errors)
+                {
+                    Console.WriteLine($"  ❌ ModelState CompanyName Error: {error.ErrorMessage}");
+                }
+            }
+            if (ModelState.ContainsKey("CompanyAddress"))
+            {
+                foreach (var error in ModelState["CompanyAddress"].Errors)
+                {
+                    Console.WriteLine($"  ❌ ModelState CompanyAddress Error: {error.ErrorMessage}");
+                }
+            }
 
             var userId = GetCurrentUserId();
             if (userId == null) return RedirectToAction("Login", "Auth");
@@ -920,13 +937,21 @@ namespace PerizinanPeternakan.Controllers
                     return View(model);
                 }
 
-                // ===============================================
-                // STEP 2: PROCESS APPLICANT DATA
-                // ===============================================
-                if (string.IsNullOrEmpty(model.ApplicantType))
-                {
-                    ModelState.AddModelError("ApplicantType", "Tipe pemohon harus dipilih");
-                }
+                            // ===============================================
+            // STEP 2: PROCESS APPLICANT DATA
+            // ===============================================
+            if (string.IsNullOrEmpty(model.ApplicantType))
+            {
+                ModelState.AddModelError("ApplicantType", "Tipe pemohon harus dipilih");
+            }
+            
+            // Clear any existing validation errors for CompanyName/CompanyAddress if ApplicantType is Individual
+            if (model.ApplicantType == "Individual")
+            {
+                Console.WriteLine("🔍 DEBUG - Clearing CompanyName/CompanyAddress validation errors for Individual applicant");
+                ModelState.Remove("CompanyName");
+                ModelState.Remove("CompanyAddress");
+            }
 
                 Console.WriteLine($"🔍 ApplicantType: '{model.ApplicantType}'");
 
@@ -1041,18 +1066,7 @@ namespace PerizinanPeternakan.Controllers
                     }
 
                 }
-                else if (model.ApplicantType == "Company")
-                {
-                    if (string.IsNullOrWhiteSpace(model.CompanyName))
-                    {
-                        ModelState.AddModelError("CompanyName", "Nama perusahaan wajib diisi");
-                    }
-
-                    if (string.IsNullOrWhiteSpace(model.CompanyAddress))
-                    {
-                        ModelState.AddModelError("CompanyAddress", "Alamat perusahaan wajib diisi");
-                    }
-                }
+                // Note: Company validation is already handled in STEP 2 above
 
                 if (string.IsNullOrWhiteSpace(model.OriginLocation))
                 {
@@ -1507,7 +1521,6 @@ namespace PerizinanPeternakan.Controllers
             return (errors.Count == 0, errors);
         }
 
-        // Helper method untuk validasi file gambar
         private bool IsValidImageFile(IFormFile file)
         {
             try
@@ -1516,12 +1529,9 @@ namespace PerizinanPeternakan.Controllers
                 var buffer = new byte[8];
                 stream.Read(buffer, 0, 8);
 
-                // Check for common image file signatures
-                // JPEG: FF D8 FF
                 if (buffer[0] == 0xFF && buffer[1] == 0xD8 && buffer[2] == 0xFF)
                     return true;
 
-                // PNG: 89 50 4E 47 0D 0A 1A 0A
                 if (buffer[0] == 0x89 && buffer[1] == 0x50 && buffer[2] == 0x4E && buffer[3] == 0x47 &&
                     buffer[4] == 0x0D && buffer[5] == 0x0A && buffer[6] == 0x1A && buffer[7] == 0x0A)
                     return true;
@@ -1559,7 +1569,6 @@ namespace PerizinanPeternakan.Controllers
                 return RedirectToAction("Index");
             }
 
-            // Check access rights
             if (userRole == "User" && permit.UserId != userId.Value)
             {
                 TempData["ErrorMessage"] = "Anda tidak memiliki akses ke permohonan ini";
@@ -1867,6 +1876,97 @@ namespace PerizinanPeternakan.Controllers
             {
                 TempData["ErrorMessage"] = "Terjadi kesalahan saat mengunduh dokumen";
                 return RedirectToAction("Detail", new { id = document.PermitApplicationId });
+            }
+        }
+
+        /// <summary>
+        /// Download dokumen izin yang telah digenerate
+        /// </summary>
+        /// <param name="id">ID permohonan izin</param>
+        /// <returns>File untuk diunduh</returns>
+        [HttpGet]
+        public async Task<IActionResult> DownloadPdf(int id)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return RedirectToAction("Login", "Auth");
+
+            var userRole = HttpContext.Session.GetString("Role");
+
+            // Ambil data permohonan
+            var permit = await _context.PermitApplications
+                .Include(p => p.User)
+                .Include(p => p.LivestockDetails)
+                .Include(p => p.Admin)
+                .Include(p => p.Verifikator)
+                .Include(p => p.KepalaDinas)
+                .Include(p => p.Documents)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (permit == null)
+            {
+                TempData["ErrorMessage"] = "Permohonan tidak ditemukan";
+                return NotFound();
+            }
+
+            // Cek akses berdasarkan role
+            bool canDownload = false;
+            switch (userRole)
+            {
+                case "User":
+                    canDownload = permit.UserId == userId.Value && permit.Status >= PermitStatus.AdminApproved;
+                    break;
+                case "Admin":
+                    canDownload = permit.Status >= PermitStatus.AdminApproved;
+                    break;
+                case "Verifikator":
+                    canDownload = permit.Status >= PermitStatus.AdminApproved;
+                    break;
+                case "KepalaDinas":
+                    canDownload = permit.Status >= PermitStatus.VerifikatorApproved;
+                    break;
+            }
+
+            if (!canDownload)
+            {
+                TempData["ErrorMessage"] = "Anda tidak memiliki akses untuk mengunduh dokumen ini";
+                return Forbid();
+            }
+
+            try
+            {
+                // Cek apakah sudah ada file yang digenerate
+                if (!string.IsNullOrEmpty(permit.GeneratedDocumentPath))
+                {
+                    var filePath = Path.Combine(_environment.WebRootPath, permit.GeneratedDocumentPath.TrimStart('/'));
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+                        var fileName = Path.GetFileName(permit.GeneratedDocumentPath);
+                        
+                        // Return file yang sudah ada
+                        return File(fileBytes, "text/html", fileName);
+                    }
+                }
+
+                // Jika belum ada file, generate baru
+                var htmlContent = await _pdfGenerator.GeneratePermitPdf(permit);
+                
+                if (htmlContent == null || htmlContent.Length == 0)
+                {
+                    TempData["ErrorMessage"] = "Gagal generate konten dokumen";
+                    return RedirectToAction("Detail", new { id = id });
+                }
+
+                // Generate nama file
+                var newFileName = $"permit_{permit.ApplicationNumber}_{DateTime.Now:yyyyMMddHHmmss}.html";
+                
+                // Return file untuk download sebagai HTML
+                return File(htmlContent, "text/html", newFileName);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Terjadi kesalahan saat mengunduh dokumen";
+                return RedirectToAction("Detail", new { id = id });
             }
         }
 
@@ -5292,5 +5392,84 @@ namespace PerizinanPeternakan.Controllers
                 return NotFound();
             }
         }
+
+        /// <summary>
+        /// Download dokumen izin dalam format HTML yang bisa dicetak
+        /// </summary>
+        /// <param name="id">ID permohonan izin</param>
+        /// <returns>File HTML untuk diunduh</returns>
+        [HttpGet]
+        public async Task<IActionResult> DownloadPdfFile(int id)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return RedirectToAction("Login", "Auth");
+
+            var userRole = HttpContext.Session.GetString("Role");
+
+            // Ambil data permohonan
+            var permit = await _context.PermitApplications
+                .Include(p => p.User)
+                .Include(p => p.LivestockDetails)
+                .Include(p => p.Admin)
+                .Include(p => p.Verifikator)
+                .Include(p => p.KepalaDinas)
+                .Include(p => p.Documents)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (permit == null)
+            {
+                TempData["ErrorMessage"] = "Permohonan tidak ditemukan";
+                return NotFound();
+            }
+
+            // Cek akses berdasarkan role
+            bool canDownload = false;
+            switch (userRole)
+            {
+                case "User":
+                    canDownload = permit.UserId == userId.Value && permit.Status >= PermitStatus.AdminApproved;
+                    break;
+                case "Admin":
+                    canDownload = permit.Status >= PermitStatus.AdminApproved;
+                    break;
+                case "Verifikator":
+                    canDownload = permit.Status >= PermitStatus.AdminApproved;
+                    break;
+                case "KepalaDinas":
+                    canDownload = permit.Status >= PermitStatus.VerifikatorApproved;
+                    break;
+            }
+
+            if (!canDownload)
+            {
+                TempData["ErrorMessage"] = "Anda tidak memiliki akses untuk mengunduh dokumen ini";
+                return Forbid();
+            }
+
+            try
+            {
+                // Generate nama file
+                var fileName = $"permit_{permit.ApplicationNumber}_{DateTime.Now:yyyyMMddHHmmss}.html";
+                
+                // Generate HTML content
+                var htmlContent = await _pdfGenerator.GeneratePermitPdf(permit);
+                
+                if (htmlContent == null || htmlContent.Length == 0)
+                {
+                    TempData["ErrorMessage"] = "Gagal generate konten dokumen";
+                    return RedirectToAction("Detail", new { id = id });
+                }
+
+                // Return file untuk download sebagai HTML
+                return File(htmlContent, "text/html", fileName);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Terjadi kesalahan saat mengunduh dokumen";
+                return RedirectToAction("Detail", new { id = id });
+            }
+        }
+
+
     }
 }

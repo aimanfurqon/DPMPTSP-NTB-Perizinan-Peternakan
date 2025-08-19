@@ -214,25 +214,67 @@
         background: #e9ecef;
     }
 
-/* Accessibility Features */
+/* Accessibility Features - Global Application */
 .high-contrast {
-    filter: contrast(200%) brightness(1.2);
+    filter: contrast(200%) brightness(1.2) !important;
+}
+
+.high-contrast * {
+    filter: contrast(200%) brightness(1.2) !important;
 }
 
 .invert-colors {
-    filter: invert(1) hue-rotate(180deg);
+    filter: invert(1) hue-rotate(180deg) !important;
+}
+
+.invert-colors * {
+    filter: invert(1) hue-rotate(180deg) !important;
 }
 
 .grayscale {
-    filter: grayscale(100%);
+    filter: grayscale(100%) !important;
 }
 
-.big-cursor .accessibility-widget {
-    cursor: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEgMUwxMSAxMUw4IDE0TDE0IDIwTDIwIDE0TDE3IDExTDI3IDFIMVoiIGZpbGw9ImJsYWNrIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiLz4KPC9zdmc+'), auto;
+.grayscale * {
+    filter: grayscale(100%) !important;
 }
 
+/* Big Cursor - Apply to all elements */
+.big-cursor * {
+    cursor: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEgMUwxMSAxMUw4IDE0TDE0IDIwTDIwIDE0TDE3IDExTDI3IDFIMVoiIGZpbGw9ImJsYWNrIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiLz4KPC9zdmc+'), auto !important;
+}
+
+/* Large Text - Apply to all text elements */
 .large-text {
     font-size: 1.2em !important;
+}
+
+.large-text h1, .large-text h2, .large-text h3, .large-text h4, .large-text h5, .large-text h6 {
+    font-size: 1.3em !important;
+}
+
+.large-text p, .large-text span, .large-text div, .large-text label, .large-text input, .large-text textarea, .large-text select, .large-text button {
+    font-size: 1.2em !important;
+}
+
+.large-text .btn {
+    font-size: 1.2em !important;
+    padding: 0.6em 1.2em !important;
+}
+
+.large-text .form-control {
+    font-size: 1.2em !important;
+    padding: 0.6em 0.75em !important;
+}
+
+.large-text .navbar-nav .nav-link {
+    font-size: 1.2em !important;
+    padding: 0.6em 1em !important;
+}
+
+.large-text .dropdown-item {
+    font-size: 1.2em !important;
+    padding: 0.6em 1em !important;
 }
 
 .reading-guide {
@@ -248,8 +290,69 @@
     display: none;
 }
 
+/* Dyslexia Font - Apply to all text elements */
+.dyslexia-font {
+    font-family: 'Comic Sans MS', 'OpenDyslexic', 'Arial', sans-serif !important;
+}
+
 .dyslexia-font * {
-    font-family: 'Comic Sans MS', cursive !important;
+    font-family: 'Comic Sans MS', 'OpenDyslexic', 'Arial', sans-serif !important;
+}
+
+/* Enhanced focus indicators for better accessibility */
+.high-contrast *:focus,
+.large-text *:focus,
+.dyslexia-font *:focus {
+    outline: 3px solid #ffff00 !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 3px #ffff00 !important;
+}
+
+/* Ensure proper contrast for form elements */
+.high-contrast input,
+.high-contrast textarea,
+.high-contrast select,
+.high-contrast button {
+    border: 2px solid #000000 !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+.high-contrast .btn {
+    border: 2px solid #000000 !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+.high-contrast .btn-primary {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border: 2px solid #000000 !important;
+}
+
+.high-contrast .btn-success {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border: 2px solid #000000 !important;
+}
+
+.high-contrast .btn-danger {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border: 2px solid #000000 !important;
+}
+
+/* Ensure proper spacing for large text */
+.large-text .container {
+    padding: 1.5em !important;
+}
+
+.large-text .row {
+    margin-bottom: 1.5em !important;
+}
+
+.large-text .col, .large-text .col-md-6, .large-text .col-lg-4 {
+    padding: 0.75em !important;
 }
 
 /* Responsive */

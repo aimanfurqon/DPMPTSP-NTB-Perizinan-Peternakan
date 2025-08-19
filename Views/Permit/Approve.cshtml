@@ -3,6 +3,49 @@
     ViewData["Title"] = "Proses Permohonan";
     var userRole = Context.Session.GetString("Role");
     var actionTitle = userRole == "Verifikator" ? "Verifikasi" : userRole == "Admin" ? "Review Data" : "Persetujuan Kepala Dinas";
+    var requiredDocsCount = Model.Documents.Count(d => d.DocumentType == "SURAT_PERMOHONAN" || d.DocumentType == "REKOMENDASI_DINAS_PROV" || d.DocumentType == "REKOMENDASI_DAERAH_TUJUAN" || d.DocumentType == "SKKH_KABUPATEN_ASAL" || d.DocumentType == "SKKH_DINAS_PROVINSI" || d.DocumentType == "SURAT_JALAN_TERNAK" || d.DocumentType == "HASIL_PEMERIKSAAN_FISIK");
+}
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Konfirmasi Aksi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="confirmation-content">
+                    <div class="confirmation-icon" id="confirmationIcon">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                    <div class="confirmation-text">
+                        <p id="confirmationMessage">Apakah Anda yakin ingin melakukan aksi ini?</p>
+                        <div class="warning-text" id="warningText" style="display: none;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Aksi ini tidak dapat dibatalkan setelah diproses</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn" id="confirmButton" onclick="confirmAction()">Konfirmasi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <link rel="stylesheet" href="~/css/permit/approve.css" />
+    <script>
+        // Pass data to JavaScript
+        document.body.setAttribute('data-user-role', '@userRole');
+        document.body.setAttribute('data-required-docs-count', '@requiredDocsCount');
+        document.body.setAttribute('data-permit-id', '@Model.Id');
+    </script>
+    <script src="~/js/permit-approve.js" asp-append-version="true"></script>
 }
 
 <div class="approval-container">
@@ -180,7 +223,6 @@
                                 };
 
                     // PENGHITUNGAN DOKUMEN
-                    var requiredDocsCount = Model.Documents.Count(d => requiredDocs.ContainsKey(d.DocumentType));
                     var optionalDocsCount = Model.Documents.Count(d => optionalDocs.ContainsKey(d.DocumentType));
                     var totalDocsUploaded = requiredDocsCount + optionalDocsCount;
                 }
@@ -217,32 +259,65 @@
             <div class="documents-review">
                 @if (Model.Documents.Any())
                 {
-                    @if (userRole == "Verifikator")
+                    @if (userRole == "Verifikator" || userRole == "KepalaDinas")
                     {
-                        <!-- Tampilan khusus untuk Verifikator - PDF Content Langsung -->
+                        <!-- Tampilan khusus untuk Verifikator dan Kepala Dinas - PDF Content Langsung -->
                         <div class="verifikator-pdf-content-view">
+                            <div class="pdf-content-header">
+                                <div class="pdf-header-info">
+                                    <h4>
+                                        <i class="fas fa-file-pdf text-danger"></i>
+                                        Dokumen Izin Pengeluaran Ternak
+                                    </h4>
+                                    <p class="pdf-header-description">
+                                        Preview dokumen izin yang telah digenerate berdasarkan data permohonan
+                                    </p>
+                                </div>
+                                <div class="pdf-header-actions">
+                                    <button type="button" class="btn btn-primary" onclick="printDocument()" title="Print Dokumen">
+                                        <i class="fas fa-print"></i>
+                                        Print
+                                    </button>
+                                    <a href="@Url.Action("DownloadPdfFile", "Permit", new { id = Model.Id })" 
+                                       class="btn btn-outline-secondary" title="Download PDF">
+                                        <i class="fas fa-download"></i>
+                                        Download
+                                    </a>
+                                    <a href="@Url.Action("ViewDocument", "Permit", new { id = Model.Id })" 
+                                       class="btn btn-outline-info" target="_blank" title="Buka di Tab Baru">
+                                        <i class="fas fa-external-link-alt"></i>
+                                        Tab Baru
+                                    </a>
+                                </div>
+                            </div>
+                            
                             <div class="pdf-content-container">
-                                <!-- PDF Content akan di-render langsung di sini -->
                                 <div class="pdf-document">
                                     @Html.Raw(Model.DocumentContent)
                                 </div>
                             </div>
                             
-                            <!-- Floating action buttons -->
-                            <div class="pdf-floating-actions">
-                                <button type="button" class="btn btn-primary" onclick="printDocument()" title="Print Dokumen">
-                                    <i class="fas fa-print"></i>
-                                </button>
-                                <a href="@Url.Action("DownloadPdf", "Permit", new { id = Model.Id })" 
-                                   class="btn btn-outline-secondary" title="Download PDF">
-                                    <i class="fas fa-download"></i>
-                                </a>
-                                <a href="@Url.Action("ViewDocument", "Permit", new { id = Model.Id })" 
-                                   class="btn btn-outline-info" target="_blank" title="Buka di Tab Baru">
-                                    <i class="fas fa-external-link-alt"></i>
-                                </a>
+                            <!-- Quick navigation for verifikator and kepala dinas -->
+                            <div class="pdf-navigation">
+                                <div class="navigation-info">
+                                    <span class="navigation-text">
+                                        <i class="fas fa-info-circle"></i>
+                                        Gunakan scroll untuk melihat seluruh dokumen
+                                    </span>
+                                </div>
+                                <div class="navigation-actions">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="scrollToTop()">
+                                        <i class="fas fa-arrow-up"></i>
+                                        Ke Atas
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="scrollToBottom()">
+                                        <i class="fas fa-arrow-down"></i>
+                                        Ke Bawah
+                                    </button>
+                                </div>
                             </div>
                         </div>
+
                     }
                     else
                     {
@@ -590,609 +665,3 @@
         </div>
     </div>
 </div>
-
-
-
-<!-- Confirmation Modal -->
-<div class="modal fade" id="confirmationModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalTitle">Konfirmasi Aksi</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="confirmation-content">
-                    <div class="confirmation-icon" id="confirmationIcon">
-                        <i class="fas fa-question-circle"></i>
-                    </div>
-                    <div class="confirmation-text">
-                        <p id="confirmationMessage">Apakah Anda yakin ingin melakukan aksi ini?</p>
-                        <div class="warning-text" id="warningText" style="display: none;">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <span>Aksi ini tidak dapat dibatalkan setelah diproses</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn" id="confirmButton" onclick="confirmAction()">Konfirmasi</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-    <link rel="stylesheet" href="~/css/permit/approve.css" />
-    <script>
-        let selectedAction = '';
-        let currentPreviewPath = '';
-         let currentImagePath = '';
-
-        function previewImageById(documentId, imageName) {
-            const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
-
-            // Reset modal state
-            document.getElementById('imageModalTitle').innerHTML = `<i class="fas fa-file-image text-primary"></i> ${imageName}`;
-            document.getElementById('imageLoader').style.display = 'flex';
-            document.getElementById('previewImage').style.display = 'none';
-            document.getElementById('imageError').style.display = 'none';
-
-            // Load image using the preview endpoint
-            const img = document.getElementById('previewImage');
-            const previewUrl = `/Permit/PreviewDocument/${documentId}`;
-            
-            img.onload = function() {
-                document.getElementById('imageLoader').style.display = 'none';
-                img.style.display = 'block';
-                currentImagePath = previewUrl;
-            };
-
-            img.onerror = function() {
-                document.getElementById('imageLoader').style.display = 'none';
-                document.getElementById('imageError').style.display = 'block';
-            };
-
-            img.src = previewUrl;
-            modal.show();
-        }
-
-        function previewImage(imagePath, imageName) {
-            currentImagePath = imagePath;
-            const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
-
-            // Reset modal state
-            document.getElementById('imageModalTitle').innerHTML = `<i class="fas fa-file-image text-primary"></i> ${imageName}`;
-            document.getElementById('imageLoader').style.display = 'flex';
-            document.getElementById('previewImage').style.display = 'none';
-            document.getElementById('imageError').style.display = 'none';
-
-            // Load image
-            const img = document.getElementById('previewImage');
-            img.onload = function() {
-                document.getElementById('imageLoader').style.display = 'none';
-                img.style.display = 'block';
-            };
-
-            img.onerror = function() {
-                document.getElementById('imageLoader').style.display = 'none';
-                document.getElementById('imageError').style.display = 'block';
-            };
-
-            img.src = imagePath;
-            modal.show();
-        }
-
-        function downloadFromImagePreview() {
-            if (currentImagePath) {
-                // If it's already a preview URL, convert it to download URL
-                if (currentImagePath.includes('/PreviewDocument/')) {
-                    const documentId = currentImagePath.split('/').pop().split('?')[0];
-                    window.open(`/Permit/DownloadDocument/${documentId}`, '_blank');
-                } else {
-                    window.open(currentImagePath, '_blank');
-                }
-            }
-        }
-
-
-
-        function submitApproval(action) {
-            selectedAction = action;
-
-            // Validate comments for rejection
-            if (action === 'Reject') {
-                const comments = document.getElementById('Comments').value.trim();
-                if (!comments) {
-                    alert('Komentar wajib diisi untuk penolakan permohonan');
-                    document.getElementById('Comments').focus();
-                    return;
-                }
-            }
-
-            // Check document completeness for admin approval
-                 // Check document completeness for admin approval
-        @if (userRole == "Admin")
-        {
-                @:if (action === 'Approve' && @requiredDocsCount < 7) {
-                @:    alert('Dokumen wajib belum lengkap. Permohonan tidak dapat disetujui.');
-                @:    return;
-                @:}
-        }
-
-            // Show confirmation modal
-            showConfirmationModal(action);
-        }
-
-        function showConfirmationModal(action) {
-            const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
-            const modalTitle = document.getElementById('modalTitle');
-            const confirmationIcon = document.getElementById('confirmationIcon');
-            const confirmationMessage = document.getElementById('confirmationMessage');
-            const warningText = document.getElementById('warningText');
-            const confirmButton = document.getElementById('confirmButton');
-
-            if (action === 'Approve') {
-                modalTitle.textContent = 'Konfirmasi Persetujuan';
-                confirmationIcon.innerHTML = '<i class="fas fa-check-circle text-success"></i>';
-                confirmationMessage.textContent = 'Apakah Anda yakin ingin menyetujui permohonan ini?';
-                confirmButton.className = 'btn btn-success';
-                confirmButton.innerHTML = '<i class="fas fa-check"></i> Ya, Setujui';
-                warningText.style.display = 'none';
-            } else {
-                modalTitle.textContent = 'Konfirmasi Penolakan';
-                confirmationIcon.innerHTML = '<i class="fas fa-times-circle text-danger"></i>';
-                confirmationMessage.textContent = 'Apakah Anda yakin ingin menolak permohonan ini?';
-                confirmButton.className = 'btn btn-danger';
-                confirmButton.innerHTML = '<i class="fas fa-times"></i> Ya, Tolak';
-                warningText.style.display = 'block';
-            }
-
-            modal.show();
-        }
-
-        function confirmAction() {
-            // Set action value
-            document.getElementById('actionInput').value = selectedAction;
-
-            // Show loading state
-            const approveBtn = document.getElementById('approveBtn');
-            const rejectBtn = document.getElementById('rejectBtn');
-            const confirmButton = document.getElementById('confirmButton');
-
-            if (selectedAction === 'Approve') {
-                approveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
-                approveBtn.disabled = true;
-            } else {
-                rejectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
-                rejectBtn.disabled = true;
-            }
-
-            confirmButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
-            confirmButton.disabled = true;
-
-            // Submit form
-            document.getElementById('approvalForm').submit();
-        }
-
-        // Enhanced preview function for verifikator
-        function previewDocumentById(documentId, documentName) {
-            currentPreviewPath = `/Permit/PreviewDocument/${documentId}`;
-            const modal = new bootstrap.Modal(document.getElementById('documentPreviewModal'));
-            
-            // Reset modal state
-            document.getElementById('previewDocumentName').textContent = documentName;
-            document.getElementById('previewLoader').style.display = 'flex';
-            document.getElementById('previewFrame').style.display = 'none';
-            document.getElementById('previewError').style.display = 'none';
-
-            // Load document in iframe using the preview endpoint
-            const iframe = document.getElementById('previewFrame');
-            const previewUrl = `/Permit/PreviewDocument/${documentId}`;
-            
-            // Add timestamp to prevent caching issues
-            const timestamp = new Date().getTime();
-            const urlWithTimestamp = previewUrl + '?_t=' + timestamp;
-            iframe.src = urlWithTimestamp;
-
-            // Handle iframe load
-            iframe.onload = function() {
-                document.getElementById('previewLoader').style.display = 'none';
-                iframe.style.display = 'block';
-                
-                // For verifikator, add success indicator and update progress
-                if ('@userRole' === 'Verifikator') {
-                    const documentCard = document.querySelector(`[onclick*="${documentId}"]`).closest('.document-preview-card');
-                    if (documentCard) {
-                        documentCard.classList.add('completed');
-                        updateVerifikatorProgress();
-                        console.log('✅ Document preview loaded successfully for verifikator');
-                    }
-                }
-            };
-
-            iframe.onerror = function() {
-                document.getElementById('previewLoader').style.display = 'none';
-                document.getElementById('previewError').style.display = 'flex';
-            };
-
-            // Fallback timeout
-            setTimeout(() => {
-                if (document.getElementById('previewLoader').style.display !== 'none') {
-                    document.getElementById('previewLoader').style.display = 'none';
-                    iframe.style.display = 'block';
-                }
-            }, 5000);
-
-            modal.show();
-        }
-
-        function previewDocument(filePath, documentName) {
-            // Extract document ID from the filePath or use a different approach
-            // For now, we'll use the direct file path but with proper error handling
-            currentPreviewPath = filePath;
-            const modal = new bootstrap.Modal(document.getElementById('documentPreviewModal'));
-            
-            // Reset modal state
-            document.getElementById('previewDocumentName').textContent = documentName;
-            document.getElementById('previewLoader').style.display = 'flex';
-            document.getElementById('previewFrame').style.display = 'none';
-            document.getElementById('previewError').style.display = 'none';
-
-            // Load document in iframe
-            const iframe = document.getElementById('previewFrame');
-            
-            // Add timestamp to prevent caching issues
-            const timestamp = new Date().getTime();
-            const urlWithTimestamp = filePath + (filePath.includes('?') ? '&' : '?') + '_t=' + timestamp;
-            iframe.src = urlWithTimestamp;
-
-            // Handle iframe load
-            iframe.onload = function() {
-                document.getElementById('previewLoader').style.display = 'none';
-                iframe.style.display = 'block';
-            };
-
-            iframe.onerror = function() {
-                document.getElementById('previewLoader').style.display = 'none';
-                document.getElementById('previewError').style.display = 'flex';
-            };
-
-            // Fallback timeout
-            setTimeout(() => {
-                if (document.getElementById('previewLoader').style.display !== 'none') {
-                    document.getElementById('previewLoader').style.display = 'none';
-                    iframe.style.display = 'block';
-                }
-            }, 5000);
-
-            modal.show();
-        }
-
-        document.getElementById('documentPreviewModal').addEventListener('hidden.bs.modal', function() {
-            const iframe = document.getElementById('previewFrame');
-            iframe.src = 'about:blank';
-            currentPreviewPath = '';
-        });
-
-        document.getElementById('imagePreviewModal').addEventListener('hidden.bs.modal', function() {
-            document.getElementById('previewImage').src = '';
-            currentImagePath = '';
-        });
-
-        function downloadFromPreview() {
-            if (currentPreviewPath) {
-                // If it's already a preview URL, convert it to download URL
-                if (currentPreviewPath.includes('/PreviewDocument/')) {
-                    const documentId = currentPreviewPath.split('/').pop().split('?')[0];
-                    window.open(`/Permit/DownloadDocument/${documentId}`, '_blank');
-                } else {
-                    window.open(currentPreviewPath, '_blank');
-                }
-            }
-        }
-
-        function previewPdfAsAdmin(permitId) {
-            const modal = new bootstrap.Modal(document.getElementById('documentPreviewModal'));
-            
-            // Reset modal state
-            document.getElementById('previewModalTitle').innerHTML = '<i class="fas fa-file-pdf text-danger"></i> Preview PDF - Admin';
-            document.getElementById('previewDocumentName').textContent = 'Memuat preview PDF...';
-            document.getElementById('previewLoader').style.display = 'flex';
-            document.getElementById('previewFrame').style.display = 'none';
-            document.getElementById('previewError').style.display = 'none';
-
-            // Load PDF in iframe
-            const iframe = document.getElementById('previewFrame');
-            iframe.src = `/Permit/PreviewPdf/${permitId}`;
-
-            // Handle iframe load
-            iframe.onload = function() {
-                document.getElementById('previewLoader').style.display = 'none';
-                iframe.style.display = 'block';
-                document.getElementById('previewDocumentName').textContent = 'Dokumen Izin Pengeluaran Ternak';
-            };
-
-            iframe.onerror = function() {
-                document.getElementById('previewLoader').style.display = 'none';
-                document.getElementById('previewError').style.display = 'flex';
-            };
-
-            // Fallback timeout
-            setTimeout(() => {
-                if (document.getElementById('previewLoader').style.display !== 'none') {
-                    document.getElementById('previewLoader').style.display = 'none';
-                    iframe.style.display = 'block';
-                }
-            }, 3000);
-
-            modal.show();
-        }
-
-        document.getElementById('Comments').addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
-        });
-
-        // Initialize verifikator experience when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            enhanceVerifikatorExperience();
-            updateVerifikatorProgress();
-            initializeVerifikatorPdfContentView();
-        });
-
-        // Initialize PDF view for verifikator
-        function initializeVerifikatorPdfView() {
-            if ('@userRole' === 'Verifikator') {
-                console.log('📄 Initializing verifikator PDF view...');
-                
-                const pdfFrame = document.querySelector('.pdf-preview-frame iframe');
-                const pdfContainer = document.querySelector('.pdf-preview-frame');
-                
-                if (pdfFrame && pdfContainer) {
-                    // Add loading state
-                    pdfContainer.classList.add('loading');
-                    
-                    // Handle iframe load
-                    pdfFrame.onload = function() {
-                        console.log('✅ PDF loaded successfully');
-                        pdfContainer.classList.remove('loading');
-                        pdfContainer.classList.add('loaded');
-                        
-                        // Mark as completed
-                        const pdfSection = document.querySelector('.verifikator-pdf-section');
-                        if (pdfSection) {
-                            pdfSection.classList.add('completed');
-                        }
-                    };
-                    
-                    // Handle iframe error
-                    pdfFrame.onerror = function() {
-                        console.log('❌ PDF failed to load');
-                        pdfContainer.classList.remove('loading');
-                        pdfContainer.classList.add('error');
-                        
-                        // Show error message
-                        const errorMsg = document.createElement('div');
-                        errorMsg.className = 'pdf-error-message';
-                        errorMsg.innerHTML = `
-                            <i class="fas fa-exclamation-triangle text-warning"></i>
-                            <p>Gagal memuat dokumen PDF. Silakan coba buka di tab baru atau download.</p>
-                        `;
-                        pdfContainer.appendChild(errorMsg);
-                    };
-                    
-                    // Add keyboard shortcuts for PDF navigation
-                    document.addEventListener('keydown', function(e) {
-                        if (e.ctrlKey || e.metaKey) {
-                            switch(e.key) {
-                                case 'KeyO':
-                                    e.preventDefault();
-                                    document.querySelector('.pdf-actions .btn-primary').click();
-                                    break;
-                                case 'KeyD':
-                                    e.preventDefault();
-                                    document.querySelector('.pdf-actions .btn-outline-secondary').click();
-                                    break;
-                            }
-                        }
-                    });
-                }
-            }
-        }
-
-        // Enhanced functions for verifikator experience
-        function enhanceVerifikatorExperience() {
-            if ('@userRole' === 'Verifikator') {
-                console.log('🔍 Enhancing verifikator experience...');
-                
-                // Auto-focus on first PDF document
-                const firstPdfButton = document.querySelector('.verifikator-documents-view .btn-preview.btn-primary');
-                if (firstPdfButton) {
-                    setTimeout(() => {
-                        firstPdfButton.focus();
-                        console.log('🎯 Auto-focused on first PDF document');
-                    }, 500);
-                }
-                
-                // Add keyboard shortcuts for verifikator
-                document.addEventListener('keydown', function(e) {
-                    if (e.ctrlKey || e.metaKey) {
-                        switch(e.key) {
-                            case 'ArrowRight':
-                                e.preventDefault();
-                                navigateToNextDocument();
-                                break;
-                            case 'ArrowLeft':
-                                e.preventDefault();
-                                navigateToPreviousDocument();
-                                break;
-                            case 'Enter':
-                                e.preventDefault();
-                                openCurrentFocusedDocument();
-                                break;
-                        }
-                    }
-                });
-                
-                // Add document navigation indicators
-                addDocumentNavigationIndicators();
-            }
-        }
-        
-        function updateVerifikatorProgress() {
-            if ('@userRole' === 'Verifikator') {
-                const totalDocuments = @Model.Documents.Count;
-                const reviewedDocuments = document.querySelectorAll('.verifikator-documents-view .document-preview-card.completed').length;
-                const progressPercentage = totalDocuments > 0 ? (reviewedDocuments / totalDocuments) * 100 : 0;
-                
-                const progressCount = document.querySelector('.verifikator-progress-count');
-                const progressFill = document.querySelector('.verifikator-progress-fill');
-                
-                if (progressCount) {
-                    progressCount.textContent = `${reviewedDocuments} / ${totalDocuments} dokumen`;
-                }
-                
-                if (progressFill) {
-                    progressFill.style.width = `${progressPercentage}%`;
-                }
-                
-                console.log(`📊 Verifikator progress: ${reviewedDocuments}/${totalDocuments} (${progressPercentage.toFixed(1)}%)`);
-            }
-        }
-        
-        function navigateToNextDocument() {
-            const currentFocused = document.querySelector('.verifikator-documents-view .btn-preview:focus');
-            if (currentFocused) {
-                const nextButton = currentFocused.closest('.document-preview-card').nextElementSibling?.querySelector('.btn-preview');
-                if (nextButton) {
-                    nextButton.focus();
-                    nextButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }
-        }
-        
-        function navigateToPreviousDocument() {
-            const currentFocused = document.querySelector('.verifikator-documents-view .btn-preview:focus');
-            if (currentFocused) {
-                const prevButton = currentFocused.closest('.document-preview-card').previousElementSibling?.querySelector('.btn-preview');
-                if (prevButton) {
-                    prevButton.focus();
-                    prevButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }
-        }
-        
-        function openCurrentFocusedDocument() {
-            const currentFocused = document.querySelector('.verifikator-documents-view .btn-preview:focus');
-            if (currentFocused) {
-                currentFocused.click();
-            }
-        }
-        
-        function addDocumentNavigationIndicators() {
-            const documentCards = document.querySelectorAll('.verifikator-documents-view .document-preview-card');
-            documentCards.forEach((card, index) => {
-                const indicator = document.createElement('div');
-                indicator.className = 'document-navigation-indicator';
-                indicator.innerHTML = `
-                    <span class="indicator-number">${index + 1}</span>
-                    <span class="indicator-total">/ ${documentCards.length}</span>
-                `;
-                card.appendChild(indicator);
-            });
-        }
-
-        // Initialize PDF-only view for verifikator
-        function initializeVerifikatorPdfOnlyView() {
-            if ('@userRole' === 'Verifikator') {
-                console.log('📄 Initializing verifikator PDF-only view...');
-                
-                const pdfContainer = document.querySelector('.pdf-preview-container');
-                const pdfFrame = document.querySelector('.pdf-preview-container iframe');
-                
-                if (pdfContainer && pdfFrame) {
-                    // Add loading state
-                    pdfContainer.classList.add('loading');
-                    
-                    // Handle iframe load
-                    pdfFrame.onload = function() {
-                        console.log('✅ PDF loaded successfully in full-screen view');
-                        pdfContainer.classList.remove('loading');
-                        pdfContainer.classList.add('loaded');
-                    };
-                    
-                    // Handle iframe error
-                    pdfFrame.onerror = function() {
-                        console.log('❌ PDF failed to load in full-screen view');
-                        pdfContainer.classList.remove('loading');
-                        pdfContainer.classList.add('error');
-                    };
-                    
-                    // Add keyboard shortcuts for PDF navigation
-                    document.addEventListener('keydown', function(e) {
-                        if (e.ctrlKey || e.metaKey) {
-                            switch(e.key) {
-                                case 'KeyO':
-                                    e.preventDefault();
-                                    document.querySelector('.pdf-floating-actions .btn-primary').click();
-                                    break;
-                                case 'KeyD':
-                                    e.preventDefault();
-                                    document.querySelector('.pdf-floating-actions .btn-outline-secondary').click();
-                                    break;
-                                case 'Escape':
-                                    e.preventDefault();
-                                    // Optionally add a way to exit full-screen mode
-                                    break;
-                            }
-                        }
-                    });
-                    
-                    // Auto-focus on PDF iframe for better UX
-                    setTimeout(() => {
-                        pdfFrame.focus();
-                    }, 1000);
-                }
-            }
-        }
-
-        // Initialize PDF content view for verifikator
-        function initializeVerifikatorPdfContentView() {
-            if ('@userRole' === 'Verifikator') {
-                console.log('📄 Initializing verifikator PDF content view...');
-                
-                // Add keyboard shortcuts for PDF actions
-                document.addEventListener('keydown', function(e) {
-                    if (e.ctrlKey || e.metaKey) {
-                        switch(e.key) {
-                            case 'KeyP':
-                                e.preventDefault();
-                                printDocument();
-                                break;
-                            case 'KeyD':
-                                e.preventDefault();
-                                downloadPDF();
-                                break;
-                        }
-                    }
-                });
-            }
-        }
-
-        // Print document function
-        function printDocument() {
-            console.log('🖨️ Printing document...');
-            window.print();
-        }
-
-        // Download PDF function
-        function downloadPDF() {
-            console.log('📥 Downloading PDF...');
-            window.open('@Url.Action("DownloadPdf", "Permit", new { id = Model.Id })', '_blank');
-        }
-
-    </script>
-}
