@@ -44,114 +44,142 @@ namespace PerizinanPeternakan.Service
 
             _logger.LogInformation("Starting application number generation for {Year}-{Month}", year, month);
 
-            try
+            // Try multiple approaches to ensure uniqueness
+            for (int attempt = 1; attempt <= 3; attempt++)
             {
-                // First, try without transaction to check if there are any existing applications
                 try
                 {
-                    var existingCount = await _context.PermitApplications
-                        .Where(p => p.SubmissionDate.Year == year && p.SubmissionDate.Month == month)
-                        .CountAsync();
-
-                    _logger.LogInformation("Found {Count} existing applications for {Year}-{Month}", existingCount, year, month);
-
-                    // If no existing applications, start with 1
-                    if (existingCount == 0)
+                    _logger.LogInformation("Attempt {Attempt} to generate application number", attempt);
+                    
+                    // Approach 1: Use database transaction with table lock
+                    using var transaction = await _context.Database.BeginTransactionAsync();
+                    
+                    try
                     {
-                        var applicationNumber = FormatApplicationNumber(1, year);
-                        _logger.LogInformation("No existing applications, using first number: {ApplicationNumber}", applicationNumber);
-                        return applicationNumber;
+                        // Lock the table to prevent race conditions
+                        await _context.Database.ExecuteSqlRawAsync("SELECT 1 FROM PermitApplications WITH (TABLOCKX)");
+
+                        // Get all existing application numbers for this period
+                        var existingNumbers = await _context.PermitApplications
+                            .Where(p => p.SubmissionDate.Year == year && p.SubmissionDate.Month == month)
+                            .Select(p => p.ApplicationNumber)
+                            .ToListAsync();
+
+                        _logger.LogInformation("Found {Count} existing applications for {Year}-{Month}", existingNumbers.Count, year, month);
+
+                        // If no existing applications, start with 1
+                        if (!existingNumbers.Any())
+                        {
+                            var applicationNumber = FormatApplicationNumber(1, year);
+                            _logger.LogInformation("No existing applications, using first number: {ApplicationNumber}", applicationNumber);
+                            
+                            // Final validation before commit
+                            var finalCheck = await _context.PermitApplications
+                                .Where(p => p.ApplicationNumber == applicationNumber)
+                                .AnyAsync();
+                            
+                            if (!finalCheck)
+                            {
+                                await transaction.CommitAsync();
+                                return applicationNumber;
+                            }
+                            else
+                            {
+                                _logger.LogWarning("Application number {ApplicationNumber} already exists during final check", applicationNumber);
+                                await transaction.RollbackAsync();
+                                continue; // Try next attempt
+                            }
+                        }
+
+                        // Find the maximum sequence number
+                        int maxNumber = 0;
+                        foreach (var appNumber in existingNumbers)
+                        {
+                            if (string.IsNullOrWhiteSpace(appNumber))
+                                continue;
+
+                            var parts = appNumber.Split('/');
+                            if (parts.Length > 0 && int.TryParse(parts[0], out int number))
+                            {
+                                maxNumber = Math.Max(maxNumber, number);
+                            }
+                        }
+
+                        var nextNumber = maxNumber + 1;
+                        _logger.LogInformation("Max sequence number for {Year}-{Month}: {MaxNumber}, next: {NextNumber}", 
+                            year, month, maxNumber, nextNumber);
+
+                        // Try to generate a unique number with retry logic
+                        string generatedNumber;
+                        int retryCount = 0;
+                        const int maxRetries = 50; // Reduced retry attempts per attempt
+
+                        do
+                        {
+                            generatedNumber = FormatApplicationNumber(nextNumber, year);
+                            _logger.LogDebug("Trying application number: {ApplicationNumber} (attempt {RetryCount})", 
+                                generatedNumber, retryCount + 1);
+
+                            // Check if this number already exists in our current list
+                            if (!existingNumbers.Contains(generatedNumber))
+                            {
+                                // Final validation before commit
+                                var finalCheck = await _context.PermitApplications
+                                    .Where(p => p.ApplicationNumber == generatedNumber)
+                                    .AnyAsync();
+                                
+                                if (!finalCheck)
+                                {
+                                    _logger.LogInformation("Generated unique application number: {ApplicationNumber}", generatedNumber);
+                                    await transaction.CommitAsync();
+                                    return generatedNumber;
+                                }
+                                else
+                                {
+                                    _logger.LogWarning("Application number {ApplicationNumber} already exists during final check", generatedNumber);
+                                    existingNumbers.Add(generatedNumber); // Add to our list to avoid retrying
+                                }
+                            }
+
+                            _logger.LogWarning("Application number {ApplicationNumber} already exists, trying next number", generatedNumber);
+                            nextNumber++;
+                            retryCount++;
+
+                            if (retryCount >= maxRetries)
+                            {
+                                break; // Try next attempt
+                            }
+
+                        } while (true);
+
+                        await transaction.RollbackAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync();
+                        _logger.LogError(ex, "Error in attempt {Attempt} with transaction", attempt);
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Error checking existing applications, proceeding with normal flow");
+                    _logger.LogError(ex, "Error in attempt {Attempt}", attempt);
                 }
+            }
 
-                // Use transaction for generating new numbers
-                using var transaction = await _context.Database.BeginTransactionAsync();
-
-                try
-                {
-                    // Try to get a lock on the table
-                    await _context.Database.ExecuteSqlRawAsync("SELECT 1 FROM PermitApplications WITH (TABLOCKX)");
-
-                    var nextNumber = await GetNextSequenceNumberForPeriodAsync(year, month);
-                    _logger.LogInformation("Starting with sequence number: {NextNumber} for {Year}-{Month}", nextNumber, year, month);
-
-                    string applicationNumber;
-                    int retryCount = 0;
-
-                    do
-                    {
-                        applicationNumber = FormatApplicationNumber(nextNumber, year);
-                        _logger.LogDebug("Trying application number: {ApplicationNumber}", applicationNumber);
-
-                        var exists = await ApplicationNumberExistsAsync(applicationNumber);
-
-                        if (!exists)
-                        {
-                            _logger.LogInformation("Generated unique application number: {ApplicationNumber}", applicationNumber);
-                            break; 
-                        }
-
-                        nextNumber++;
-                        retryCount++;
-
-                        _logger.LogWarning("Application number {ApplicationNumber} already exists, retrying with {NextNumber} (attempt {RetryCount})",
-                            applicationNumber, nextNumber, retryCount);
-
-                        if (retryCount >= MAX_RETRY_ATTEMPTS)
-                        {
-                            var errorMessage = $"Failed to generate unique application number after {MAX_RETRY_ATTEMPTS} attempts. Last tried: {applicationNumber}";
-                            _logger.LogError(errorMessage);
-                            
-                            // Try to get a completely new number by checking the database again
-                            var maxNumber = await GetMaxSequenceNumberForPeriodAsync(year, month);
-                            var newNumber = maxNumber + 1;
-                            applicationNumber = FormatApplicationNumber(newNumber, year);
-                            
-                            _logger.LogInformation("Trying alternative approach with number: {ApplicationNumber}", applicationNumber);
-                            
-                            if (!await ApplicationNumberExistsAsync(applicationNumber))
-                            {
-                                _logger.LogInformation("Successfully generated alternative application number: {ApplicationNumber}", applicationNumber);
-                                break;
-                            }
-                            
-                            throw new InvalidOperationException(errorMessage);
-                        }
-
-                    } while (true);
-
-                    await transaction.CommitAsync();
-
-                    _logger.LogInformation("Successfully generated application number: {ApplicationNumber}", applicationNumber);
-                    return applicationNumber;
-                }
-                catch (Exception ex)
-                {
-                    await transaction.RollbackAsync();
-                    _logger.LogError(ex, "Error generating application number for {Year}-{Month}", year, month);
-                    throw;
-                }
+            // If all attempts failed, use timestamp-based fallback
+            _logger.LogWarning("All attempts failed, using timestamp-based fallback");
+            try
+            {
+                var timestamp = DateTime.Now.ToString("HHmmss");
+                var fallbackNumber = $"999{timestamp}/03-260/DPM&PTSP/{year}";
+                _logger.LogWarning("Using timestamp-based fallback number: {FallbackNumber}", fallbackNumber);
+                return fallbackNumber;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Critical error in GenerateApplicationNumberAsync for {Year}-{Month}", year, month);
-                
-                // Fallback: generate a timestamp-based number
-                try
-                {
-                    var fallbackNumber = $"999/03-260/DPM&PTSP/{year}";
-                    _logger.LogWarning("Using fallback application number: {FallbackNumber}", fallbackNumber);
-                    return fallbackNumber;
-                }
-                catch (Exception fallbackEx)
-                {
-                    _logger.LogError(fallbackEx, "Even fallback application number generation failed");
-                    throw new InvalidOperationException("Tidak dapat menghasilkan nomor aplikasi. Silakan coba lagi.", ex);
-                }
+                _logger.LogError(ex, "Even fallback application number generation failed");
+                var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+                return $"999{timestamp}/03-260/DPM&PTSP/{year}";
             }
         }
 
@@ -231,13 +259,26 @@ namespace PerizinanPeternakan.Service
                     .Select(p => p.ApplicationNumber)
                     .ToListAsync();
 
+                if (!applications.Any())
+                {
+                    _logger.LogInformation("No applications found for {Year}-{Month}, returning 0", year, month);
+                    return 0;
+                }
+
                 int maxNumber = 0;
                 foreach (var appNumber in applications)
                 {
+                    if (string.IsNullOrWhiteSpace(appNumber))
+                        continue;
+
                     var parts = appNumber.Split('/');
                     if (parts.Length > 0 && int.TryParse(parts[0], out int number))
                     {
                         maxNumber = Math.Max(maxNumber, number);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Could not parse sequence number from application number: {ApplicationNumber}", appNumber);
                     }
                 }
 

@@ -1033,6 +1033,8 @@ namespace PerizinanPeternakan.Controllers
                     else
                     {
                         Console.WriteLine("✅ IndividualName validation passed");
+                        // Map IndividualName to CompanyName for database
+                        model.CompanyName = model.IndividualName.Trim();
                     }
 
                     if (string.IsNullOrWhiteSpace(model.IndividualProvince))
@@ -1043,6 +1045,8 @@ namespace PerizinanPeternakan.Controllers
                     else
                     {
                         Console.WriteLine("✅ IndividualProvince validation passed");
+                        // Map IndividualProvince to CompanyProvince for database
+                        model.CompanyProvince = model.IndividualProvince.Trim();
                     }
 
                     if (string.IsNullOrWhiteSpace(model.IndividualRegency))
@@ -1053,6 +1057,8 @@ namespace PerizinanPeternakan.Controllers
                     else
                     {
                         Console.WriteLine("✅ IndividualRegency validation passed");
+                        // Map IndividualRegency to CompanyRegency for database
+                        model.CompanyRegency = model.IndividualRegency.Trim();
                     }
 
                     if (string.IsNullOrWhiteSpace(model.IndividualAddress))
@@ -1063,8 +1069,11 @@ namespace PerizinanPeternakan.Controllers
                     else
                     {
                         Console.WriteLine("✅ IndividualAddress validation passed");
+                        // Map IndividualAddress to CompanyAddress for database
+                        model.CompanyAddress = model.IndividualAddress.Trim();
                     }
 
+                    Console.WriteLine($"✅ Individual data mapped - Name: '{model.CompanyName}', Address: '{model.CompanyAddress}'");
                 }
                 // Note: Company validation is already handled in STEP 2 above
 
@@ -1152,12 +1161,40 @@ namespace PerizinanPeternakan.Controllers
                         }
                     }
 
+                    // Additional validation for required fields
+                    if (string.IsNullOrWhiteSpace(model.CompanyName))
+                    {
+                        ModelState.AddModelError("", "Nama pemohon/perusahaan wajib diisi");
+                        Console.WriteLine("❌ CompanyName is empty after mapping");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(model.CompanyAddress))
+                    {
+                        ModelState.AddModelError("", "Alamat pemohon/perusahaan wajib diisi");
+                        Console.WriteLine("❌ CompanyAddress is empty after mapping");
+                    }
+
                     // Ensure there's at least one livestock detail for the form
                     if (model.LivestockDetails == null || !model.LivestockDetails.Any())
                     {
                         model.LivestockDetails.Add(new LivestockDetailViewModel());
                     }
 
+                    // Add specific error message for better user experience
+                    TempData["ErrorMessage"] = "Mohon periksa kembali data yang diisi. Pastikan semua field wajib telah dilengkapi dengan benar.";
+                    
+                    return View(model);
+                }
+
+                // Final validation check after all processing
+                if (string.IsNullOrWhiteSpace(model.CompanyName) || string.IsNullOrWhiteSpace(model.CompanyAddress))
+                {
+                    ModelState.AddModelError("", "Data pemohon tidak lengkap. Silakan periksa kembali.");
+                    Console.WriteLine("❌ Final validation failed - missing company data");
+                    
+                    // Add specific error message
+                    TempData["ErrorMessage"] = "Data pemohon tidak lengkap. Silakan periksa kembali informasi pemohon.";
+                    
                     return View(model);
                 }
 
@@ -1183,16 +1220,44 @@ namespace PerizinanPeternakan.Controllers
                 // ===============================================
                 Console.WriteLine("📝 Creating permit application object...");
                 
+                // Ensure CompanyName and CompanyAddress are properly set based on applicant type
+                string finalCompanyName = string.Empty;
+                string finalCompanyAddress = string.Empty;
+                
+                if (model.ApplicantType == "Individual")
+                {
+                    finalCompanyName = model.IndividualName?.Trim() ?? string.Empty;
+                    finalCompanyAddress = model.IndividualAddress?.Trim() ?? string.Empty;
+                    Console.WriteLine($"👤 Individual applicant - CompanyName: '{finalCompanyName}', CompanyAddress: '{finalCompanyAddress}'");
+                }
+                else if (model.ApplicantType == "Company")
+                {
+                    finalCompanyName = model.CompanyName?.Trim() ?? string.Empty;
+                    finalCompanyAddress = model.CompanyAddress?.Trim() ?? string.Empty;
+                    Console.WriteLine($"🏢 Company applicant - CompanyName: '{finalCompanyName}', CompanyAddress: '{finalCompanyAddress}'");
+                }
+                
+                // Final validation for required fields
+                if (string.IsNullOrWhiteSpace(finalCompanyName))
+                {
+                    ModelState.AddModelError("", "Nama pemohon/perusahaan wajib diisi");
+                    Console.WriteLine("❌ Final CompanyName is empty");
+                    return View(model);
+                }
+                
+                if (string.IsNullOrWhiteSpace(finalCompanyAddress))
+                {
+                    ModelState.AddModelError("", "Alamat pemohon/perusahaan wajib diisi");
+                    Console.WriteLine("❌ Final CompanyAddress is empty");
+                    return View(model);
+                }
+                
                 var permitApplication = new LivestockPermitApplication
                 {
                     ApplicationNumber = applicationNumber,
                     UserId = userId.Value,
-                    CompanyName = model.ApplicantType == "Individual"
-                        ? model.IndividualName?.Trim()
-                        : model.CompanyName?.Trim(),
-                    CompanyAddress = model.ApplicantType == "Individual"
-                        ? model.IndividualAddress?.Trim()
-                        : model.CompanyAddress?.Trim(),
+                    CompanyName = finalCompanyName,
+                    CompanyAddress = finalCompanyAddress,
                     OriginLocation = model.OriginLocation.Trim(),
                     DestinationLocation = model.DestinationLocation.Trim(),
                     DeparturePort = model.DeparturePort.Trim(),
@@ -1205,6 +1270,8 @@ namespace PerizinanPeternakan.Controllers
                     DestinationProvinceId = model.DestinationProvinceId > 0 ? model.DestinationProvinceId : null,
                     DestinationRegencyId = model.DestinationRegencyId > 0 ? model.DestinationRegencyId : null
                 };
+
+                Console.WriteLine($"✅ Permit application created - CompanyName: '{permitApplication.CompanyName}', CompanyAddress: '{permitApplication.CompanyAddress}'");
 
                 // Add livestock details
                 foreach (var livestockDetail in validLivestockDetails)
@@ -1221,6 +1288,47 @@ namespace PerizinanPeternakan.Controllers
                 // STEP 9: SAVE TO DATABASE
                 // ===============================================
                 Console.WriteLine($"📝 Saving permit application to database...");
+                
+                // Debug: Log all data before saving
+                Console.WriteLine($"🔍 DEBUG - Permit application data before save:");
+                Console.WriteLine($"  ApplicationNumber: '{permitApplication.ApplicationNumber}'");
+                Console.WriteLine($"  UserId: {permitApplication.UserId}");
+                Console.WriteLine($"  CompanyName: '{permitApplication.CompanyName}'");
+                Console.WriteLine($"  CompanyAddress: '{permitApplication.CompanyAddress}'");
+                Console.WriteLine($"  OriginLocation: '{permitApplication.OriginLocation}'");
+                Console.WriteLine($"  DestinationLocation: '{permitApplication.DestinationLocation}'");
+                Console.WriteLine($"  DeparturePort: '{permitApplication.DeparturePort}'");
+                Console.WriteLine($"  ArrivalPort: '{permitApplication.ArrivalPort}'");
+                Console.WriteLine($"  Status: {permitApplication.Status}");
+                Console.WriteLine($"  SubmissionDate: {permitApplication.SubmissionDate}");
+                Console.WriteLine($"  CurrentApprovalLevel: {permitApplication.CurrentApprovalLevel}");
+                Console.WriteLine($"  LivestockDetails count: {permitApplication.LivestockDetails.Count}");
+                
+                // Validate required fields one more time
+                if (string.IsNullOrWhiteSpace(permitApplication.ApplicationNumber))
+                {
+                    ModelState.AddModelError("", "Nomor aplikasi tidak boleh kosong");
+                    return View(model);
+                }
+                
+                if (permitApplication.UserId <= 0)
+                {
+                    ModelState.AddModelError("", "User ID tidak valid");
+                    return View(model);
+                }
+                
+                if (string.IsNullOrWhiteSpace(permitApplication.CompanyName))
+                {
+                    ModelState.AddModelError("", "Nama pemohon/perusahaan tidak boleh kosong");
+                    return View(model);
+                }
+                
+                if (string.IsNullOrWhiteSpace(permitApplication.CompanyAddress))
+                {
+                    ModelState.AddModelError("", "Alamat pemohon/perusahaan tidak boleh kosong");
+                    return View(model);
+                }
+                
                 try
                 {
                     using var transaction = await _context.Database.BeginTransactionAsync();
@@ -1242,7 +1350,48 @@ namespace PerizinanPeternakan.Controllers
                 catch (Exception ex)
                 {
                     Console.WriteLine($"❌ Failed to save permit application: {ex.Message}");
-                    ModelState.AddModelError("", $"Gagal menyimpan permohonan ke database: {ex.Message}");
+                    Console.WriteLine($"❌ Inner exception: {ex.InnerException?.Message}");
+                    Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+                    
+                    // Provide more specific error messages
+                    string errorMessage = "Gagal menyimpan permohonan ke database";
+                    
+                    // Check for specific database errors
+                    if (ex.InnerException != null)
+                    {
+                        var innerEx = ex.InnerException;
+                        
+                        // Check for duplicate key error
+                        if (innerEx.Message.Contains("duplicate key") || 
+                            innerEx.Message.Contains("IX_PermitApplications_ApplicationNumber") ||
+                            innerEx.Message.Contains("ApplicationNumber"))
+                        {
+                            errorMessage = "Nomor aplikasi sudah ada. Silakan coba lagi.";
+                            Console.WriteLine("🔍 Detected duplicate ApplicationNumber error");
+                        }
+                        // Check for foreign key constraint error
+                        else if (innerEx.Message.Contains("FK_"))
+                        {
+                            errorMessage = "Gagal menyimpan permohonan: Masalah dengan referensi data";
+                            Console.WriteLine("🔍 Detected foreign key constraint error");
+                        }
+                        // Check for other database errors
+                        else if (innerEx.Message.Contains("database") || innerEx.Message.Contains("connection"))
+                        {
+                            errorMessage = "Gagal menyimpan permohonan: Masalah koneksi database";
+                            Console.WriteLine("🔍 Detected database connection error");
+                        }
+                        else
+                        {
+                            errorMessage = $"Gagal menyimpan permohonan: {innerEx.Message}";
+                            Console.WriteLine("🔍 Detected other database error");
+                        }
+                    }
+                    
+                    ModelState.AddModelError("", errorMessage);
+                    Console.WriteLine($"❌ Final error message: {errorMessage}");
+                    
+                    // Return to view with error
                     return View(model);
                 }
 

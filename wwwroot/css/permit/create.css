@@ -525,6 +525,40 @@ div.form-step[data-step="2"] .location-dropdown > *:last-child {
     color: #1d4ed8;
 }
 
+/* Active state for radio items */
+.radio-item.active .radio-label {
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, #f8faff 0%, #eff6ff 100%);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.25);
+}
+
+.radio-item.active .radio-label::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.radio-item.active .radio-content i {
+    color: #3b82f6;
+    transform: scale(1.1);
+}
+
+.radio-item.active .radio-title {
+    color: #1d4ed8;
+}
+
+/* Hover effect for active radio items */
+.radio-item.active .radio-label:hover {
+    border-color: #1d4ed8;
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+    transform: translateY(-3px);
+}
+
 /* ===============================================
    APPLICANT FORM
    =============================================== */
@@ -1299,4 +1333,286 @@ div.form-step[data-step="2"] .location-dropdown > *:last-child {
 .livestock-quantity.error {
     border-color: var(--danger-color);
     background: linear-gradient(to right, #fff8f8, #ffffff);
+}
+
+/* ===============================================
+   VALIDATION AND ERROR HANDLING
+   =============================================== */
+
+.validation-summary-errors {
+    margin-bottom: var(--spacing-lg);
+    border: 1px solid #dc3545;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, #fff5f5 0%, #fef2f2 100%);
+}
+
+.validation-summary-errors h5 {
+    color: #dc3545;
+    margin-bottom: var(--spacing-sm);
+    font-weight: 600;
+}
+
+.validation-summary-errors ul {
+    margin-bottom: 0;
+    padding-left: var(--spacing-md);
+}
+
+.validation-summary-errors li {
+    color: #dc3545;
+    margin-bottom: var(--spacing-xs);
+    font-size: 0.9rem;
+}
+
+.alert[data-tempdata-error],
+.alert[data-tempdata-success] {
+    margin-bottom: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.alert[data-tempdata-error] {
+    background: linear-gradient(135deg, #fff5f5 0%, #fef2f2 100%);
+    color: #dc3545;
+    border-left: 4px solid #dc3545;
+}
+
+.alert[data-tempdata-success] {
+    background: linear-gradient(135deg, #f0fff4 0%, #f0fdf4 100%);
+    color: #166534;
+    border-left: 4px solid #16a34a;
+}
+
+.field-validation-error {
+    color: #dc3545;
+    font-size: 0.8rem;
+    margin-top: var(--spacing-xs);
+    display: block;
+}
+
+.field-validation-valid {
+    display: none;
+}
+
+/* ===============================================
+   LIVESTOCK QUOTA MANAGEMENT (STEP 3)
+   =============================================== */
+
+.quota-info-panel {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid #dee2e6;
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-xl);
+    overflow: hidden;
+}
+
+.quota-info-panel .panel-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: var(--spacing-md) var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+}
+
+.quota-info-panel .panel-header i {
+    font-size: 1.2rem;
+}
+
+.quota-info-panel .panel-content {
+    padding: var(--spacing-lg);
+}
+
+.quota-table {
+    margin-top: var(--spacing-md);
+}
+
+.quota-table .table {
+    margin-bottom: 0;
+    font-size: 0.9rem;
+}
+
+.quota-table .table th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    color: #495057;
+}
+
+.quota-table .table td {
+    vertical-align: middle;
+    border-color: #e9ecef;
+}
+
+.quota-header h5 {
+    color: #495057;
+    margin-bottom: var(--spacing-sm);
+    font-weight: 600;
+}
+
+.livestock-item {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: var(--transition-normal);
+}
+
+.livestock-item:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-color: #007bff;
+}
+
+.livestock-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid #e9ecef;
+}
+
+.livestock-header h4 {
+    margin: 0;
+    color: #495057;
+    font-weight: 600;
+}
+
+.livestock-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+}
+
+.livestock-form .form-group:last-child {
+    grid-column: 1 / -1;
+}
+
+.quota-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    margin-left: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: #e3f2fd;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    color: #1976d2;
+}
+
+.quota-limit {
+    display: inline-block;
+    margin-left: var(--spacing-sm);
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.quantity-feedback {
+    margin-top: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+}
+
+.quantity-feedback .text-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.quantity-feedback .text-warning {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.quantity-feedback .text-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.livestock-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: var(--spacing-xl);
+    padding: var(--spacing-lg);
+    background: #f8f9fa;
+    border-radius: var(--radius-lg);
+    border: 1px solid #dee2e6;
+}
+
+.livestock-summary {
+    display: flex;
+    gap: var(--spacing-lg);
+    align-items: center;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.summary-item .label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: var(--spacing-xs);
+}
+
+.summary-item .value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.quota-usage .value {
+    font-size: 1rem;
+}
+
+.quota-validation-summary {
+    margin-top: var(--spacing-lg);
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.validation-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: var(--spacing-md) var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-weight: 600;
+}
+
+.validation-content {
+    padding: var(--spacing-lg);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .livestock-form {
+        grid-template-columns: 1fr;
+    }
+    
+    .livestock-actions {
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+    
+    .livestock-summary {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .quota-info-panel .panel-header {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        text-align: center;
+    }
 }

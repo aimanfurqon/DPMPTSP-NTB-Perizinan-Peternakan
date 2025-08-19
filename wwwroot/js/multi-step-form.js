@@ -31,6 +31,101 @@ const stepValidationRules = {
 };
 
 // ===============================================
+// SERVER RESPONSE HANDLING
+// ===============================================
+
+// Function to handle server-side validation errors
+function handleServerValidationErrors() {
+    console.log('🔍 Checking for server-side validation errors...');
+    
+    // Check for validation summary errors
+    const validationSummary = $('.validation-summary-errors');
+    if (validationSummary.length > 0) {
+        const errors = validationSummary.find('li');
+        if (errors.length > 0) {
+            const errorMessages = [];
+            errors.each(function() {
+                errorMessages.push($(this).text().trim());
+            });
+            
+            if (errorMessages.length > 0) {
+                showAlert('Terjadi kesalahan validasi: ' + errorMessages.join(', '), 'danger');
+                console.log('❌ Server validation errors found:', errorMessages);
+                
+                // Reset submit button
+                $('#submitBtn').html('<i class="fas fa-paper-plane"></i> Ajukan Permohonan').prop('disabled', false);
+                
+                // Stay on current step instead of going back to step 1
+                console.log('📍 Staying on current step due to validation errors');
+                return true;
+            }
+        }
+    }
+    
+    // Check for field-specific errors
+    const fieldErrors = $('.field-validation-error');
+    if (fieldErrors.length > 0) {
+        const errorMessages = [];
+        fieldErrors.each(function() {
+            const errorText = $(this).text().trim();
+            if (errorText) {
+                errorMessages.push(errorText);
+            }
+        });
+        
+        if (errorMessages.length > 0) {
+            showAlert('Terjadi kesalahan validasi: ' + errorMessages.join(', '), 'danger');
+            console.log('❌ Field validation errors found:', errorMessages);
+            
+            // Reset submit button
+            $('#submitBtn').html('<i class="fas fa-paper-plane"></i> Ajukan Permohonan').prop('disabled', false);
+            
+            // Stay on current step instead of going back to step 1
+            console.log('📍 Staying on current step due to field validation errors');
+            return true;
+        }
+    }
+    
+    // Check for TempData error messages
+    const tempDataError = $('[data-tempdata-error]');
+    if (tempDataError.length > 0) {
+        const errorMessage = tempDataError.attr('data-tempdata-error');
+        if (errorMessage) {
+            showAlert(errorMessage, 'danger');
+            console.log('❌ TempData error found:', errorMessage);
+            
+            // Reset submit button
+            $('#submitBtn').html('<i class="fas fa-paper-plane"></i> Ajukan Permohonan').prop('disabled', false);
+            
+            // Stay on current step instead of going back to step 1
+            console.log('📍 Staying on current step due to TempData error');
+            return true;
+        }
+    }
+    
+    console.log('✅ No server validation errors found');
+    return false;
+}
+
+// Function to handle successful submission
+function handleSuccessfulSubmission() {
+    console.log('✅ Handling successful submission...');
+    
+    // Check for success message
+    const successMessage = $('[data-tempdata-success]');
+    if (successMessage.length > 0) {
+        const message = successMessage.attr('data-tempdata-success');
+        if (message) {
+            showAlert(message, 'success');
+            console.log('✅ Success message found:', message);
+        }
+    }
+    
+    // Reset submit button
+    $('#submitBtn').html('<i class="fas fa-paper-plane"></i> Ajukan Permohonan').prop('disabled', false);
+}
+
+// ===============================================
 // INITIALIZATION
 // ===============================================
 $(document).ready(function () {
@@ -50,6 +145,40 @@ function initializeForm() {
     updateStepProgress();
     updateUploadProgress();
     updateDocumentChecklist();
+    
+    // Initialize applicant type selection
+    initializeApplicantTypeSelection();
+    
+    // Handle server-side validation errors and success messages
+    handleServerValidationErrors();
+    handleSuccessfulSubmission();
+}
+
+// Initialize applicant type selection
+function initializeApplicantTypeSelection() {
+    console.log('🔧 Initializing applicant type selection...');
+    
+    // Check if any radio button is selected
+    const selectedType = $('input[name="ApplicantType"]:checked').val();
+    console.log('🔍 Initial ApplicantType selection:', selectedType);
+    
+    if (selectedType === 'Individual') {
+        $('#companyForm').hide();
+        $('#individualForm').show();
+        console.log('👤 Initial state: Showing Individual form');
+    } else if (selectedType === 'Company') {
+        $('#individualForm').hide();
+        $('#companyForm').show();
+        console.log('🏢 Initial state: Showing Company form');
+    } else {
+        // Default: show company form, hide individual form
+        $('#individualForm').hide();
+        $('#companyForm').show();
+        console.log('🏢 Default state: Showing Company form (no selection)');
+    }
+    
+    // Update hidden field
+    $('#applicantTypeHidden').val(selectedType || '');
 }
 
 // ===============================================
@@ -191,6 +320,12 @@ function onStepChange(step) {
         case 3:
             // Livestock step - integration point with quota system
             console.log('🐄 Entered livestock details step');
+            // Load quota information if available
+            if (window.permitCreateManager) {
+                setTimeout(() => {
+                    window.permitCreateManager.loadQuotaInfo();
+                }, 500);
+            }
             break;
         case 4:
             // Documents step
@@ -1045,6 +1180,53 @@ function initializeEventHandlers() {
     $('#nextBtn').on('click', nextStep);
     $('#prevBtn').on('click', prevStep);
 
+    // Radio button selection for ApplicantType
+    $('input[name="ApplicantType"]').on('change', function() {
+        const selectedType = $(this).val();
+        console.log('🔘 ApplicantType changed to:', selectedType);
+        
+        // Remove active class from all radio items
+        $('.radio-item').removeClass('active');
+        
+        // Add active class to selected radio item
+        $(this).closest('.radio-item').addClass('active');
+        
+        if (selectedType === 'Individual') {
+            $('#companyForm').fadeOut(300, function() {
+                $('#individualForm').fadeIn(300);
+            });
+            console.log('👤 Showing Individual form, hiding Company form');
+        } else if (selectedType === 'Company') {
+            $('#individualForm').fadeOut(300, function() {
+                $('#companyForm').fadeIn(300);
+            });
+            console.log('🏢 Showing Company form, hiding Individual form');
+        }
+        
+        // Update hidden field for form submission
+        $('#applicantTypeHidden').val(selectedType);
+        
+        // Trigger validation for the newly shown form
+        setTimeout(() => {
+            validateCurrentStep();
+        }, 350);
+    });
+
+    // Debug: Log radio button elements
+    console.log('🔍 Radio button elements found:', $('input[name="ApplicantType"]').length);
+    $('input[name="ApplicantType"]').each(function(index) {
+        console.log(`  Radio ${index + 1}:`, $(this).attr('id'), 'value:', $(this).val());
+    });
+
+    // Additional click handler for radio labels
+    $('.radio-label').on('click', function(e) {
+        const radioInput = $(this).prev('input[type="radio"]');
+        if (radioInput.length > 0) {
+            radioInput.prop('checked', true).trigger('change');
+            console.log('🖱️ Radio label clicked, triggering change event');
+        }
+    });
+
     // Form submission with enhanced validation
     $('#permitForm').on('submit', function (e) {
         console.log('📤 Form submission initiated...');
@@ -1059,19 +1241,21 @@ function initializeEventHandlers() {
         // Debug: Log specific fields
         console.log('🔍 DEBUG - Specific field values:');
         console.log('  CompanyName:', $('[name="CompanyName"]').val());
+        console.log('  IndividualName:', $('[name="IndividualName"]').val());
         console.log('  ApplicantType:', $('input[name="ApplicantType"]:checked').val());
         console.log('  CompanyProvince:', $('[name="CompanyProvince"]').val());
+        console.log('  IndividualProvince:', $('[name="IndividualProvince"]').val());
         console.log('  CompanyRegency:', $('[name="CompanyRegency"]').val());
+        console.log('  IndividualRegency:', $('[name="IndividualRegency"]').val());
         console.log('  AddressStreet:', $('[name="AddressStreet"]').val());
+        console.log('  IndividualAddress:', $('[name="IndividualAddress"]').val());
 
-        // Debug: Check if CompanyName field exists and has value
+        // Debug: Check if fields exist and have values
         const companyNameField = $('[name="CompanyName"]');
-        console.log('🔍 DEBUG - CompanyName field check:');
-        console.log('  Field exists:', companyNameField.length > 0);
-        console.log('  Field value:', companyNameField.val());
-        console.log('  Field trimmed value:', companyNameField.val()?.trim());
-        console.log('  Field is visible:', companyNameField.is(':visible'));
-        console.log('  Field is enabled:', !companyNameField.prop('disabled'));
+        const individualNameField = $('[name="IndividualName"]');
+        console.log('🔍 DEBUG - Field existence check:');
+        console.log('  CompanyName field exists:', companyNameField.length > 0);
+        console.log('  IndividualName field exists:', individualNameField.length > 0);
 
         // Final validation check
         if (!validateAllSteps()) {
@@ -1088,12 +1272,12 @@ function initializeEventHandlers() {
             return false;
         }
 
-        // Validate applicant-specific data
+        // Validate applicant-specific data with improved logic
         if (applicantType === 'Individual') {
-            const name = $('input[name="IndividualName"]').val();
-            const province = $('input[name="IndividualProvince"]').val();
-            const regency = $('input[name="IndividualRegency"]').val();
-            const address = $('textarea[name="IndividualAddress"]').val();
+            const name = $('input[name="IndividualName"]').val()?.trim();
+            const province = $('input[name="IndividualProvince"]').val()?.trim();
+            const regency = $('input[name="IndividualRegency"]').val()?.trim();
+            const address = $('textarea[name="IndividualAddress"]').val()?.trim();
 
             console.log('Individual form data check:', { name, province, regency, address });
 
@@ -1104,12 +1288,18 @@ function initializeEventHandlers() {
                 return false;
             }
             
+            // Clear company fields for Individual applicant
+            $('[name="CompanyName"]').val('');
+            $('[name="CompanyProvince"]').val('');
+            $('[name="CompanyRegency"]').val('');
+            $('[name="AddressStreet"]').val('');
+            
             console.log('✅ Individual form validation passed');
         } else if (applicantType === 'Company') {
-            const companyName = $('input[name="CompanyName"]').val();
-            const companyProvince = $('input[name="CompanyProvince"]').val();
-            const companyRegency = $('input[name="CompanyRegency"]').val();
-            const street = $('input[name="AddressStreet"]').val();
+            const companyName = $('input[name="CompanyName"]').val()?.trim();
+            const companyProvince = $('input[name="CompanyProvince"]').val()?.trim();
+            const companyRegency = $('input[name="CompanyRegency"]').val()?.trim();
+            const street = $('input[name="AddressStreet"]').val()?.trim();
 
             console.log('Company form data check:', { companyName, companyProvince, companyRegency, street });
 
@@ -1120,6 +1310,12 @@ function initializeEventHandlers() {
                 return false;
             }
             
+            // Clear individual fields for Company applicant
+            $('[name="IndividualName"]').val('');
+            $('[name="IndividualProvince"]').val('');
+            $('[name="IndividualRegency"]').val('');
+            $('[name="IndividualAddress"]').val('');
+            
             console.log('✅ Company form validation passed');
         }
 
@@ -1127,15 +1323,22 @@ function initializeEventHandlers() {
         $('#submitBtn').html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...').prop('disabled', true);
         showAlert('Sedang memproses permohonan...', 'info');
 
-        // Debug form data before submission
-        console.log('🔍 Form data before submission:');
-        console.log('CompanyName:', $('[name="CompanyName"]').val());
+        // Final debug log before submission
+        console.log('🔍 Final form data before submission:');
         console.log('ApplicantType:', $('input[name="ApplicantType"]:checked').val());
+        console.log('CompanyName:', $('[name="CompanyName"]').val());
+        console.log('IndividualName:', $('[name="IndividualName"]').val());
         console.log('CompanyProvince:', $('[name="CompanyProvince"]').val());
+        console.log('IndividualProvince:', $('[name="IndividualProvince"]').val());
         console.log('CompanyRegency:', $('[name="CompanyRegency"]').val());
+        console.log('IndividualRegency:', $('[name="IndividualRegency"]').val());
         console.log('AddressStreet:', $('[name="AddressStreet"]').val());
+        console.log('IndividualAddress:', $('[name="IndividualAddress"]').val());
 
         console.log('✅ Form validation passed, proceeding with submission...');
+        
+        // Don't prevent default - let the form submit normally
+        // The server will handle validation and return appropriate response
     });
 
     // Field validation on blur
