@@ -945,10 +945,16 @@ namespace PerizinanPeternakan.Controllers
                 ModelState.AddModelError("ApplicantType", "Tipe pemohon harus dipilih");
             }
             
-            // Clear any existing validation errors for CompanyName/CompanyAddress if ApplicantType is Individual
+            // Clear any existing validation errors for CompanyName/CompanyAddress based on ApplicantType
             if (model.ApplicantType == "Individual")
             {
                 Console.WriteLine("🔍 DEBUG - Clearing CompanyName/CompanyAddress validation errors for Individual applicant");
+                ModelState.Remove("CompanyName");
+                ModelState.Remove("CompanyAddress");
+            }
+            else if (model.ApplicantType == "Company")
+            {
+                Console.WriteLine("🔍 DEBUG - Clearing CompanyName/CompanyAddress validation errors for Company applicant");
                 ModelState.Remove("CompanyName");
                 ModelState.Remove("CompanyAddress");
             }
@@ -996,22 +1002,77 @@ namespace PerizinanPeternakan.Controllers
 
                     // Build company address from components
                     var addressParts = new List<string>();
-                    if (!string.IsNullOrWhiteSpace(model.AddressStreet)) addressParts.Add(model.AddressStreet);
+                    
+                    Console.WriteLine("🔍 DEBUG - Building company address from components:");
+                    Console.WriteLine($"  AddressStreet: '{model.AddressStreet}'");
+                    Console.WriteLine($"  AddressRT: '{model.AddressRT}'");
+                    Console.WriteLine($"  AddressRW: '{model.AddressRW}'");
+                    Console.WriteLine($"  AddressVillage: '{model.AddressVillage}'");
+                    Console.WriteLine($"  AddressDistrict: '{model.AddressDistrict}'");
+                    Console.WriteLine($"  CompanyRegency: '{model.CompanyRegency}'");
+                    Console.WriteLine($"  CompanyProvince: '{model.CompanyProvince}'");
+                    Console.WriteLine($"  AddressPostalCode: '{model.AddressPostalCode}'");
+                    
+                    if (!string.IsNullOrWhiteSpace(model.AddressStreet)) 
+                    {
+                        addressParts.Add(model.AddressStreet);
+                        Console.WriteLine($"  ✅ Added AddressStreet: '{model.AddressStreet}'");
+                    }
+                    
                     if (!string.IsNullOrWhiteSpace(model.AddressRT) || !string.IsNullOrWhiteSpace(model.AddressRW))
                     {
-                        addressParts.Add($"RT {model.AddressRT ?? "-"} / RW {model.AddressRW ?? "-"}");
+                        var rtRw = $"RT {model.AddressRT ?? "-"} / RW {model.AddressRW ?? "-"}";
+                        addressParts.Add(rtRw);
+                        Console.WriteLine($"  ✅ Added RT/RW: '{rtRw}'");
                     }
-                    if (!string.IsNullOrWhiteSpace(model.AddressVillage)) addressParts.Add($"Desa/Kel. {model.AddressVillage}");
-                    if (!string.IsNullOrWhiteSpace(model.AddressDistrict)) addressParts.Add($"Kec. {model.AddressDistrict}");
-                    if (!string.IsNullOrWhiteSpace(model.CompanyRegency)) addressParts.Add(model.CompanyRegency);
-                    if (!string.IsNullOrWhiteSpace(model.CompanyProvince)) addressParts.Add(model.CompanyProvince);
-                    if (!string.IsNullOrWhiteSpace(model.AddressPostalCode)) addressParts.Add(model.AddressPostalCode);
+                    
+                    if (!string.IsNullOrWhiteSpace(model.AddressVillage)) 
+                    {
+                        var village = $"Desa/Kel. {model.AddressVillage}";
+                        addressParts.Add(village);
+                        Console.WriteLine($"  ✅ Added Village: '{village}'");
+                    }
+                    
+                    if (!string.IsNullOrWhiteSpace(model.AddressDistrict)) 
+                    {
+                        var district = $"Kec. {model.AddressDistrict}";
+                        addressParts.Add(district);
+                        Console.WriteLine($"  ✅ Added District: '{district}'");
+                    }
+                    
+                    if (!string.IsNullOrWhiteSpace(model.CompanyRegency)) 
+                    {
+                        addressParts.Add(model.CompanyRegency);
+                        Console.WriteLine($"  ✅ Added Regency: '{model.CompanyRegency}'");
+                    }
+                    
+                    if (!string.IsNullOrWhiteSpace(model.CompanyProvince)) 
+                    {
+                        addressParts.Add(model.CompanyProvince);
+                        Console.WriteLine($"  ✅ Added Province: '{model.CompanyProvince}'");
+                    }
+                    
+                    if (!string.IsNullOrWhiteSpace(model.AddressPostalCode)) 
+                    {
+                        addressParts.Add(model.AddressPostalCode);
+                        Console.WriteLine($"  ✅ Added PostalCode: '{model.AddressPostalCode}'");
+                    }
 
                     model.CompanyAddress = string.Join(", ", addressParts);
+                    Console.WriteLine($"🔍 DEBUG - Final CompanyAddress: '{model.CompanyAddress}'");
+                    Console.WriteLine($"🔍 DEBUG - CompanyAddress length: {model.CompanyAddress?.Length ?? 0}");
+                    Console.WriteLine($"🔍 DEBUG - CompanyAddress is null: {model.CompanyAddress == null}");
+                    Console.WriteLine($"🔍 DEBUG - CompanyAddress is empty: {string.IsNullOrEmpty(model.CompanyAddress)}");
+                    Console.WriteLine($"🔍 DEBUG - CompanyAddress is whitespace: {string.IsNullOrWhiteSpace(model.CompanyAddress)}");
 
                     if (string.IsNullOrWhiteSpace(model.CompanyAddress))
                     {
                         ModelState.AddModelError("CompanyAddress", "Alamat perusahaan harus diisi");
+                        Console.WriteLine("❌ CompanyAddress validation failed - address is empty");
+                    }
+                    else
+                    {
+                        Console.WriteLine("✅ CompanyAddress validation passed");
                     }
 
                     Console.WriteLine($"✅ Company data processed - Name: '{model.CompanyName}', Address: '{model.CompanyAddress}'");
