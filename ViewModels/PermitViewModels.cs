@@ -983,15 +983,44 @@ namespace PerizinanPeternakan.ViewModels
         }
     }
 
+    /// <summary>
+    /// Represents a recent user for display in user management
+    /// </summary>
     public class RecentUser
     {
+        /// <summary>
+        /// User ID
+        /// </summary>
         public int Id { get; set; }
+        
+        /// <summary>
+        /// Full name of the user
+        /// </summary>
         public string NamaLengkap { get; set; } = "";
+        
+        /// <summary>
+        /// Email address of the user
+        /// </summary>
         public string Email { get; set; } = "";
+        
+        /// <summary>
+        /// User role
+        /// </summary>
         public string Role { get; set; } = "";
+        
+        /// <summary>
+        /// Whether the user is active
+        /// </summary>
         public bool IsActive { get; set; }
+        
+        /// <summary>
+        /// User registration date
+        /// </summary>
         public DateTime TanggalDaftar { get; set; }
 
+        /// <summary>
+        /// Display name for the user role
+        /// </summary>
         public string RoleDisplayName => Role switch
         {
             "User" => "User",
@@ -1001,6 +1030,9 @@ namespace PerizinanPeternakan.ViewModels
             _ => Role
         };
 
+        /// <summary>
+        /// CSS badge class for the user role
+        /// </summary>
         public string RoleBadgeClass => Role switch
         {
             "Admin" => "badge-danger",
@@ -1009,26 +1041,58 @@ namespace PerizinanPeternakan.ViewModels
             _ => "badge-secondary"
         };
 
+        /// <summary>
+        /// CSS badge class for the user status
+        /// </summary>
         public string StatusBadgeClass => IsActive ? "badge-success" : "badge-danger";
+        
+        /// <summary>
+        /// Text representation of the user status
+        /// </summary>
         public string StatusText => IsActive ? "Aktif" : "Nonaktif";
     }
 
-
+    /// <summary>
+    /// View model for editable livestock details
+    /// </summary>
     public class EditableLivestockDetailViewModel
     {
+        /// <summary>
+        /// ID for existing livestock details
+        /// </summary>
         public int? Id { get; set; } // For existing livestock details
+        
+        /// <summary>
+        /// Index for form binding
+        /// </summary>
         public int Index { get; set; } // For form binding
 
+        /// <summary>
+        /// Type of livestock
+        /// </summary>
         [Display(Name = "Jenis Ternak")]
         public string LivestockType { get; set; }
 
+        /// <summary>
+        /// Quantity of livestock
+        /// </summary>
         [Display(Name = "Jumlah")]
         public int Quantity { get; set; }
 
+        /// <summary>
+        /// Description or notes
+        /// </summary>
         [Display(Name = "Keterangan")]
         public string Description { get; set; }
 
+        /// <summary>
+        /// Whether this entry is marked for deletion
+        /// </summary>
         public bool IsMarkedForDeletion { get; set; }
+        
+        /// <summary>
+        /// Whether this is a new entry
+        /// </summary>
         public bool IsNewEntry { get; set; }
     }
 }

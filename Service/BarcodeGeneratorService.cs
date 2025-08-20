@@ -46,6 +46,7 @@ namespace PerizinanPeternakan.Services
         {
             return await Task.Run(() =>
             {
+#pragma warning disable CA1416 // Validate platform compatibility
                 // Create a simple barcode image with text
                 int width = 300;
                 int height = 100;
@@ -76,6 +77,7 @@ namespace PerizinanPeternakan.Services
                 using var stream = new MemoryStream();
                 bitmap.Save(stream, ImageFormat.Png);
                 return stream.ToArray();
+#pragma warning restore CA1416 // Validate platform compatibility
             });
         }
     }
