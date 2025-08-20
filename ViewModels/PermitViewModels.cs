@@ -278,6 +278,7 @@ namespace PerizinanPeternakan.ViewModels
         public string ApplicationNumber { get; set; } = string.Empty;
         public string CompanyName { get; set; } = string.Empty;
         public string ApplicantName { get; set; } = string.Empty;
+        public string ApplicantType { get; set; } = string.Empty; // "Individual" or "Company"
         public PermitStatus Status { get; set; }
         public DateTime SubmissionDate { get; set; }
         public DateTime? AdminApprovalDate { get; set; }
@@ -289,6 +290,7 @@ namespace PerizinanPeternakan.ViewModels
         public string StatusText => PermitStatusHelper.GetStatusText(Status);
         public string StatusClass => PermitStatusHelper.GetStatusClass(Status);
         public string FormattedAdminApprovalDate => AdminApprovalDate?.ToString("dd MMM yyyy HH:mm") ?? "-";
+        public string ApplicantTypeDisplay => ApplicantType == "Individual" ? "Perorangan" : "Perusahaan";
     }
 
     public class VerifikatorHistoryViewModel
@@ -297,6 +299,7 @@ namespace PerizinanPeternakan.ViewModels
         public string ApplicationNumber { get; set; } = string.Empty;
         public string CompanyName { get; set; } = string.Empty;
         public string ApplicantName { get; set; } = string.Empty;
+        public string ApplicantType { get; set; } = string.Empty; // "Individual" or "Company"
         public PermitStatus Status { get; set; }
         public DateTime SubmissionDate { get; set; }
         public DateTime? VerificationDate { get; set; }
@@ -309,6 +312,7 @@ namespace PerizinanPeternakan.ViewModels
         public string StatusText => PermitStatusHelper.GetStatusText(Status);
         public string StatusClass => PermitStatusHelper.GetStatusClass(Status);
         public string FormattedVerificationDate => VerificationDate?.ToString("dd MMM yyyy HH:mm") ?? "-";
+        public string ApplicantTypeDisplay => ApplicantType == "Individual" ? "Perorangan" : "Perusahaan";
     }
 
     public class KepalaDinasHistoryViewModel
@@ -317,6 +321,7 @@ namespace PerizinanPeternakan.ViewModels
         public string ApplicationNumber { get; set; } = string.Empty;
         public string CompanyName { get; set; } = string.Empty;
         public string ApplicantName { get; set; } = string.Empty;
+        public string ApplicantType { get; set; } = string.Empty; // "Individual" or "Company"
         public PermitStatus Status { get; set; }
         public DateTime SubmissionDate { get; set; }
         public DateTime? FinalApprovalDate { get; set; }
@@ -328,6 +333,7 @@ namespace PerizinanPeternakan.ViewModels
         public string StatusText => PermitStatusHelper.GetStatusText(Status);
         public string StatusClass => PermitStatusHelper.GetStatusClass(Status);
         public string FormattedFinalApprovalDate => FinalApprovalDate?.ToString("dd MMM yyyy HH:mm") ?? "-";
+        public string ApplicantTypeDisplay => ApplicantType == "Individual" ? "Perorangan" : "Perusahaan";
     }
 
     // ViewModels untuk Dashboard Kepala Dinas

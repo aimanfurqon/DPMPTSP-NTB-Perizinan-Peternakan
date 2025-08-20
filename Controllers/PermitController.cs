@@ -101,6 +101,7 @@ namespace PerizinanPeternakan.Controllers
                         ApplicationNumber = p.ApplicationNumber,
                         CompanyName = p.CompanyName,
                         ApplicantName = p.User.NamaLengkap,
+                        ApplicantType = p.ApplicantType,
                         Status = p.Status,
                         SubmissionDate = p.SubmissionDate,
                         AdminApprovalDate = p.AdminApprovalDate,
@@ -216,6 +217,7 @@ namespace PerizinanPeternakan.Controllers
                         ApplicationNumber = p.ApplicationNumber,
                         CompanyName = p.CompanyName,
                         ApplicantName = p.User.NamaLengkap,
+                        ApplicantType = p.ApplicantType,
                         Status = p.Status,
                         SubmissionDate = p.SubmissionDate,
                         VerificationDate = p.VerificationDate,
@@ -330,6 +332,7 @@ namespace PerizinanPeternakan.Controllers
                         ApplicationNumber = p.ApplicationNumber,
                         CompanyName = p.CompanyName,
                         ApplicantName = p.User.NamaLengkap,
+                        ApplicantType = p.ApplicantType,
                         Status = p.Status,
                         SubmissionDate = p.SubmissionDate,
                         FinalApprovalDate = p.FinalApprovalDate,
@@ -1319,6 +1322,7 @@ namespace PerizinanPeternakan.Controllers
                     UserId = userId.Value,
                     CompanyName = finalCompanyName,
                     CompanyAddress = finalCompanyAddress,
+                    ApplicantType = model.ApplicantType, // Store the applicant type
                     OriginLocation = model.OriginLocation.Trim(),
                     DestinationLocation = model.DestinationLocation.Trim(),
                     DeparturePort = model.DeparturePort.Trim(),
@@ -1354,6 +1358,7 @@ namespace PerizinanPeternakan.Controllers
                 Console.WriteLine($"🔍 DEBUG - Permit application data before save:");
                 Console.WriteLine($"  ApplicationNumber: '{permitApplication.ApplicationNumber}'");
                 Console.WriteLine($"  UserId: {permitApplication.UserId}");
+                Console.WriteLine($"  ApplicantType: '{permitApplication.ApplicantType}'");
                 Console.WriteLine($"  CompanyName: '{permitApplication.CompanyName}'");
                 Console.WriteLine($"  CompanyAddress: '{permitApplication.CompanyAddress}'");
                 Console.WriteLine($"  OriginLocation: '{permitApplication.OriginLocation}'");

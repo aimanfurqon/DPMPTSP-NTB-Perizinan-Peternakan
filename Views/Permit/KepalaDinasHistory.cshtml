@@ -206,6 +206,27 @@
     color: #383d41;
 }
 
+.applicant-type-badge {
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.applicant-type-badge.individual {
+    background: #e3f2fd;
+    color: #1565c0;
+    border: 1px solid #bbdefb;
+}
+
+.applicant-type-badge.company {
+    background: #f3e5f5;
+    color: #7b1fa2;
+    border: 1px solid #e1bee7;
+}
+
 .pagination-container {
     display: flex;
     justify-content: center;
@@ -379,7 +400,8 @@
                     <thead>
                         <tr>
                             <th>No. Permohonan</th>
-                            <th>Perusahaan</th>
+                            <th>Tipe</th>
+                            <th>Nama/Perusahaan</th>
                             <th>Pemohon</th>
                             <th>Status</th>
                             <th>Tanggal Persetujuan</th>
@@ -396,6 +418,11 @@
                                     <strong>@item.ApplicationNumber</strong>
                                     <br>
                                     <small class="text-muted">@item.SubmissionDate.ToString("dd MMM yyyy")</small>
+                                </td>
+                                <td>
+                                    <span class="applicant-type-badge @(item.ApplicantType == "Individual" ? "individual" : "company")">
+                                        @item.ApplicantTypeDisplay
+                                    </span>
                                 </td>
                                 <td>
                                     <div class="text-start">

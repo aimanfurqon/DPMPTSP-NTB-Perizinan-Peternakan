@@ -47,6 +47,7 @@ namespace PerizinanPeternakan.Data
                 entity.Property(e => e.ApplicationNumber).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.CompanyName).IsRequired(false).HasMaxLength(200);
                 entity.Property(e => e.CompanyAddress).IsRequired(false).HasMaxLength(500);
+                entity.Property(e => e.ApplicantType).IsRequired(false).HasMaxLength(20);
                 entity.Property(e => e.OriginLocation).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.DestinationLocation).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.DeparturePort).IsRequired().HasMaxLength(100);

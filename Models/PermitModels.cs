@@ -17,6 +17,9 @@ namespace PerizinanPeternakan.Models
         [StringLength(500, ErrorMessage = "Alamat perusahaan maksimal 500 karakter")]
         public string CompanyAddress { get; set; } = string.Empty;
 
+        [StringLength(20, ErrorMessage = "Tipe pemohon maksimal 20 karakter")]
+        public string ApplicantType { get; set; } = string.Empty; // "Individual" or "Company"
+
         [Required(ErrorMessage = "Asal ternak harus diisi")]
         [StringLength(100, ErrorMessage = "Asal ternak maksimal 100 karakter")]
         public string OriginLocation { get; set; } = string.Empty;
