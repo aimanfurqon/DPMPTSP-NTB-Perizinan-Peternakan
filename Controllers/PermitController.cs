@@ -903,7 +903,7 @@ namespace PerizinanPeternakan.Controllers
             if (model == null)
             {
                 TempData["ErrorMessage"] = "Data permohonan tidak valid";
-                return RedirectToAction("Index");
+                return RedirectToAction("Index", "Dashboard");
             }
 
             // Ensure LivestockDetails is initialized
@@ -1567,7 +1567,7 @@ namespace PerizinanPeternakan.Controllers
 
                 Console.WriteLine($"✅ Permit application created successfully - ID: {permitApplication.Id}, Number: {applicationNumber}");
 
-                return RedirectToAction("Index");
+                return RedirectToAction("Index", "Dashboard");
             }
             catch (Exception ex)
             {
@@ -1781,13 +1781,13 @@ namespace PerizinanPeternakan.Controllers
             if (permit == null)
             {
                 TempData["ErrorMessage"] = "Permohonan tidak ditemukan";
-                return RedirectToAction("Index");
+                return RedirectToAction("Index", "Dashboard");
             }
 
             if (userRole == "User" && permit.UserId != userId.Value)
             {
                 TempData["ErrorMessage"] = "Anda tidak memiliki akses ke permohonan ini";
-                return RedirectToAction("Index");
+                return RedirectToAction("Index", "Dashboard");
             }
 
             var model = new PermitDetailViewModel
@@ -1997,7 +1997,7 @@ namespace PerizinanPeternakan.Controllers
             if (permit == null)
             {
                 TempData["ErrorMessage"] = "Permohonan tidak ditemukan";
-                return RedirectToAction("Index");
+                return RedirectToAction("Index", "Dashboard");
             }
 
             if (!CanUserApprove(userRole, permit.Status))
@@ -2439,7 +2439,15 @@ namespace PerizinanPeternakan.Controllers
                 if (result.Success)
                 {
                     TempData["SuccessMessage"] = $"Permohonan {result.PermitApplicationNumber} berhasil {result.ActionText.ToLower()}";
-                    return RedirectToAction("Index");
+                    
+                    // Redirect to appropriate history page based on user role
+                    return userRole switch
+                    {
+                        "Admin" => RedirectToAction("AdminHistory"),
+                        "Verifikator" => RedirectToAction("VerifikatorHistory"),
+                        "KepalaDinas" => RedirectToAction("KepalaDinasHistory"),
+                        _ => RedirectToAction("Index")
+                    };
                 }
                 else
                 {
@@ -2471,7 +2479,7 @@ namespace PerizinanPeternakan.Controllers
             if (permit == null)
             {
                 TempData["ErrorMessage"] = "Permohonan tidak ditemukan";
-                return RedirectToAction("Index");
+                return RedirectToAction("Index", "Dashboard");
             }
 
             if (userRole != "User")
@@ -2483,7 +2491,7 @@ namespace PerizinanPeternakan.Controllers
             if (permit.UserId != userId.Value)
             {
                 TempData["ErrorMessage"] = "Anda tidak memiliki akses ke dokumen ini";
-                return RedirectToAction("Index");
+                return RedirectToAction("Index", "Dashboard");
             }
 
 
@@ -3333,7 +3341,7 @@ namespace PerizinanPeternakan.Controllers
             if (document == null)
             {
                 TempData["ErrorMessage"] = "Dokumen tidak ditemukan";
-                return RedirectToAction("Index");
+                return RedirectToAction("Index", "Dashboard");
             }
 
             var model = new DocumentDetailsViewModel
@@ -3378,7 +3386,7 @@ namespace PerizinanPeternakan.Controllers
                 if (document == null)
                 {
                     TempData["ErrorMessage"] = "Dokumen tidak ditemukan";
-                    return RedirectToAction("Index");
+                    return RedirectToAction("Index", "Dashboard");
                 }
 
                 // Update document details
@@ -3844,7 +3852,7 @@ namespace PerizinanPeternakan.Controllers
             if (permit == null)
             {
                 TempData["ErrorMessage"] = "Permohonan tidak ditemukan";
-                return RedirectToAction("Index");
+                return RedirectToAction("Index", "Dashboard");
             }
 
             if (!CanUserApprove(userRole, permit.Status))
@@ -3964,7 +3972,7 @@ namespace PerizinanPeternakan.Controllers
                     }
 
                     TempData["SuccessMessage"] = successMessage;
-                    return RedirectToAction("Index");
+                    return RedirectToAction("AdminHistory");
                 }
                 else
                 {
@@ -5453,7 +5461,7 @@ namespace PerizinanPeternakan.Controllers
             if (userRole != "Admin")
             {
                 TempData["ErrorMessage"] = "Hanya Admin yang dapat menyimpan edit";
-                return RedirectToAction("Index");
+                return RedirectToAction("Index", "Dashboard");
             }
 
             try
@@ -5465,7 +5473,7 @@ namespace PerizinanPeternakan.Controllers
                 if (permit == null)
                 {
                     TempData["ErrorMessage"] = "Permohonan tidak ditemukan";
-                    return RedirectToAction("Index");
+                    return RedirectToAction("Index", "Dashboard");
                 }
 
                 // Apply changes without approval
