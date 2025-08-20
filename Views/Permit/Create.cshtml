@@ -156,8 +156,17 @@
                             </div>
                         </div>
 
+                        <!-- Pesan untuk memilih tipe pemohon -->
+                        <div id="noSelectionMessage" class="applicant-form">
+                            <div class="alert alert-info text-center">
+                                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                                <h5>Pilih Tipe Pemohon</h5>
+                                <p class="mb-0">Silakan pilih tipe pemohon di atas untuk menampilkan form yang sesuai</p>
+                            </div>
+                        </div>
+
                         <!-- Form untuk Perusahaan (Default - LENGKAP dengan dropdown spesifik) -->
-                        <div id="companyForm" class="applicant-form">
+                        <div id="companyForm" class="applicant-form" style="display: none !important;">
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label asp-for="CompanyName" class="form-label required">
@@ -166,8 +175,7 @@
                                     </label>
                                     <input asp-for="CompanyName" class="form-control" placeholder="Contoh: CV. DENA BERSAUDARA" />
                                     <span asp-validation-for="CompanyName" class="text-danger"></span>
-                                    <!-- Debug info -->
-                                    <small class="form-text text-muted" id="companyNameDebug">Debug: Field ID = "CompanyName", Name = "CompanyName"</small>
+                                    
                                 </div>
 
                                 <!-- ALAMAT PERUSAHAAN LENGKAP dengan dropdown spesifik -->
@@ -245,7 +253,7 @@
                         </div>
 
                         <!-- Form untuk Perorangan (Hidden by default - SEDERHANA) -->
-                        <div id="individualForm" class="applicant-form" style="display: none;">
+                        <div id="individualForm" class="applicant-form" style="display: none !important;">
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label asp-for="IndividualName" class="form-label required">
@@ -264,8 +272,8 @@
                                         Alamat Perorangan
                                     </label>
                                     <div class="address-grid">
-                                        <!-- Provinsi -->
-                                        <div class="address-group span-2">
+                                        <!-- Provinsi (Hidden for now) -->
+                                        <div class="address-group span-2" id="individualProvinceGroup" style="display: none;">
                                             <label asp-for="IndividualProvince">Provinsi</label>
                                             <select id="individualProvinceSelect" class="form-control">
                                                 <option value="">Pilih Provinsi</option>
@@ -274,8 +282,8 @@
                                             <span asp-validation-for="IndividualProvince" class="text-danger"></span>
                                         </div>
 
-                                        <!-- Kabupaten/Kota -->
-                                        <div class="address-group span-2">
+                                        <!-- Kabupaten/Kota (Hidden for now) -->
+                                        <div class="address-group span-2" id="individualRegencyGroup" style="display: none;">
                                             <label asp-for="IndividualRegency">Kabupaten/Kota</label>
                                             <select id="individualRegencySelect" class="form-control" disabled>
                                                 <option value="">Pilih Provinsi terlebih dahulu</option>
@@ -313,75 +321,92 @@
                     </div>
 
                     <div class="form-body">
-                        <div class="form-grid">
-                            <!-- Asal Ternak -->
-                            <div class="form-group">
-                                <label class="form-label required">
-                                    <i class="fas fa-map-marker-alt text-success"></i>
-                                    Asal Ternak
-                                </label>
-                                <div class="location-dropdown">
-                                    <select id="originProvinceSelect" class="form-control select2-province">
-                                        <option value="">Pilih Provinsi</option>
-                                    </select>
-                                    <select id="originRegencySelect" class="form-control select2-regency" disabled>
-                                        <option value="">Pilih Kabupaten/Kota</option>
-                                    </select>
+                        <!-- Location Section -->
+                        <div class="form-section">
+                            <div class="section-header">
+                                <h3><i class="fas fa-map-marked-alt"></i> Lokasi Asal dan Tujuan</h3>
+                                <p class="section-description">Pilih lokasi asal ternak dan tujuan pengiriman</p>
+                            </div>
+                            
+                            <div class="form-grid">
+                                <!-- Asal Ternak -->
+                                <div class="form-group location-group">
+                                    <label class="form-label required">
+                                        <i class="fas fa-map-marker-alt text-success"></i>
+                                        Asal Ternak
+                                    </label>
+                                    <div class="location-dropdown">
+                                        <select id="originProvinceSelect" class="form-control select2-province">
+                                            <option value="">Pilih Provinsi</option>
+                                        </select>
+                                        <select id="originRegencySelect" class="form-control select2-regency" disabled>
+                                            <option value="">Pilih Kabupaten/Kota</option>
+                                        </select>
+                                    </div>
+                                    <input asp-for="OriginLocation" id="originLocationHidden" type="hidden" />
+                                    <span asp-validation-for="OriginLocation" class="text-danger"></span>
                                 </div>
-                                <input asp-for="OriginLocation" id="originLocationHidden" type="hidden" />
-                                <span asp-validation-for="OriginLocation" class="text-danger"></span>
-                            </div>
 
-                            <!-- Tujuan Pengiriman -->
-                            <div class="form-group">
-                                <label class="form-label required">
-                                    <i class="fas fa-map-marker-alt text-danger"></i>
-                                    Tujuan Pengiriman
-                                </label>
-                                <div class="location-dropdown">
-                                    <select id="destinationProvinceSelect" class="form-control select2-province">
-                                        <option value="">Pilih Provinsi</option>
-                                    </select>
-                                    <select id="destinationRegencySelect" class="form-control select2-regency" disabled>
-                                        <option value="">Pilih Kabupaten/Kota</option>
-                                    </select>
+                                <!-- Tujuan Pengiriman -->
+                                <div class="form-group location-group">
+                                    <label class="form-label required">
+                                        <i class="fas fa-map-marker-alt text-danger"></i>Tujuan Pengiriman
+                                    </label>
+                                    <div class="location-dropdown">
+                                        <select id="destinationProvinceSelect" class="form-control select2-province">
+                                            <option value="">Pilih Provinsi</option>
+                                        </select>
+                                        <select id="destinationRegencySelect" class="form-control select2-regency" disabled>
+                                            <option value="">Pilih Kabupaten/Kota</option>
+                                        </select>
+                                    </div>
+                                    <input asp-for="DestinationLocation" id="destinationLocationHidden" type="hidden" />
+                                    <span asp-validation-for="DestinationLocation" class="text-danger"></span>
                                 </div>
-                                <input asp-for="DestinationLocation" id="destinationLocationHidden" type="hidden" />
-                                <span asp-validation-for="DestinationLocation" class="text-danger"></span>
                             </div>
+                        </div>
 
-                            <!-- Pelabuhan Keberangkatan -->
-                            <div class="form-group">
-                                <label class="form-label required">
-                                    <i class="fas fa-anchor text-primary"></i>
-                                    Pelabuhan Keberangkatan
-                                </label>
-                                <select id="departurePortSelect" class="form-control select2-port" disabled>
-                                    <option value="">Pilih provinsi asal terlebih dahulu</option>
-                                </select>
-                                <input asp-for="DeparturePort" id="departurePortHidden" type="hidden" />
-                                <span asp-validation-for="DeparturePort" class="text-danger"></span>
-                                <small class="form-text text-muted">
-                                    <i class="fas fa-info-circle"></i>
-                                    Pelabuhan akan muncul setelah memilih provinsi asal
-                                </small>
+                        <!-- Port Section -->
+                        <div class="form-section">
+                            <div class="section-header">
+                                <h3><i class="fas fa-anchor"></i> Pelabuhan</h3>
+                                <p class="section-description">Pilih pelabuhan keberangkatan dan tujuan</p>
                             </div>
+                            
+                            <div class="form-grid">
+                                <!-- Pelabuhan Keberangkatan -->
+                                <div class="form-group port-group">
+                                    <label class="form-label required">
+                                        <i class="fas fa-anchor text-primary"></i>
+                                        Pelabuhan Keberangkatan
+                                    </label>
+                                    <select id="departurePortSelect" class="form-control select2-port" disabled>
+                                        <option value="">Pilih provinsi asal terlebih dahulu</option>
+                                    </select>
+                                    <input asp-for="DeparturePort" id="departurePortHidden" type="hidden" />
+                                    <span asp-validation-for="DeparturePort" class="text-danger"></span>
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle"></i>
+                                        Pelabuhan akan muncul setelah memilih provinsi asal
+                                    </small>
+                                </div>
 
-                            <!-- Pelabuhan Tujuan -->
-                            <div class="form-group">
-                                <label class="form-label required">
-                                    <i class="fas fa-anchor text-warning"></i>
-                                    Pelabuhan Tujuan
-                                </label>
-                                <select id="arrivalPortSelect" class="form-control select2-port" disabled>
-                                    <option value="">Pilih provinsi tujuan terlebih dahulu</option>
-                                </select>
-                                <input asp-for="ArrivalPort" id="arrivalPortHidden" type="hidden" />
-                                <span asp-validation-for="ArrivalPort" class="text-danger"></span>
-                                <small class="form-text text-muted">
-                                    <i class="fas fa-info-circle"></i>
-                                    Pelabuhan akan muncul setelah memilih provinsi tujuan
-                                </small>
+                                <!-- Pelabuhan Tujuan -->
+                                <div class="form-group port-group">
+                                    <label class="form-label required">
+                                        <i class="fas fa-anchor text-warning"></i>
+                                        Pelabuhan Tujuan
+                                    </label>
+                                    <select id="arrivalPortSelect" class="form-control select2-port" disabled>
+                                        <option value="">Pilih provinsi tujuan terlebih dahulu</option>
+                                    </select>
+                                    <input asp-for="ArrivalPort" id="arrivalPortHidden" type="hidden" />
+                                    <span asp-validation-for="ArrivalPort" class="text-danger"></span>
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle"></i>
+                                        Pelabuhan akan muncul setelah memilih provinsi tujuan
+                                    </small>
+                                </div>
                             </div>
                         </div>
 
@@ -1151,4 +1176,73 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="~/js/permit-create.js" asp-append-version="true"></script>
+    
+    <script>
+        // Data user dari server (akan diisi oleh controller)
+        var userProfileData = {
+            namaLengkap: '@Html.Raw(Model.IndividualName)',
+            alamat: '@Html.Raw(Model.IndividualAddress)'
+        };
+        
+        console.log('📋 User profile data loaded:', userProfileData);
+
+        $(document).ready(function() {
+            // Handler untuk radio button ApplicantType
+            $('input[name="ApplicantType"]').on('change', function() {
+                const selectedType = $(this).val();
+                console.log('ApplicantType changed to:', selectedType);
+                
+                if (selectedType === 'Individual') {
+                    // Isi data dari profil user
+                    fillIndividualDataFromProfile();
+                    
+                    // Sembunyikan dropdown provinsi dan kabupaten untuk sementara
+                    $('#individualProvinceGroup').hide();
+                    $('#individualRegencyGroup').hide();
+                    
+                    // Tampilkan pesan bahwa data diambil dari profil
+                    showProfileDataMessage();
+                } else if (selectedType === 'Company') {
+                    // Tampilkan dropdown provinsi dan kabupaten untuk perusahaan
+                    $('#companyProvinceSelect').closest('.address-group').show();
+                    $('#companyRegencySelect').closest('.address-group').show();
+                    
+                    // Sembunyikan pesan profil
+                    hideProfileDataMessage();
+                }
+            });
+        });
+
+        function fillIndividualDataFromProfile() {
+            // Isi nama lengkap dari profil
+            if (userProfileData.namaLengkap) {
+                $('#IndividualName').val(userProfileData.namaLengkap);
+                console.log('✅ Nama lengkap diisi dari profil:', userProfileData.namaLengkap);
+            }
+            
+            // Isi alamat dari profil
+            if (userProfileData.alamat) {
+                $('#IndividualAddress').val(userProfileData.alamat);
+                console.log('✅ Alamat diisi dari profil:', userProfileData.alamat);
+            }
+        }
+
+        function showProfileDataMessage() {
+            // Tambahkan pesan bahwa data diambil dari profil
+            if (!$('#profileDataMessage').length) {
+                const message = `
+                    <div id="profileDataMessage" class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Data diambil dari profil:</strong> Nama dan alamat telah diisi otomatis dari data profil akun Anda. 
+                        Anda dapat mengubah data ini jika diperlukan.
+                    </div>
+                `;
+                $('#individualForm').append(message);
+            }
+        }
+
+        function hideProfileDataMessage() {
+            $('#profileDataMessage').remove();
+        }
+    </script>
 }

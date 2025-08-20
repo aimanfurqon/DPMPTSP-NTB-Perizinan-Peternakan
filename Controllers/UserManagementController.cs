@@ -267,7 +267,7 @@ namespace PerizinanPeternakan.Controllers
                 
                 if (userRole != "Admin")
                 {
-                    Console.WriteLine($"UserStatistics - UserRole '{userRole}' is not Admin, but allowing access for debugging");
+        
                 }
 
                 var totalUsers = await _context.Users.CountAsync();

@@ -87,12 +87,12 @@ namespace PerizinanPeternakan.Services
                 // Kirim email
                 await smtp.SendAsync(email);
 
-                System.Diagnostics.Debug.WriteLine($"Email ke {toEmail} berhasil dikirim melalui MailKit!");
+                Console.WriteLine($"Email ke {toEmail} berhasil dikirim melalui MailKit!");
             }
             catch (System.Exception ex)
             {
-                // Jika gagal, tampilkan pesan error di console debug
-                System.Diagnostics.Debug.WriteLine($"Gagal mengirim email ke {toEmail}. Error: {ex.Message}");
+                // Jika gagal, tampilkan pesan error di console
+                Console.WriteLine($"Gagal mengirim email ke {toEmail}. Error: {ex.Message}");
                 throw; // Lemparkan kembali error agar bisa ditangani lebih lanjut jika perlu
             }
             finally

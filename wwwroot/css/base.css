@@ -18,6 +18,7 @@
     
     /* Status Colors */
     --success-color: #28a745;
+    --success-dark: #1e7e34;
     --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
     --danger-color: #dc3545;
     --danger-gradient: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);

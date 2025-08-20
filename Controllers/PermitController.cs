@@ -838,16 +838,30 @@ namespace PerizinanPeternakan.Controllers
         }
 
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            if (GetCurrentUserId() == null) return RedirectToAction("Login", "Auth");
+            var userId = GetCurrentUserId();
+            if (userId == null) return RedirectToAction("Login", "Auth");
             if (HttpContext.Session.GetString("Role") != "User")
             {
                 TempData["ErrorMessage"] = "Hanya user yang dapat membuat permohonan";
                 return RedirectToAction("Index");
             }
 
+            // Ambil data user existing
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "Data user tidak ditemukan";
+                return RedirectToAction("Index", "Dashboard");
+            }
+
             var model = new PermitApplicationViewModel();
+            
+            // Pre-fill data untuk perorangan dari profil user
+            model.IndividualName = user.NamaLengkap;
+            model.IndividualAddress = user.Alamat;
+            
             model.LivestockDetails.Add(new LivestockDetailViewModel()); 
             return View(model);
         }
@@ -858,15 +872,7 @@ namespace PerizinanPeternakan.Controllers
         public async Task<IActionResult> Create(PermitApplicationViewModel model)
         {
             Console.WriteLine("🚀 Create action started");
-            Console.WriteLine($"🔍 DEBUG - ApplicantType: '{model.ApplicantType}'");
-            Console.WriteLine($"🔍 DEBUG - CompanyName: '{model.CompanyName}'");
-            Console.WriteLine($"🔍 DEBUG - IndividualName: '{model.IndividualName}'");
-            Console.WriteLine($"🔍 DEBUG - CompanyProvince: '{model.CompanyProvince}'");
-            Console.WriteLine($"🔍 DEBUG - CompanyRegency: '{model.CompanyRegency}'");
-            Console.WriteLine($"🔍 DEBUG - AddressStreet: '{model.AddressStreet}'");
-            
-            // Log all form data for debugging
-            Console.WriteLine("🔍 DEBUG - All form data:");
+
             foreach (var property in typeof(PermitApplicationViewModel).GetProperties())
             {
                 var value = property.GetValue(model);
@@ -874,7 +880,7 @@ namespace PerizinanPeternakan.Controllers
             }
             
             // Check if ModelState already has errors for CompanyName/CompanyAddress
-            Console.WriteLine("🔍 DEBUG - Checking ModelState for CompanyName/CompanyAddress errors:");
+
             if (ModelState.ContainsKey("CompanyName"))
             {
                 foreach (var error in ModelState["CompanyName"].Errors)
@@ -951,13 +957,13 @@ namespace PerizinanPeternakan.Controllers
             // Clear any existing validation errors for CompanyName/CompanyAddress based on ApplicantType
             if (model.ApplicantType == "Individual")
             {
-                Console.WriteLine("🔍 DEBUG - Clearing CompanyName/CompanyAddress validation errors for Individual applicant");
+    
                 ModelState.Remove("CompanyName");
                 ModelState.Remove("CompanyAddress");
             }
             else if (model.ApplicantType == "Company")
             {
-                Console.WriteLine("🔍 DEBUG - Clearing CompanyName/CompanyAddress validation errors for Company applicant");
+    
                 ModelState.Remove("CompanyName");
                 ModelState.Remove("CompanyAddress");
             }
@@ -974,13 +980,7 @@ namespace PerizinanPeternakan.Controllers
                 {
                     Console.WriteLine("🏢 Processing Company applicant...");
 
-                    // Debug logging for CompanyName
-                    Console.WriteLine($"🔍 DEBUG - CompanyName value: '{model.CompanyName}'");
-                    Console.WriteLine($"🔍 DEBUG - CompanyName length: {model.CompanyName?.Length ?? 0}");
-                    Console.WriteLine($"🔍 DEBUG - CompanyName is null: {model.CompanyName == null}");
-                    Console.WriteLine($"🔍 DEBUG - CompanyName is empty: {string.IsNullOrEmpty(model.CompanyName)}");
-                    Console.WriteLine($"🔍 DEBUG - CompanyName is whitespace: {string.IsNullOrWhiteSpace(model.CompanyName)}");
-                    Console.WriteLine($"🔍 DEBUG - CompanyName trimmed: '{model.CompanyName?.Trim()}'");
+                    
 
                     // Validate company fields - ONLY for Company applicant type
                     if (string.IsNullOrWhiteSpace(model.CompanyName))
@@ -1003,10 +1003,65 @@ namespace PerizinanPeternakan.Controllers
                         ModelState.AddModelError("CompanyRegency", "Kabupaten perusahaan wajib diisi");
                     }
 
+                    // Validasi Kecamatan
+                    if (string.IsNullOrWhiteSpace(model.AddressDistrict))
+                    {
+                        ModelState.AddModelError("AddressDistrict", "Kecamatan wajib dipilih");
+                        Console.WriteLine("❌ AddressDistrict validation failed");
+                    }
+                    else
+                    {
+                        Console.WriteLine("✅ AddressDistrict validation passed");
+                    }
+
+                    // Validasi Desa/Kelurahan
+                    if (string.IsNullOrWhiteSpace(model.AddressVillage))
+                    {
+                        ModelState.AddModelError("AddressVillage", "Desa/Kelurahan wajib dipilih");
+                        Console.WriteLine("❌ AddressVillage validation failed");
+                    }
+                    else
+                    {
+                        Console.WriteLine("✅ AddressVillage validation passed");
+                    }
+
+                    // Validasi Nama Jalan
+                    if (string.IsNullOrWhiteSpace(model.AddressStreet))
+                    {
+                        ModelState.AddModelError("AddressStreet", "Nama jalan wajib diisi");
+                        Console.WriteLine("❌ AddressStreet validation failed");
+                    }
+                    else
+                    {
+                        Console.WriteLine("✅ AddressStreet validation passed");
+                    }
+
+                    // Validasi RT
+                    if (string.IsNullOrWhiteSpace(model.AddressRT))
+                    {
+                        ModelState.AddModelError("AddressRT", "RT wajib diisi");
+                        Console.WriteLine("❌ AddressRT validation failed");
+                    }
+                    else
+                    {
+                        Console.WriteLine("✅ AddressRT validation passed");
+                    }
+
+                    // Validasi RW
+                    if (string.IsNullOrWhiteSpace(model.AddressRW))
+                    {
+                        ModelState.AddModelError("AddressRW", "RW wajib diisi");
+                        Console.WriteLine("❌ AddressRW validation failed");
+                    }
+                    else
+                    {
+                        Console.WriteLine("✅ AddressRW validation passed");
+                    }
+
                     // Build company address from components
                     var addressParts = new List<string>();
                     
-                    Console.WriteLine("🔍 DEBUG - Building company address from components:");
+        
                     Console.WriteLine($"  AddressStreet: '{model.AddressStreet}'");
                     Console.WriteLine($"  AddressRT: '{model.AddressRT}'");
                     Console.WriteLine($"  AddressRW: '{model.AddressRW}'");
@@ -1062,11 +1117,7 @@ namespace PerizinanPeternakan.Controllers
                     }
 
                     model.CompanyAddress = string.Join(", ", addressParts);
-                    Console.WriteLine($"🔍 DEBUG - Final CompanyAddress: '{model.CompanyAddress}'");
-                    Console.WriteLine($"🔍 DEBUG - CompanyAddress length: {model.CompanyAddress?.Length ?? 0}");
-                    Console.WriteLine($"🔍 DEBUG - CompanyAddress is null: {model.CompanyAddress == null}");
-                    Console.WriteLine($"🔍 DEBUG - CompanyAddress is empty: {string.IsNullOrEmpty(model.CompanyAddress)}");
-                    Console.WriteLine($"🔍 DEBUG - CompanyAddress is whitespace: {string.IsNullOrWhiteSpace(model.CompanyAddress)}");
+                    
 
                     if (string.IsNullOrWhiteSpace(model.CompanyAddress))
                     {
@@ -1101,29 +1152,12 @@ namespace PerizinanPeternakan.Controllers
                         model.CompanyName = model.IndividualName.Trim();
                     }
 
-                    if (string.IsNullOrWhiteSpace(model.IndividualProvince))
-                    {
-                        ModelState.AddModelError("IndividualProvince", "Provinsi wajib diisi");
-                        Console.WriteLine("❌ IndividualProvince validation failed");
-                    }
-                    else
-                    {
-                        Console.WriteLine("✅ IndividualProvince validation passed");
-                        // Map IndividualProvince to CompanyProvince for database
-                        model.CompanyProvince = model.IndividualProvince.Trim();
-                    }
-
-                    if (string.IsNullOrWhiteSpace(model.IndividualRegency))
-                    {
-                        ModelState.AddModelError("IndividualRegency", "Kabupaten wajib diisi");
-                        Console.WriteLine("❌ IndividualRegency validation failed");
-                    }
-                    else
-                    {
-                        Console.WriteLine("✅ IndividualRegency validation passed");
-                        // Map IndividualRegency to CompanyRegency for database
-                        model.CompanyRegency = model.IndividualRegency.Trim();
-                    }
+                    // Skip province and regency validation for individual (dropdowns are hidden)
+                    // Set default values for database mapping
+                    model.CompanyProvince = "NTB"; // Default province
+                    model.CompanyRegency = "Lombok Barat"; // Default regency
+                    Console.WriteLine("⚠️ Skipping Individual province/regency validation - dropdowns are hidden");
+                    Console.WriteLine($"✅ Using default values - Province: {model.CompanyProvince}, Regency: {model.CompanyRegency}");
 
                     if (string.IsNullOrWhiteSpace(model.IndividualAddress))
                     {
@@ -1177,6 +1211,24 @@ namespace PerizinanPeternakan.Controllers
                 else
                 {
                     Console.WriteLine($"✅ Livestock validation passed - {validLivestockDetails.Count} valid entries");
+                }
+
+                // ===============================================
+                // STEP 4.5: VALIDATE QUOTA LIMITS
+                // ===============================================
+                Console.WriteLine("📊 Validating quota limits...");
+                var quotaValidationResult = await ValidateQuotaLimits(validLivestockDetails, model.OriginLocation);
+                if (!quotaValidationResult.IsValid)
+                {
+                    foreach (var error in quotaValidationResult.Errors)
+                    {
+                        ModelState.AddModelError("", error);
+                        Console.WriteLine($"❌ Quota validation error: {error}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("✅ Quota validation passed");
                 }
 
                 // ===============================================
@@ -1354,8 +1406,7 @@ namespace PerizinanPeternakan.Controllers
                 // ===============================================
                 Console.WriteLine($"📝 Saving permit application to database...");
                 
-                // Debug: Log all data before saving
-                Console.WriteLine($"🔍 DEBUG - Permit application data before save:");
+                
                 Console.WriteLine($"  ApplicationNumber: '{permitApplication.ApplicationNumber}'");
                 Console.WriteLine($"  UserId: {permitApplication.UserId}");
                 Console.WriteLine($"  ApplicantType: '{permitApplication.ApplicantType}'");
@@ -1642,6 +1693,62 @@ namespace PerizinanPeternakan.Controllers
             return (errors.Count == 0, errors);
         }
 
+        private async Task<(bool IsValid, List<string> Errors)> ValidateQuotaLimits(List<LivestockDetailViewModel> livestockDetails, string originLocation)
+        {
+            var errors = new List<string>();
+            
+            try
+            {
+                // Get quota data for the origin location
+                var quotaData = await GetQuotaDataForLocation(originLocation);
+                
+                foreach (var livestock in livestockDetails)
+                {
+                    if (quotaData.ContainsKey(livestock.LivestockType))
+                    {
+                        var quota = quotaData[livestock.LivestockType];
+                        if (livestock.Quantity > quota.Available)
+                        {
+                            errors.Add($"Jumlah {livestock.LivestockType} ({livestock.Quantity:N0} ekor) melebihi kuota tersedia ({quota.Available:N0} ekor)");
+                        }
+                    }
+                    else
+                    {
+                        // If quota data not found, add a warning but don't block submission
+                        Console.WriteLine($"⚠️ No quota data found for {livestock.LivestockType} in {originLocation}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error validating quota limits: {ex.Message}");
+                // Don't block submission if quota validation fails, just log the error
+            }
+            
+            return (errors.Count == 0, errors);
+        }
+
+        private async Task<Dictionary<string, (int Total, int Used, int Available)>> GetQuotaDataForLocation(string originLocation)
+        {
+            // Mock quota data - in real implementation, this would come from database or API
+            var quotaData = new Dictionary<string, (int Total, int Used, int Available)>
+            {
+                { "Sapi Potong", (5000, 3200, 1800) },
+                { "Kerbau Potong", (2000, 1200, 800) },
+                { "Kuda Pedaging", (1000, 600, 400) },
+                { "Kambing", (8000, 4500, 3500) },
+                { "Domba", (6000, 3800, 2200) }
+            };
+            
+            // In real implementation, you would query the database based on originLocation
+            // Example:
+            // var quotas = await _context.LivestockQuotas
+            //     .Where(q => q.Location == originLocation && q.Year == DateTime.Now.Year)
+            //     .ToDictionaryAsync(q => q.LivestockType, q => (q.Total, q.Used, q.Available));
+            
+            return quotaData;
+        }
+
         private string FormatFileSize(long bytes)
         {
             string[] sizes = { "B", "KB", "MB", "GB" };
@@ -1854,7 +1961,7 @@ namespace PerizinanPeternakan.Controllers
 
             return View(model);
         }
-        #region Debug Methods
+
 
         [HttpGet]
         public async Task<IActionResult> TestUpload()
@@ -1972,7 +2079,6 @@ namespace PerizinanPeternakan.Controllers
 
             return NotFound();
         }
-        #endregion
 
         [HttpGet]
         public async Task<IActionResult> Approve(int id)
@@ -5047,8 +5153,7 @@ namespace PerizinanPeternakan.Controllers
                     return Json(new { success = false, message = "User tidak ditemukan" });
                 }
 
-                // Debug logging
-                Console.WriteLine($"User found: {user.NamaLengkap}, Email: {user.Email}, Role: {user.Role}");
+
 
                 return Json(new { success = true, data = user });
             }
@@ -5273,7 +5378,7 @@ namespace PerizinanPeternakan.Controllers
                 // Temporary: Allow access for debugging
                 if (userRole != "Admin")
                 {
-                    Console.WriteLine($"UserStatistics - UserRole '{userRole}' is not Admin, but allowing access for debugging");
+    
                     // return RedirectToAction("Index", "Dashboard");
                 }
 

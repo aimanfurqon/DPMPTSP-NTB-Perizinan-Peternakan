@@ -163,18 +163,21 @@ function initializeApplicantTypeSelection() {
     console.log('🔍 Initial ApplicantType selection:', selectedType);
     
     if (selectedType === 'Individual') {
-        $('#companyForm').hide();
-        $('#individualForm').show();
+        $('#noSelectionMessage').removeClass('show').addClass('hide').hide();
+        $('#companyForm').removeClass('show').hide();
+        $('#individualForm').removeClass('hide').addClass('show').show();
         console.log('👤 Initial state: Showing Individual form');
     } else if (selectedType === 'Company') {
-        $('#individualForm').hide();
-        $('#companyForm').show();
+        $('#noSelectionMessage').removeClass('show').addClass('hide').hide();
+        $('#individualForm').removeClass('show').hide();
+        $('#companyForm').removeClass('hide').addClass('show').show();
         console.log('🏢 Initial state: Showing Company form');
     } else {
-        // Default: show company form, hide individual form
-        $('#individualForm').hide();
-        $('#companyForm').show();
-        console.log('🏢 Default state: Showing Company form (no selection)');
+        // Default: show message when no selection and hide both forms
+        $('#noSelectionMessage').removeClass('hide').addClass('show').show();
+        $('#individualForm').removeClass('show').hide();
+        $('#companyForm').removeClass('show').hide();
+        console.log('❓ Default state: Showing selection message (no selection)');
     }
     
     // Update hidden field
@@ -274,7 +277,8 @@ function nextStep() {
             showStep(currentStep + 1);
         }
     } else {
-        showAlert('Mohon lengkapi semua field yang diperlukan sebelum melanjutkan', 'warning');
+        // Don't show generic alert here - let each validation function handle its own alerts
+        console.log('❌ Step validation failed - alert handled by specific validation function');
     }
 }
 
@@ -460,15 +464,6 @@ function validateCompanyForm(errors) {
     // Validasi nama perusahaan
     const companyName = $('[name="CompanyName"]').val()?.trim();
     console.log('🔍 CompanyName field value:', companyName);
-    console.log('🔍 CompanyName field element:', $('[name="CompanyName"]')[0]);
-    console.log('🔍 CompanyName field exists:', $('[name="CompanyName"]').length > 0);
-    console.log('🔍 CompanyName field name attribute:', $('[name="CompanyName"]').attr('name'));
-    console.log('🔍 CompanyName field id attribute:', $('[name="CompanyName"]').attr('id'));
-    console.log('🔍 CompanyName field is visible:', $('[name="CompanyName"]').is(':visible'));
-    console.log('🔍 CompanyName field is enabled:', !$('[name="CompanyName"]').prop('disabled'));
-    
-    // Update debug info
-    $('#companyNameDebug').text(`Debug: Field value = "${companyName}"`);
     
     if (!companyName) {
         $('[name="CompanyName"]').addClass('is-invalid');
@@ -504,7 +499,31 @@ function validateCompanyForm(errors) {
         console.log('✅ Company regency is valid');
     }
 
-    // TAMBAHAN: Validasi field alamat minimal (street address WAJIB untuk company)
+    // Validasi kecamatan
+    const district = $('[name="AddressDistrict"]').val()?.trim();
+    if (!district) {
+        $('#companyDistrictSelect').addClass('is-invalid');
+        errors.push('Kecamatan harus dipilih');
+        isValid = false;
+        console.log('❌ Company district is empty');
+    } else {
+        $('#companyDistrictSelect').removeClass('is-invalid').addClass('is-valid');
+        console.log('✅ Company district is valid');
+    }
+
+    // Validasi desa/kelurahan
+    const village = $('[name="AddressVillage"]').val()?.trim();
+    if (!village) {
+        $('#companyVillageSelect').addClass('is-invalid');
+        errors.push('Desa/Kelurahan harus dipilih');
+        isValid = false;
+        console.log('❌ Company village is empty');
+    } else {
+        $('#companyVillageSelect').removeClass('is-invalid').addClass('is-valid');
+        console.log('✅ Company village is valid');
+    }
+
+    // Validasi nama jalan
     const street = $('[name="AddressStreet"]').val()?.trim();
     if (!street) {
         $('[name="AddressStreet"]').addClass('is-invalid');
@@ -514,6 +533,30 @@ function validateCompanyForm(errors) {
     } else {
         $('[name="AddressStreet"]').removeClass('is-invalid').addClass('is-valid');
         console.log('✅ Company street address is valid');
+    }
+
+    // Validasi RT
+    const rt = $('[name="AddressRT"]').val()?.trim();
+    if (!rt) {
+        $('[name="AddressRT"]').addClass('is-invalid');
+        errors.push('RT harus diisi');
+        isValid = false;
+        console.log('❌ Company RT is empty');
+    } else {
+        $('[name="AddressRT"]').removeClass('is-invalid').addClass('is-valid');
+        console.log('✅ Company RT is valid');
+    }
+
+    // Validasi RW
+    const rw = $('[name="AddressRW"]').val()?.trim();
+    if (!rw) {
+        $('[name="AddressRW"]').addClass('is-invalid');
+        errors.push('RW harus diisi');
+        isValid = false;
+        console.log('❌ Company RW is empty');
+    } else {
+        $('[name="AddressRW"]').removeClass('is-invalid').addClass('is-valid');
+        console.log('✅ Company RW is valid');
     }
 
     console.log(`🏢 Company form validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
@@ -535,7 +578,10 @@ function validateIndividualForm(errors) {
         return true; // Skip validation if not Individual
     }
 
-    // Validasi nama lengkap
+    // Pastikan data profil diisi terlebih dahulu
+    fillIndividualDataFromProfile();
+
+    // Validasi nama lengkap - lebih fleksibel
     const individualName = $('[name="IndividualName"]').val()?.trim();
     if (!individualName) {
         $('[name="IndividualName"]').addClass('is-invalid');
@@ -544,34 +590,44 @@ function validateIndividualForm(errors) {
         console.log('❌ Individual name is empty');
     } else {
         $('[name="IndividualName"]').removeClass('is-invalid').addClass('is-valid');
-        console.log('✅ Individual name is valid');
+        console.log('✅ Individual name is valid:', individualName);
     }
 
-    // Validasi provinsi individual
-    const individualProvince = $('[name="IndividualProvince"]').val()?.trim();
-    if (!individualProvince) {
-        $('#individualProvinceSelect').addClass('is-invalid');
-        errors.push('Provinsi harus dipilih');
-        isValid = false;
-        console.log('❌ Individual province is empty');
+    // Validasi provinsi individual (skip jika dropdown disembunyikan)
+    const individualProvinceGroup = $('#individualProvinceGroup');
+    if (individualProvinceGroup.is(':visible')) {
+        const individualProvince = $('[name="IndividualProvince"]').val()?.trim();
+        if (!individualProvince) {
+            $('#individualProvinceSelect').addClass('is-invalid');
+            errors.push('Provinsi harus dipilih');
+            isValid = false;
+            console.log('❌ Individual province is empty');
+        } else {
+            $('#individualProvinceSelect').removeClass('is-invalid').addClass('is-valid');
+            console.log('✅ Individual province is valid');
+        }
     } else {
-        $('#individualProvinceSelect').removeClass('is-invalid').addClass('is-valid');
-        console.log('✅ Individual province is valid');
+        console.log('⚠️ Skipping Individual province validation - dropdown is hidden');
     }
 
-    // Validasi kabupaten individual
-    const individualRegency = $('[name="IndividualRegency"]').val()?.trim();
-    if (!individualRegency) {
-        $('#individualRegencySelect').addClass('is-invalid');
-        errors.push('Kabupaten/Kota harus dipilih');
-        isValid = false;
-        console.log('❌ Individual regency is empty');
+    // Validasi kabupaten individual (skip jika dropdown disembunyikan)
+    const individualRegencyGroup = $('#individualRegencyGroup');
+    if (individualRegencyGroup.is(':visible')) {
+        const individualRegency = $('[name="IndividualRegency"]').val()?.trim();
+        if (!individualRegency) {
+            $('#individualRegencySelect').addClass('is-invalid');
+            errors.push('Kabupaten/Kota harus dipilih');
+            isValid = false;
+            console.log('❌ Individual regency is empty');
+        } else {
+            $('#individualRegencySelect').removeClass('is-invalid').addClass('is-valid');
+            console.log('✅ Individual regency is valid');
+        }
     } else {
-        $('#individualRegencySelect').removeClass('is-invalid').addClass('is-valid');
-        console.log('✅ Individual regency is valid');
+        console.log('⚠️ Skipping Individual regency validation - dropdown is hidden');
     }
 
-    // Validasi alamat lengkap individual
+    // Validasi alamat lengkap individual - lebih fleksibel
     const individualAddress = $('[name="IndividualAddress"]').val()?.trim();
     if (!individualAddress) {
         $('[name="IndividualAddress"]').addClass('is-invalid');
@@ -580,7 +636,7 @@ function validateIndividualForm(errors) {
         console.log('❌ Individual address is empty');
     } else {
         $('[name="IndividualAddress"]').removeClass('is-invalid').addClass('is-valid');
-        console.log('✅ Individual address is valid');
+        console.log('✅ Individual address is valid:', individualAddress);
     }
 
     console.log(`👤 Individual form validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
@@ -645,29 +701,85 @@ function validateLivestockStep() {
     console.log('🐄 Validating livestock step...');
 
     let hasValidLivestock = false;
+    let quotaExceededItems = [];
+    let totalQuantity = 0;
+    let missingFields = [];
 
     $('.livestock-item').each(function () {
         const type = $(this).find('.livestock-type').val();
         const quantity = parseInt($(this).find('.livestock-quantity').val()) || 0;
+        const maxQuota = parseInt($(this).find('.livestock-quantity').attr('max')) || 999999;
 
         if (type && quantity > 0) {
             hasValidLivestock = true;
-            console.log(`✅ Found valid livestock: ${type} - ${quantity} ekor`);
+            totalQuantity += quantity;
+            console.log(`✅ Found valid livestock: ${type} - ${quantity} ekor (max: ${maxQuota})`);
+            
+            // Check if quantity exceeds quota
+            if (quantity > maxQuota) {
+                quotaExceededItems.push({
+                    type: type,
+                    quantity: quantity,
+                    maxQuota: maxQuota
+                });
+                console.log(`❌ Quota exceeded for ${type}: ${quantity} > ${maxQuota}`);
+            }
+        } else if (type && quantity === 0) {
+            // Jenis ternak dipilih tapi jumlah 0
+            missingFields.push(`Jumlah untuk ${type}`);
+        } else if (!type && quantity > 0) {
+            // Jumlah diisi tapi jenis ternak tidak dipilih
+            missingFields.push('Jenis ternak');
         }
     });
 
-    // Also check for quota validation errors (integration with main script)
+    // Check for quota validation errors (integration with main script)
     const hasQuotaErrors = $('.livestock-quantity.error').length > 0;
 
+    // Validasi field yang kosong
     if (!hasValidLivestock) {
-        showAlert('Minimal harus ada satu jenis ternak dengan jumlah yang valid', 'warning');
+        if (missingFields.length > 0) {
+            showAlert(`Mohon lengkapi: ${missingFields.join(', ')}`, 'warning');
+        } else {
+            showAlert('Minimal harus ada satu jenis ternak dengan jumlah yang valid', 'warning');
+        }
         console.log('❌ No valid livestock found');
         return false;
     }
 
+    // Check for quota exceeded items - PRIORITAS UTAMA
+    if (quotaExceededItems.length > 0) {
+        let errorMessage = '⚠️ **KUOTA TERLAMPAUI** ⚠️\n\n';
+        errorMessage += 'Jumlah ternak yang diminta melebihi kuota yang tersedia:\n\n';
+        
+        quotaExceededItems.forEach(item => {
+            const excess = item.quantity - item.maxQuota;
+            errorMessage += `• **${item.type}**: ${item.quantity.toLocaleString()} ekor\n`;
+            errorMessage += `  └─ Kuota tersedia: ${item.maxQuota.toLocaleString()} ekor\n`;
+            errorMessage += `  └─ Kelebihan: ${excess.toLocaleString()} ekor\n\n`;
+        });
+        
+        errorMessage += '**Tindakan yang diperlukan:**\n';
+        errorMessage += '• Kurangi jumlah ternak sesuai kuota yang tersedia\n';
+        errorMessage += '• Atau pilih jenis ternak lain yang masih memiliki kuota cukup\n';
+        errorMessage += '• Hubungi admin jika memerlukan penambahan kuota';
+        
+        showAlert(errorMessage, 'danger');
+        console.log('❌ Quota exceeded for multiple items:', quotaExceededItems);
+        return false;
+    }
+
+    // Check for other quota validation errors
     if (hasQuotaErrors) {
-        showAlert('Masih ada masalah dengan kuota ternak. Silakan periksa kembali jumlah yang diminta.', 'warning');
+        showAlert('⚠️ **MASALAH KUOTA TERNAK** ⚠️\n\nMasih ada masalah dengan kuota ternak. Silakan periksa kembali jumlah yang diminta dan pastikan tidak melebihi batas yang ditentukan.', 'warning');
         console.log('❌ Quota validation errors found');
+        return false;
+    }
+
+    // Additional validation: Check if total quantity is reasonable
+    if (totalQuantity > 10000) {
+        showAlert('⚠️ **JUMLAH TERNAK TERLALU BESAR** ⚠️\n\nTotal jumlah ternak yang diminta terlalu besar. Silakan periksa kembali jumlah yang diminta atau hubungi admin untuk konfirmasi.', 'warning');
+        console.log('❌ Total quantity too large:', totalQuantity);
         return false;
     }
 
@@ -1192,27 +1304,36 @@ function initializeEventHandlers() {
         $(this).closest('.radio-item').addClass('active');
         
         if (selectedType === 'Individual') {
-            $('#companyForm').fadeOut(300, function() {
-                $('#individualForm').fadeIn(300);
+            $('#noSelectionMessage').removeClass('show').addClass('hide').fadeOut(300);
+            $('#companyForm').removeClass('show').fadeOut(300, function() {
+                $('#individualForm').removeClass('hide').addClass('show').fadeIn(300);
+                
+                // Fill individual data from profile after form is shown
+                setTimeout(() => {
+                    fillIndividualDataFromProfile();
+                }, 100);
             });
-            console.log('👤 Showing Individual form, hiding Company form');
+            console.log('👤 Showing Individual form, hiding Company form and message');
         } else if (selectedType === 'Company') {
-            $('#individualForm').fadeOut(300, function() {
-                $('#companyForm').fadeIn(300);
+            $('#noSelectionMessage').removeClass('show').addClass('hide').fadeOut(300);
+            $('#individualForm').removeClass('show').fadeOut(300, function() {
+                $('#companyForm').removeClass('hide').addClass('show').fadeIn(300);
             });
-            console.log('🏢 Showing Company form, hiding Individual form');
+            console.log('🏢 Showing Company form, hiding Individual form and message');
         }
         
         // Update hidden field for form submission
         $('#applicantTypeHidden').val(selectedType);
         
-        // Trigger validation for the newly shown form
-        setTimeout(() => {
-            validateCurrentStep();
-        }, 350);
+        // Clear any existing validation errors when switching forms
+        clearFormValidation('#individualForm');
+        clearFormValidation('#companyForm');
+        
+        // Don't trigger validation automatically - let user fill the form first
+        console.log('✅ Form switched, validation will be triggered on next button click');
     });
 
-    // Debug: Log radio button elements
+    
     console.log('🔍 Radio button elements found:', $('input[name="ApplicantType"]').length);
     $('input[name="ApplicantType"]').each(function(index) {
         console.log(`  Radio ${index + 1}:`, $(this).attr('id'), 'value:', $(this).val());
@@ -1231,15 +1352,13 @@ function initializeEventHandlers() {
     $('#permitForm').on('submit', function (e) {
         console.log('📤 Form submission initiated...');
 
-        // Debug: Log all form data before submission
-        console.log('🔍 DEBUG - Form data before submission:');
+
         const formData = new FormData(this);
         for (let [key, value] of formData.entries()) {
             console.log(`  ${key}: '${value}'`);
         }
 
-        // Debug: Log specific fields
-        console.log('🔍 DEBUG - Specific field values:');
+
         console.log('  CompanyName:', $('[name="CompanyName"]').val());
         console.log('  IndividualName:', $('[name="IndividualName"]').val());
         console.log('  ApplicantType:', $('input[name="ApplicantType"]:checked').val());
@@ -1250,10 +1369,8 @@ function initializeEventHandlers() {
         console.log('  AddressStreet:', $('[name="AddressStreet"]').val());
         console.log('  IndividualAddress:', $('[name="IndividualAddress"]').val());
 
-        // Debug: Check if fields exist and have values
         const companyNameField = $('[name="CompanyName"]');
         const individualNameField = $('[name="IndividualName"]');
-        console.log('🔍 DEBUG - Field existence check:');
         console.log('  CompanyName field exists:', companyNameField.length > 0);
         console.log('  IndividualName field exists:', individualNameField.length > 0);
 
@@ -1275,15 +1392,13 @@ function initializeEventHandlers() {
         // Validate applicant-specific data with improved logic
         if (applicantType === 'Individual') {
             const name = $('input[name="IndividualName"]').val()?.trim();
-            const province = $('input[name="IndividualProvince"]').val()?.trim();
-            const regency = $('input[name="IndividualRegency"]').val()?.trim();
             const address = $('textarea[name="IndividualAddress"]').val()?.trim();
 
-            console.log('Individual form data check:', { name, province, regency, address });
+            console.log('Individual form data check:', { name, address });
 
-            if (!name || !province || !regency || !address) {
+            if (!name || !address) {
                 e.preventDefault();
-                showAlert('Mohon lengkapi semua field untuk pemohon perorangan.', 'danger');
+                showAlert('Mohon lengkapi nama lengkap dan alamat untuk pemohon perorangan.', 'danger');
                 showStep(1); // Navigate back to step 1
                 return false;
             }
@@ -1294,18 +1409,30 @@ function initializeEventHandlers() {
             $('[name="CompanyRegency"]').val('');
             $('[name="AddressStreet"]').val('');
             
+            // Clear individual province/regency fields if dropdowns are hidden
+            if (!$('#individualProvinceGroup').is(':visible')) {
+                $('[name="IndividualProvince"]').val('');
+            }
+            if (!$('#individualRegencyGroup').is(':visible')) {
+                $('[name="IndividualRegency"]').val('');
+            }
+            
             console.log('✅ Individual form validation passed');
         } else if (applicantType === 'Company') {
             const companyName = $('input[name="CompanyName"]').val()?.trim();
             const companyProvince = $('input[name="CompanyProvince"]').val()?.trim();
             const companyRegency = $('input[name="CompanyRegency"]').val()?.trim();
+            const district = $('input[name="AddressDistrict"]').val()?.trim();
+            const village = $('input[name="AddressVillage"]').val()?.trim();
             const street = $('input[name="AddressStreet"]').val()?.trim();
+            const rt = $('input[name="AddressRT"]').val()?.trim();
+            const rw = $('input[name="AddressRW"]').val()?.trim();
 
-            console.log('Company form data check:', { companyName, companyProvince, companyRegency, street });
+            console.log('Company form data check:', { companyName, companyProvince, companyRegency, district, village, street, rt, rw });
 
-            if (!companyName || !companyProvince || !companyRegency || !street) {
+            if (!companyName || !companyProvince || !companyRegency || !district || !village || !street || !rt || !rw) {
                 e.preventDefault();
-                showAlert('Mohon lengkapi semua field untuk perusahaan.', 'danger');
+                showAlert('Mohon lengkapi semua field untuk perusahaan (Nama, Provinsi, Kabupaten, Kecamatan, Desa/Kelurahan, Nama Jalan, RT, RW).', 'danger');
                 showStep(1); // Navigate back to step 1
                 return false;
             }
@@ -1316,6 +1443,14 @@ function initializeEventHandlers() {
             $('[name="IndividualRegency"]').val('');
             $('[name="IndividualAddress"]').val('');
             
+            // Clear individual province/regency fields if dropdowns are hidden
+            if (!$('#individualProvinceGroup').is(':visible')) {
+                $('[name="IndividualProvince"]').val('');
+            }
+            if (!$('#individualRegencyGroup').is(':visible')) {
+                $('[name="IndividualRegency"]').val('');
+            }
+            
             console.log('✅ Company form validation passed');
         }
 
@@ -1323,7 +1458,7 @@ function initializeEventHandlers() {
         $('#submitBtn').html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...').prop('disabled', true);
         showAlert('Sedang memproses permohonan...', 'info');
 
-        // Final debug log before submission
+
         console.log('🔍 Final form data before submission:');
         console.log('ApplicantType:', $('input[name="ApplicantType"]:checked').val());
         console.log('CompanyName:', $('[name="CompanyName"]').val());
@@ -1341,32 +1476,200 @@ function initializeEventHandlers() {
         // The server will handle validation and return appropriate response
     });
 
-    // Field validation on blur
-    $('input, textarea, select').on('blur', function () {
-        validateField($(this));
+    // Field validation on blur - only for required fields, don't show errors immediately
+    $('input[required], textarea[required], select[required]').on('blur', function () {
+        const value = $(this).val()?.trim();
+        
+        // Only show valid state if there's a value, don't show invalid state on blur
+        if (value) {
+            $(this).removeClass('is-invalid').addClass('is-valid');
+        } else {
+            // Remove both classes to keep field neutral
+            $(this).removeClass('is-invalid is-valid');
+        }
     });
 
-    // Monitor CompanyName field specifically - only when applicant type is Company
-    $('[name="CompanyName"]').on('input change blur', function() {
+    // Monitor CompanyName field - only show visual feedback, don't trigger validation
+    $('[name="CompanyName"]').on('input change', function() {
         const applicantType = $('input[name="ApplicantType"]:checked').val();
         const value = $(this).val()?.trim();
         
-        // Only validate CompanyName if applicant type is Company
+        // Only show visual feedback if applicant type is Company
         if (applicantType === 'Company') {
             console.log('🔍 CompanyName field changed:', value);
-            $('#companyNameDebug').text(`Debug: Field value = "${value}"`);
             
+            // Remove validation classes to clear previous state
+            $(this).removeClass('is-invalid is-valid');
+            
+            // Only add valid class if there's a value (don't add invalid class automatically)
             if (value) {
-                $(this).removeClass('is-invalid').addClass('is-valid');
-                console.log('✅ CompanyName field is valid');
-            } else {
-                $(this).removeClass('is-valid').addClass('is-invalid');
-                console.log('❌ CompanyName field is invalid');
+                $(this).addClass('is-valid');
+                console.log('✅ CompanyName field has value');
             }
         } else {
             // Clear validation for Individual applicant type
             $(this).removeClass('is-invalid is-valid');
-            $('#companyNameDebug').text('Debug: Not required for Individual applicant');
+        }
+    });
+
+    // Monitor AddressStreet field - dynamic color feedback
+    $('[name="AddressStreet"]').on('input change', function() {
+        const applicantType = $('input[name="ApplicantType"]:checked').val();
+        const value = $(this).val()?.trim();
+        
+        // Only show visual feedback if applicant type is Company
+        if (applicantType === 'Company') {
+            console.log('🔍 AddressStreet field changed:', value);
+            
+            // Remove validation classes to clear previous state
+            $(this).removeClass('is-invalid is-valid');
+            
+            // Only add valid class if there's a value (don't add invalid class automatically)
+            if (value) {
+                $(this).addClass('is-valid');
+                console.log('✅ AddressStreet field has value');
+            }
+        } else {
+            // Clear validation for Individual applicant type
+            $(this).removeClass('is-invalid is-valid');
+        }
+    });
+
+    // Monitor AddressRT field - dynamic color feedback
+    $('[name="AddressRT"]').on('input change', function() {
+        const applicantType = $('input[name="ApplicantType"]:checked').val();
+        const value = $(this).val()?.trim();
+        
+        // Only show visual feedback if applicant type is Company
+        if (applicantType === 'Company') {
+            console.log('🔍 AddressRT field changed:', value);
+            
+            // Remove validation classes to clear previous state
+            $(this).removeClass('is-invalid is-valid');
+            
+            // Only add valid class if there's a value (don't add invalid class automatically)
+            if (value) {
+                $(this).addClass('is-valid');
+                console.log('✅ AddressRT field has value');
+            }
+        } else {
+            // Clear validation for Individual applicant type
+            $(this).removeClass('is-invalid is-valid');
+        }
+    });
+
+    // Monitor AddressRW field - dynamic color feedback
+    $('[name="AddressRW"]').on('input change', function() {
+        const applicantType = $('input[name="ApplicantType"]:checked').val();
+        const value = $(this).val()?.trim();
+        
+        // Only show visual feedback if applicant type is Company
+        if (applicantType === 'Company') {
+            console.log('🔍 AddressRW field changed:', value);
+            
+            // Remove validation classes to clear previous state
+            $(this).removeClass('is-invalid is-valid');
+            
+            // Only add valid class if there's a value (don't add invalid class automatically)
+            if (value) {
+                $(this).addClass('is-valid');
+                console.log('✅ AddressRW field has value');
+            }
+        } else {
+            // Clear validation for Individual applicant type
+            $(this).removeClass('is-invalid is-valid');
+        }
+    });
+
+    // Monitor AddressDistrict dropdown - dynamic color feedback
+    $('[name="AddressDistrict"]').on('change', function() {
+        const applicantType = $('input[name="ApplicantType"]:checked').val();
+        const value = $(this).val()?.trim();
+        
+        // Only show visual feedback if applicant type is Company
+        if (applicantType === 'Company') {
+            console.log('🔍 AddressDistrict field changed:', value);
+            
+            // Remove validation classes to clear previous state
+            $('#companyDistrictSelect').removeClass('is-invalid is-valid');
+            
+            // Only add valid class if there's a value (don't add invalid class automatically)
+            if (value) {
+                $('#companyDistrictSelect').addClass('is-valid');
+                console.log('✅ AddressDistrict field has value');
+            }
+        } else {
+            // Clear validation for Individual applicant type
+            $('#companyDistrictSelect').removeClass('is-invalid is-valid');
+        }
+    });
+
+    // Monitor AddressVillage dropdown - dynamic color feedback
+    $('[name="AddressVillage"]').on('change', function() {
+        const applicantType = $('input[name="ApplicantType"]:checked').val();
+        const value = $(this).val()?.trim();
+        
+        // Only show visual feedback if applicant type is Company
+        if (applicantType === 'Company') {
+            console.log('🔍 AddressVillage field changed:', value);
+            
+            // Remove validation classes to clear previous state
+            $('#companyVillageSelect').removeClass('is-invalid is-valid');
+            
+            // Only add valid class if there's a value (don't add invalid class automatically)
+            if (value) {
+                $('#companyVillageSelect').addClass('is-valid');
+                console.log('✅ AddressVillage field has value');
+            }
+        } else {
+            // Clear validation for Individual applicant type
+            $('#companyVillageSelect').removeClass('is-invalid is-valid');
+        }
+    });
+
+    // Monitor CompanyProvince dropdown - dynamic color feedback
+    $('[name="CompanyProvince"]').on('change', function() {
+        const applicantType = $('input[name="ApplicantType"]:checked').val();
+        const value = $(this).val()?.trim();
+        
+        // Only show visual feedback if applicant type is Company
+        if (applicantType === 'Company') {
+            console.log('🔍 CompanyProvince field changed:', value);
+            
+            // Remove validation classes to clear previous state
+            $('#companyProvinceSelect').removeClass('is-invalid is-valid');
+            
+            // Only add valid class if there's a value (don't add invalid class automatically)
+            if (value) {
+                $('#companyProvinceSelect').addClass('is-valid');
+                console.log('✅ CompanyProvince field has value');
+            }
+        } else {
+            // Clear validation for Individual applicant type
+            $('#companyProvinceSelect').removeClass('is-invalid is-valid');
+        }
+    });
+
+    // Monitor CompanyRegency dropdown - dynamic color feedback
+    $('[name="CompanyRegency"]').on('change', function() {
+        const applicantType = $('input[name="ApplicantType"]:checked').val();
+        const value = $(this).val()?.trim();
+        
+        // Only show visual feedback if applicant type is Company
+        if (applicantType === 'Company') {
+            console.log('🔍 CompanyRegency field changed:', value);
+            
+            // Remove validation classes to clear previous state
+            $('#companyRegencySelect').removeClass('is-invalid is-valid');
+            
+            // Only add valid class if there's a value (don't add invalid class automatically)
+            if (value) {
+                $('#companyRegencySelect').addClass('is-valid');
+                console.log('✅ CompanyRegency field has value');
+            }
+        } else {
+            // Clear validation for Individual applicant type
+            $('#companyRegencySelect').removeClass('is-invalid is-valid');
         }
     });
 
@@ -1406,17 +1709,41 @@ function initializeEventHandlers() {
     console.log('✅ Event handlers initialized');
 }
 
-function validateField($field) {
-    const value = $field.val()?.trim();
-    const isRequired = $field.attr('required') !== undefined;
+// Function validateField removed - validation now only happens on form submission or next button click
 
-    if (isRequired && !value) {
-        $field.addClass('is-invalid');
-        return false;
+// ===============================================
+// PROFILE DATA FUNCTIONS
+// ===============================================
+function fillIndividualDataFromProfile() {
+    console.log('🔧 Filling individual data from profile...');
+    
+    // Check if userProfileData is available (defined in Create.cshtml)
+    if (typeof userProfileData !== 'undefined') {
+        console.log('📋 User profile data found:', userProfileData);
+        
+        // Fill nama lengkap from profile
+        if (userProfileData.namaLengkap && userProfileData.namaLengkap !== '' && userProfileData.namaLengkap !== 'null') {
+            $('[name="IndividualName"]').val(userProfileData.namaLengkap);
+            console.log('✅ Nama lengkap diisi dari profil:', userProfileData.namaLengkap);
+        } else {
+            console.log('⚠️ Nama lengkap tidak tersedia di profil');
+        }
+        
+        // Fill alamat from profile
+        if (userProfileData.alamat && userProfileData.alamat !== '' && userProfileData.alamat !== 'null') {
+            $('[name="IndividualAddress"]').val(userProfileData.alamat);
+            console.log('✅ Alamat diisi dari profil:', userProfileData.alamat);
+        } else {
+            console.log('⚠️ Alamat tidak tersedia di profil');
+        }
     } else {
-        $field.removeClass('is-invalid');
-        return true;
+        console.log('⚠️ userProfileData tidak tersedia');
     }
+    
+    // Log current field values after filling
+    console.log('📝 Current field values after profile fill:');
+    console.log('  IndividualName:', $('[name="IndividualName"]').val());
+    console.log('  IndividualAddress:', $('[name="IndividualAddress"]').val());
 }
 
 // ===============================================
@@ -1450,13 +1777,20 @@ function showAlert(message, type) {
         'error': 'fa-exclamation-circle'
     }[type] || 'fa-info-circle';
 
+    // Convert markdown-style formatting to HTML
+    let formattedMessage = message
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold text
+        .replace(/\n/g, '<br>') // Line breaks
+        .replace(/•/g, '•') // Bullet points
+        .replace(/└─/g, '└─'); // Tree structure
+
     const alert = $(`
         <div class="alert ${alertClass} alert-dismissible fade show custom-alert"
-             style="position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px; 
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <i class="fas ${icon}"></i>
-                <span>${message}</span>
+             style="position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 500px; 
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.2); white-space: pre-line;">
+            <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <i class="fas ${icon}" style="margin-top: 2px; flex-shrink: 0;"></i>
+                <div style="flex: 1; line-height: 1.5;">${formattedMessage}</div>
             </div>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
@@ -1466,7 +1800,8 @@ function showAlert(message, type) {
 
     $('body').append(alert);
 
-    const delay = type === 'danger' || type === 'error' ? 6000 : 4000;
+    // Longer delay for quota-related alerts
+    const delay = (type === 'danger' || type === 'error') ? 8000 : 4000;
     setTimeout(() => {
         alert.fadeOut(300, () => alert.remove());
     }, delay);
@@ -1484,23 +1819,19 @@ window.MultiStepForm = {
     currentStep: () => currentStep,
     totalSteps: () => totalSteps,
     uploadedDocuments: () => uploadedDocuments,
-
-    // Debug functions
-    debug: {
-        validateStep1: validateCompanyStep,
-        validateStep2: validateShippingStep,
-        validateStep3: validateLivestockStep,
-        validateStep4: validateDocumentStep,
-        checkApplicantType: function () {
-            return {
-                radioValue: $('input[name="ApplicantType"]:checked').val(),
-                hiddenValue: $('#applicantTypeHidden').val(),
-                formsVisible: {
-                    individual: $('#individualForm').is(':visible'),
-                    company: $('#companyForm').is(':visible')
-                }
-            };
-        }
+    validateStep1: validateCompanyStep,
+    validateStep2: validateShippingStep,
+    validateStep3: validateLivestockStep,
+    validateStep4: validateDocumentStep,
+    checkApplicantType: function () {
+        return {
+            radioValue: $('input[name="ApplicantType"]:checked').val(),
+            hiddenValue: $('#applicantTypeHidden').val(),
+            formsVisible: {
+                individual: $('#individualForm').is(':visible'),
+                company: $('#companyForm').is(':visible')
+            }
+        };
     }
 };
 
@@ -1521,20 +1852,3 @@ window.onShippingValidationChange = function (isValid) {
     // This allows the main script to communicate validation status to the multi-step form
 };
 
-// Export for debugging
-if (typeof window !== 'undefined') {
-    window.debugMultiStepForm = {
-        validateCompanyStep,
-        validateIndividualForm,
-        validateCompanyForm,
-        validateShippingStep,
-        validateLivestockStep,
-        validateDocumentStep,
-        validateAllSteps,
-        clearFormValidation,
-        currentStep: () => currentStep,
-        uploadedDocuments: () => Array.from(uploadedDocuments.keys())
-    };
-
-    console.log('🛠️ Debug functions available at window.debugMultiStepForm');
-}

@@ -1123,11 +1123,7 @@
 
             console.log('Edit mode components initialized with port search');
             
-            // Debug: Check if Select2 is working
-            setTimeout(() => {
-                console.log('Select2 debug - Origin province:', $('#editOriginProvinceSelect').select2('data'));
-                console.log('Select2 debug - Destination province:', $('#editDestinationProvinceSelect').select2('data'));
-            }, 1000);
+
         }
 
 
@@ -1241,7 +1237,7 @@
                 const originPort = '@Model.EditableDeparturePort';
                 const destinationPort = '@Model.EditableArrivalPort';
                 
-                // Debug: Check raw values from model
+    
                 console.log('=== MODEL VALUES ===');
                 console.log('Origin Province ID:', originProvinceId);
                 console.log('Destination Province ID:', destinationProvinceId);
@@ -1399,7 +1395,7 @@
                         $originProvince.trigger('change');
                         $destinationProvince.trigger('change');
                         
-                        // Debug: Check if options are still there after trigger
+            
                         setTimeout(() => {
                             console.log('After trigger - Origin options:', $originProvince.find('option').length);
                             console.log('After trigger - Destination options:', $destinationProvince.find('option').length);
@@ -1573,13 +1569,7 @@
                                     $target.val(initialPortName);
                                     $target.trigger('change.select2');
                                     
-                                    // Debug: Check if value was set correctly
-                                    setTimeout(() => {
-                                        console.log('Port value after set:', $target.val());
-                                        console.log('Port Select2 data:', $target.select2('data'));
-                                        console.log('Port options available:', $target.find('option').length);
-                                        console.log('Port option with value', initialPortName, 'exists:', $target.find(`option[value="${initialPortName}"]`).length > 0);
-                                    }, 200);
+
                                 } else {
                                     // Try to find by text content (case insensitive)
                                     let found = false;
@@ -1591,13 +1581,7 @@
                                             $target.val($(this).val());
                                             $target.trigger('change.select2');
                                             
-                                            // Debug: Check if value was set correctly
-                                            setTimeout(() => {
-                                                console.log('Port value after text match set:', $target.val());
-                                                console.log('Port Select2 data:', $target.select2('data'));
-                                                console.log('Port options available:', $target.find('option').length);
-                                                console.log('Port option with value', $(this).val(), 'exists:', $target.find(`option[value="${$(this).val()}"]`).length > 0);
-                                            }, 200);
+
                                             
                                             found = true;
                                             return false; // break the loop

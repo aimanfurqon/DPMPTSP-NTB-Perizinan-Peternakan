@@ -117,7 +117,7 @@ namespace PerizinanPeternakan.Service
                         do
                         {
                             generatedNumber = FormatApplicationNumber(nextNumber, year);
-                            _logger.LogDebug("Trying application number: {ApplicationNumber} (attempt {RetryCount})", 
+                            _logger.LogInformation("Trying application number: {ApplicationNumber} (attempt {RetryCount})", 
                                 generatedNumber, retryCount + 1);
 
                             // Check if this number already exists in our current list

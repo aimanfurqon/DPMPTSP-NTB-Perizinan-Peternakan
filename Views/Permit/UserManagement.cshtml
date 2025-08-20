@@ -225,10 +225,10 @@
         function viewUserDetails(userId) {
             $.get('/Permit/GetUserDetails', { id: userId })
                 .done(function(response) {
-                    console.log('Response:', response); // Debug
+    
                     if (response.success) {
                         var user = response.data;
-                        console.log('User data:', user); // Debug
+                        
                         
                         var roleDisplayName = getRoleDisplayName(user.Role);
                         var statusText = user.IsActive ? 'Aktif' : 'Nonaktif';
@@ -258,7 +258,7 @@
                     }
                 })
                 .fail(function(xhr, status, error) {
-                    console.log('Error:', xhr, status, error); // Debug
+
                     alert('Gagal memuat detail user');
                 });
         }
