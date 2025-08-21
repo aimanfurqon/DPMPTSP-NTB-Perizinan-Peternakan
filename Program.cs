@@ -12,8 +12,18 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddHttpClient();
 
 // Database Configuration
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrEmpty(connectionString))
+{
+    connectionString = builder.Configuration.GetConnectionString("AzureConnection");
+}
+if (string.IsNullOrEmpty(connectionString))
+{
+    connectionString = builder.Configuration.GetConnectionString("AzurePasswordless");
+}
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(connectionString));
 
 // Session Configuration
 builder.Services.AddDistributedMemoryCache();
@@ -62,7 +72,11 @@ var app = builder.Build();
 
 
 // Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
@@ -99,22 +113,51 @@ using (var scope = app.Services.CreateScope())
 
     try
     {
-        // Hanya buat database dan tabel, tidak seed data
-        context.Database.EnsureCreated();
-        logger.LogInformation("Database ensured created successfully");
+        // Test database connection first
+        logger.LogInformation("Testing database connection...");
+        var canConnect = context.Database.CanConnect();
+        logger.LogInformation($"Database connection test result: {canConnect}");
 
-        // Cek apakah ada data users
-        var userCount = context.Users.Count();
-        logger.LogInformation($"Current users in database: {userCount}");
-
-        if (userCount == 0)
+        if (canConnect)
         {
-            logger.LogWarning("No users found in database. Please run the SQL insert script manually.");
+            try
+            {
+                // Apply migrations instead of EnsureCreated for better control
+                logger.LogInformation("Applying database migrations...");
+                context.Database.Migrate();
+                logger.LogInformation("Database migrations applied successfully");
+
+                // Cek apakah ada data users
+                var userCount = context.Users.Count();
+                logger.LogInformation($"Current users in database: {userCount}");
+
+                if (userCount == 0)
+                {
+                    logger.LogWarning("No users found in database. Please run the SQL insert script manually.");
+                }
+            }
+            catch (Exception migrationEx)
+            {
+                logger.LogError(migrationEx, "Error applying migrations. Trying EnsureCreated as fallback...");
+                
+                // Fallback to EnsureCreated if migrations fail
+                context.Database.EnsureCreated();
+                logger.LogInformation("Database ensured created successfully (fallback method)");
+            }
+        }
+        else
+        {
+            logger.LogError("Cannot connect to database. Please check connection string and network connectivity.");
         }
     }
     catch (Exception ex)
     {
         logger.LogError(ex, "An error occurred while ensuring database creation");
+        // Don't throw the exception in production to prevent app from crashing
+        if (app.Environment.IsDevelopment())
+        {
+            throw;
+        }
     }
 }
 

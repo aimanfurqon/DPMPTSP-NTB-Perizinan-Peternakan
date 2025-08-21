@@ -49,7 +49,7 @@ namespace PerizinanPeternakan.Migrations
 
                     b.HasIndex("PermitApplicationId");
 
-                    b.ToTable("LivestockDetails", (string)null);
+                    b.ToTable("LivestockDetails");
                 });
 
             modelBuilder.Entity("PerizinanPeternakan.Models.LivestockPermitApplication", b =>
@@ -66,6 +66,10 @@ namespace PerizinanPeternakan.Migrations
                     b.Property<int?>("AdminId")
                         .HasColumnType("int");
 
+                    b.Property<string>("ApplicantType")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<string>("ApplicationNumber")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -77,12 +81,10 @@ namespace PerizinanPeternakan.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("CompanyAddress")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("CompanyName")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
@@ -99,6 +101,12 @@ namespace PerizinanPeternakan.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int?>("DestinationProvinceId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DestinationRegencyId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("FinalApprovalDate")
                         .HasColumnType("datetime2");
 
@@ -113,6 +121,12 @@ namespace PerizinanPeternakan.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("OriginProvinceId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("OriginRegencyId")
+                        .HasColumnType("int");
 
                     b.Property<string>("RejectionReason")
                         .HasMaxLength(1000)
@@ -146,7 +160,15 @@ namespace PerizinanPeternakan.Migrations
                     b.HasIndex("ApplicationNumber")
                         .IsUnique();
 
+                    b.HasIndex("DestinationProvinceId");
+
+                    b.HasIndex("DestinationRegencyId");
+
                     b.HasIndex("KepalaDinasId");
+
+                    b.HasIndex("OriginProvinceId");
+
+                    b.HasIndex("OriginRegencyId");
 
                     b.HasIndex("Status");
 
@@ -156,7 +178,69 @@ namespace PerizinanPeternakan.Migrations
 
                     b.HasIndex("VerifikatorId");
 
-                    b.ToTable("PermitApplications", (string)null);
+                    b.ToTable("PermitApplications");
+                });
+
+            modelBuilder.Entity("PerizinanPeternakan.Models.LivestockQuota", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LivestockType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("ProvinceCode")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
+
+                    b.Property<string>("ProvinceName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("RegulationReference")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("TotalQuota")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UsedQuota")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProvinceCode");
+
+                    b.HasIndex("Year");
+
+                    b.HasIndex("LivestockType", "ProvinceCode", "Year")
+                        .IsUnique()
+                        .HasDatabaseName("IX_LivestockQuotas_Type_Province_Year");
+
+                    b.ToTable("LivestockQuotas");
                 });
 
             modelBuilder.Entity("PerizinanPeternakan.Models.PermitApprovalHistory", b =>
@@ -199,7 +283,7 @@ namespace PerizinanPeternakan.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PermitApprovalHistories", (string)null);
+                    b.ToTable("PermitApprovalHistories");
                 });
 
             modelBuilder.Entity("PerizinanPeternakan.Models.PermitDocument", b =>
@@ -210,10 +294,21 @@ namespace PerizinanPeternakan.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("DocumentDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DocumentDescription")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<string>("DocumentName")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("DocumentNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("DocumentType")
                         .IsRequired()
@@ -244,11 +339,112 @@ namespace PerizinanPeternakan.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DocumentDate");
+
+                    b.HasIndex("DocumentNumber");
+
+                    b.HasIndex("DocumentType");
+
                     b.HasIndex("PermitApplicationId");
 
                     b.HasIndex("UploadedByUserId");
 
-                    b.ToTable("PermitDocuments", (string)null);
+                    b.ToTable("PermitDocuments");
+                });
+
+            modelBuilder.Entity("PerizinanPeternakan.Models.Port", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Province")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ProvinceCode")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("ProvinceCode", "Name");
+
+                    b.ToTable("Ports");
+                });
+
+            modelBuilder.Entity("PerizinanPeternakan.Models.QuotaUsage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("LivestockQuotaId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("PermitApplicationId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("UsedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PermitApplicationId");
+
+                    b.HasIndex("LivestockQuotaId", "Status");
+
+                    b.ToTable("QuotaUsages");
                 });
 
             modelBuilder.Entity("PerizinanPeternakan.Models.User", b =>
@@ -271,6 +467,9 @@ namespace PerizinanPeternakan.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsEmailVerified")
+                        .HasColumnType("bit");
+
                     b.Property<string>("NamaLengkap")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -286,6 +485,12 @@ namespace PerizinanPeternakan.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<string>("PasswordResetToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ResetTokenExpires")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -299,6 +504,12 @@ namespace PerizinanPeternakan.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("VerificationToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("VerificationTokenExpires")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -307,113 +518,7 @@ namespace PerizinanPeternakan.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Alamat = "Kantor DPMPTSP NTB, Jl. Udayana No. 4 Mataram",
-                            Email = "kepaladinas@dpmptsp-ntb.go.id",
-                            IsActive = true,
-                            NamaLengkap = "Hj. Eva Dewiyani, SP",
-                            NoTelepon = "081234567890",
-                            Password = "$2a$11$BCGyEESCpVMrVerzreURR.3BZ9uitmtMiaoKJU2pslyMH65gh.xZ.",
-                            Role = "KepalaDinas",
-                            TanggalDaftar = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Username = "kepaladinas"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Alamat = "Kantor DPMPTSP NTB, Jl. Udayana No. 4 Mataram",
-                            Email = "admin1@dpmptsp-ntb.go.id",
-                            IsActive = true,
-                            NamaLengkap = "Ahmad Admin, S.Pt",
-                            NoTelepon = "081234567891",
-                            Password = "$2a$11$roTC0yhCxb.55PJ/PSMz/uFYEQw00YB657Co8cj8d2M0BzqYFexse",
-                            Role = "Admin",
-                            TanggalDaftar = new DateTime(2024, 1, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Username = "admin1"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Alamat = "Kantor DPMPTSP NTB, Jl. Udayana No. 4 Mataram",
-                            Email = "admin2@dpmptsp-ntb.go.id",
-                            IsActive = true,
-                            NamaLengkap = "Siti Admin, S.Pt",
-                            NoTelepon = "081234567893",
-                            Password = "$2a$11$dlnS3JhriSvJcFWWOwX9GefAc2Lk3YbsrFk5VLOjYfHEV0oQOBF9m",
-                            Role = "Admin",
-                            TanggalDaftar = new DateTime(2024, 1, 20, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Username = "admin2"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Alamat = "Kantor DPMPTSP NTB, Jl. Udayana No. 4 Mataram",
-                            Email = "verifikator1@dpmptsp-ntb.go.id",
-                            IsActive = true,
-                            NamaLengkap = "Budi Verifikator, S.Pt, M.Si",
-                            NoTelepon = "081234567894",
-                            Password = "$2a$11$Di196bGJ3yOV.whx3TkB.eCnmtV03M/9DIWDIuEzGZFCCU0HK9qZq",
-                            Role = "Verifikator",
-                            TanggalDaftar = new DateTime(2024, 1, 25, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Username = "verifikator1"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Alamat = "Kantor DPMPTSP NTB, Jl. Udayana No. 4 Mataram",
-                            Email = "verifikator2@dpmptsp-ntb.go.id",
-                            IsActive = true,
-                            NamaLengkap = "Rina Verifikator, S.Pt",
-                            NoTelepon = "081234567895",
-                            Password = "$2a$11$ShNRaNjMF/IxhcOoZGrUuOxI6Pr41tJujx6EuPP5iy.gtenwe.bwi",
-                            Role = "Verifikator",
-                            TanggalDaftar = new DateTime(2024, 1, 30, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Username = "verifikator2"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Alamat = "Desa Suka Maju, Kec. Praya, Lombok Tengah",
-                            Email = "user1@example.com",
-                            IsActive = true,
-                            NamaLengkap = "Budi Peternak",
-                            NoTelepon = "081234567896",
-                            Password = "$2a$11$n6zBiQ8IgPdOHkghfqQGru2DMtzkqxjOSzUM53teW1UAO73CpmOQO",
-                            Role = "User",
-                            TanggalDaftar = new DateTime(2024, 2, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Username = "user1"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Alamat = "Desa Dena, Kec. Madapangga, Kab. Bima",
-                            Email = "cvdena@example.com",
-                            IsActive = true,
-                            NamaLengkap = "CV. DENA BERSAUDARA",
-                            NoTelepon = "081234567897",
-                            Password = "$2a$11$Xe5nSUyr88T3rG.Qe/OtD.hzXqtKFW5TQ3U9WYBcCxaOD6x/b3f5a",
-                            Role = "User",
-                            TanggalDaftar = new DateTime(2024, 3, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Username = "cvdena"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Alamat = "Jl. Peternakan No. 15, Mataram",
-                            Email = "sarimakmur@example.com",
-                            IsActive = true,
-                            NamaLengkap = "PT. Sari Makmur Ternak",
-                            NoTelepon = "081234567898",
-                            Password = "$2a$11$4UyeoBPsfBrqzMEbm25mMuqTLWWigAusH4PuyoSPwi.YRvZYbqCzG",
-                            Role = "User",
-                            TanggalDaftar = new DateTime(2024, 3, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Username = "sarimakmur"
-                        });
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("PerizinanPeternakan.Models.LivestockDetail", b =>
@@ -432,12 +537,12 @@ namespace PerizinanPeternakan.Migrations
                     b.HasOne("PerizinanPeternakan.Models.User", "Admin")
                         .WithMany()
                         .HasForeignKey("AdminId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("PerizinanPeternakan.Models.User", "KepalaDinas")
                         .WithMany()
                         .HasForeignKey("KepalaDinasId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("PerizinanPeternakan.Models.User", "User")
                         .WithMany()
@@ -448,7 +553,7 @@ namespace PerizinanPeternakan.Migrations
                     b.HasOne("PerizinanPeternakan.Models.User", "Verifikator")
                         .WithMany()
                         .HasForeignKey("VerifikatorId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Admin");
 
@@ -497,6 +602,25 @@ namespace PerizinanPeternakan.Migrations
                     b.Navigation("UploadedByUser");
                 });
 
+            modelBuilder.Entity("PerizinanPeternakan.Models.QuotaUsage", b =>
+                {
+                    b.HasOne("PerizinanPeternakan.Models.LivestockQuota", "LivestockQuota")
+                        .WithMany("QuotaUsages")
+                        .HasForeignKey("LivestockQuotaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PerizinanPeternakan.Models.LivestockPermitApplication", "PermitApplication")
+                        .WithMany()
+                        .HasForeignKey("PermitApplicationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LivestockQuota");
+
+                    b.Navigation("PermitApplication");
+                });
+
             modelBuilder.Entity("PerizinanPeternakan.Models.LivestockPermitApplication", b =>
                 {
                     b.Navigation("ApprovalHistory");
@@ -504,6 +628,11 @@ namespace PerizinanPeternakan.Migrations
                     b.Navigation("Documents");
 
                     b.Navigation("LivestockDetails");
+                });
+
+            modelBuilder.Entity("PerizinanPeternakan.Models.LivestockQuota", b =>
+                {
+                    b.Navigation("QuotaUsages");
                 });
 #pragma warning restore 612, 618
         }
