@@ -369,13 +369,16 @@ class PermitCreateManager {
     }
 
     setupLivestockHandlers() {
-        $('#addLivestockBtn').on('click', function() {
+        // Add livestock button
+        $('#addLivestock').on('click', function() {
             window.permitCreateManager.addLivestockDetail();
         });
 
-        $(document).on('click', '.remove-livestock-btn', function() {
-            $(this).closest('.livestock-detail').remove();
+        // Remove livestock button
+        $(document).on('click', '.remove-livestock', function() {
+            $(this).closest('.livestock-item').remove();
             window.permitCreateManager.updateLivestockIndexes();
+            window.permitCreateManager.updateLivestockNumbers();
         });
 
         // Quota management handlers
@@ -402,18 +405,6 @@ class PermitCreateManager {
             const index = $(this).data('index');
             const quantity = parseInt($(this).val()) || 0;
             window.permitCreateManager.validateQuantity(index, quantity);
-        });
-
-        // Add livestock button
-        $('#addLivestock').on('click', function() {
-            window.permitCreateManager.addLivestockItem();
-        });
-
-        // Remove livestock button
-        $(document).on('click', '.remove-livestock', function() {
-            $(this).closest('.livestock-item').remove();
-            window.permitCreateManager.updateLivestockNumbers();
-            window.permitCreateManager.updateSummary();
         });
 
         console.log('✅ Quota handlers setup completed');
@@ -717,43 +708,73 @@ class PermitCreateManager {
 
     addLivestockDetail() {
         const template = `
-            <div class="livestock-detail border rounded p-3 mb-3">
-                <div class="row">
-                    <div class="col-md-4">
-                        <label class="form-label">Jenis Ternak</label>
-                        <select name="LivestockDetails[${this.livestockIndex}].LivestockType" class="form-select" required>
+            <div class="livestock-item" data-index="${this.livestockIndex}">
+                <div class="livestock-header">
+                    <h4>Ternak #<span class="livestock-number">${this.livestockIndex + 1}</span></h4>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-livestock" title="Hapus item ini">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+
+                <div class="livestock-form">
+                    <div class="form-group">
+                        <label class="form-label required">
+                            <i class="fas fa-paw"></i>
+                            Jenis Ternak
+                            <span class="quota-indicator" data-index="${this.livestockIndex}" style="display: none;">
+                                <i class="fas fa-info-circle text-primary"></i>
+                                <span class="quota-text">Loading...</span>
+                            </span>
+                        </label>
+                        <select name="LivestockDetails[${this.livestockIndex}].LivestockType" class="form-control livestock-type" data-index="${this.livestockIndex}" required>
                             <option value="">Pilih Jenis Ternak</option>
-                            <option value="Sapi">Sapi</option>
-                            <option value="Kerbau">Kerbau</option>
+                            <option value="Sapi Potong">Sapi Potong</option>
+                            <option value="Kerbau Potong">Kerbau Potong</option>
+                            <option value="Kuda Pedaging">Kuda Pedaging</option>
                             <option value="Kambing">Kambing</option>
                             <option value="Domba">Domba</option>
-                            <option value="Babi">Babi</option>
-                            <option value="Unggas">Unggas</option>
                         </select>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Jumlah</label>
-                        <input type="number" name="LivestockDetails[${this.livestockIndex}].Quantity" class="form-control" min="1" required>
+
+                    <div class="form-group">
+                        <label class="form-label required">
+                            <i class="fas fa-calculator"></i>
+                            Jumlah (ekor)
+                            <span class="quota-limit" data-index="${this.livestockIndex}" style="display: none;">
+                                <small class="text-muted">Maks: <span class="max-quota">-</span> ekor</small>
+                            </span>
+                        </label>
+                        <input type="number" name="LivestockDetails[${this.livestockIndex}].Quantity"
+                               class="form-control livestock-quantity" data-index="${this.livestockIndex}"
+                               min="1" max="1"
+                               placeholder="Masukkan jumlah ternak" required />
+                        <div class="quantity-feedback" data-index="${this.livestockIndex}" style="display: none;">
+                            <small class="feedback-text">-</small>
+                        </div>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Deskripsi</label>
-                        <input type="text" name="LivestockDetails[${this.livestockIndex}].Description" class="form-control" placeholder="Contoh: Sapi Bali, Kambing Kacang">
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-comment"></i>
+                            Keterangan
+                        </label>
+                        <textarea name="LivestockDetails[${this.livestockIndex}].Description"
+                                  class="form-control" rows="2"
+                                  placeholder="Keterangan tambahan (opsional)"></textarea>
                     </div>
-                </div>
-                <div class="mt-2">
-                    <button type="button" class="btn btn-sm btn-danger remove-livestock-btn">
-                        <i class="fas fa-trash"></i> Hapus
-                    </button>
                 </div>
             </div>
         `;
 
-        $('#livestockDetailsContainer').append(template);
+        $('#livestockContainer').append(template);
         this.livestockIndex++;
+        
+        // Update livestock numbers
+        this.updateLivestockNumbers();
     }
 
     updateLivestockIndexes() {
-        $('.livestock-detail').each((index, element) => {
+        $('.livestock-item').each((index, element) => {
             $(element).find('select, input').each((i, input) => {
                 const name = $(input).attr('name');
                 if (name) {
@@ -762,7 +783,94 @@ class PermitCreateManager {
                 }
             });
         });
-        this.livestockIndex = $('.livestock-detail').length;
+        this.livestockIndex = $('.livestock-item').length;
+    }
+
+    updateLivestockNumbers() {
+        $('.livestock-item').each((index, element) => {
+            $(element).find('.livestock-number').text(index + 1);
+            $(element).attr('data-index', index);
+            $(element).find('[data-index]').attr('data-index', index);
+        });
+    }
+
+    checkQuotaForLivestock(index, livestockType) {
+        console.log(`🔍 Checking quota for livestock ${index}: ${livestockType}`);
+        
+        if (!livestockType) {
+            this.hideQuotaIndicator(index);
+            return;
+        }
+
+        const quotaData = this.getMockQuotaData();
+        const quota = quotaData.quotas[livestockType];
+        
+        if (quota) {
+            this.showQuotaIndicator(index, quota);
+        } else {
+            this.hideQuotaIndicator(index);
+        }
+    }
+
+    showQuotaIndicator(index, quota) {
+        const $indicator = $(`.quota-indicator[data-index="${index}"]`);
+        const $limit = $(`.quota-limit[data-index="${index}"]`);
+        const $quantity = $(`.livestock-quantity[data-index="${index}"]`);
+        
+        $indicator.show();
+        $indicator.find('.quota-text').text(`Tersedia: ${quota.available.toLocaleString()} ekor`);
+        
+        $limit.show();
+        $limit.find('.max-quota').text(quota.available.toLocaleString());
+        
+        $quantity.attr('max', quota.available);
+        
+        console.log(`✅ Quota indicator shown for index ${index}`);
+    }
+
+    hideQuotaIndicator(index) {
+        const $indicator = $(`.quota-indicator[data-index="${index}"]`);
+        const $limit = $(`.quota-limit[data-index="${index}"]`);
+        
+        $indicator.hide();
+        $limit.hide();
+        
+        console.log(`✅ Quota indicator hidden for index ${index}`);
+    }
+
+    validateQuantity(index, quantity) {
+        console.log(`🔍 Validating quantity for livestock ${index}: ${quantity}`);
+        
+        const $quantity = $(`.livestock-quantity[data-index="${index}"]`);
+        const $feedback = $(`.quantity-feedback[data-index="${index}"]`);
+        const maxQuota = parseInt($quantity.attr('max')) || 999999;
+        
+        $quantity.removeClass('is-valid is-invalid');
+        $feedback.hide();
+        
+        if (quantity > 0) {
+            if (quantity > maxQuota) {
+                $quantity.addClass('is-invalid');
+                $feedback.show().find('.feedback-text')
+                    .removeClass('text-success text-warning text-danger')
+                    .addClass('text-danger')
+                    .text(`Jumlah melebihi kuota tersedia (maks: ${maxQuota.toLocaleString()} ekor)`);
+            } else if (quantity > maxQuota * 0.8) {
+                $quantity.addClass('is-valid');
+                $feedback.show().find('.feedback-text')
+                    .removeClass('text-success text-warning text-danger')
+                    .addClass('text-warning')
+                    .text(`Hampir mencapai batas kuota (${((quantity/maxQuota)*100).toFixed(1)}%)`);
+            } else {
+                $quantity.addClass('is-valid');
+                $feedback.show().find('.feedback-text')
+                    .removeClass('text-success text-warning text-danger')
+                    .addClass('text-success')
+                    .text(`Dalam batas kuota (${((quantity/maxQuota)*100).toFixed(1)}%)`);
+            }
+        }
+        
+        this.updateSummary();
     }
 }
 

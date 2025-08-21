@@ -1084,6 +1084,7 @@ function updateDocumentChecklist() {
     documentTypes.forEach(docType => {
         const $item = $(`.checklist-item[data-doc="${docType}"]`);
         const $icon = $item.find('i');
+        const $status = $item.find('.checklist-status');
 
         if (uploadedDocuments.has(docType)) {
             if (docType === 'DokumenOpsional') {
@@ -1091,11 +1092,13 @@ function updateDocumentChecklist() {
                 $icon.removeClass('fas fa-circle text-info fas fa-times-circle text-danger')
                     .addClass('fas fa-check-circle text-success');
                 $item.addClass('completed');
+                $status.text('Sudah diupload');
             } else {
                 // Dokumen wajib
                 $icon.removeClass('fas fa-times-circle text-danger')
                     .addClass('fas fa-check-circle text-success');
                 $item.addClass('completed');
+                $status.text('Sudah diupload');
             }
         } else {
             if (docType === 'DokumenOpsional') {
@@ -1103,11 +1106,13 @@ function updateDocumentChecklist() {
                 $icon.removeClass('fas fa-check-circle text-success fas fa-times-circle text-danger')
                     .addClass('fas fa-circle text-info');
                 $item.removeClass('completed');
+                $status.text('Opsional');
             } else {
                 // Dokumen wajib belum upload
                 $icon.removeClass('fas fa-check-circle text-success')
                     .addClass('fas fa-times-circle text-danger');
                 $item.removeClass('completed');
+                $status.text('Belum diupload');
             }
         }
     });
@@ -1153,10 +1158,14 @@ function initializeDocumentDetailsValidation() {
         optionalFileInput.addEventListener('change', function () {
             if (this.files && this.files.length > 0) {
                 validateOptionalDocumentDetails();
+                // Update checklist setelah file diupload
+                updateDocumentChecklist();
             } else {
                 clearDocumentFieldError(optionalNameInput);
                 if (optionalDateInput) clearDocumentFieldError(optionalDateInput);
                 if (optionalNumberInput) clearDocumentFieldError(optionalNumberInput);
+                // Update checklist jika file dihapus
+                updateDocumentChecklist();
             }
         });
 

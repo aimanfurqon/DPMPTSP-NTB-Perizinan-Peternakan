@@ -624,39 +624,51 @@
                                         <span>Status Upload Dokumen</span>
                                     </div>
                                     <div class="summary-progress">
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" id="uploadProgress" style="width: 0%"></div>
+                                        <div class="progress-container">
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" id="uploadProgress" style="width: 0%"></div>
+                                            </div>
+                                            <div class="progress-stats">
+                                                <span class="progress-text" id="uploadProgressText">0 dari 7 dokumen telah diupload</span>
+                                                <span class="progress-percentage" id="uploadPercentage">0%</span>
+                                            </div>
                                         </div>
-                                        <span class="progress-text" id="uploadProgressText">0 dari 7 dokumen telah diupload</span>
                                     </div>
                                     <div class="summary-checklist" id="documentChecklist">
                                         <div class="checklist-item" data-doc="SuratPermohonan">
                                             <i class="fas fa-times-circle text-danger"></i>
                                             <span>Surat Permohonan</span>
+                                            <small class="checklist-status">Belum diupload</small>
                                         </div>
                                         <div class="checklist-item" data-doc="RekomendasiDinasProv">
                                             <i class="fas fa-times-circle text-danger"></i>
                                             <span>Rekomendasi Dinas Peternakan Provinsi NTB</span>
+                                            <small class="checklist-status">Belum diupload</small>
                                         </div>
                                         <div class="checklist-item" data-doc="RekomendasiDaerahTujuan">
                                             <i class="fas fa-times-circle text-danger"></i>
                                             <span>Rekomendasi Pemasukan Ternak dari Daerah Tujuan</span>
+                                            <small class="checklist-status">Belum diupload</small>
                                         </div>
                                         <div class="checklist-item" data-doc="SKKHKabupatenAsal">
                                             <i class="fas fa-times-circle text-danger"></i>
                                             <span>SKKH dari Kabupaten Asal</span>
+                                            <small class="checklist-status">Belum diupload</small>
                                         </div>
                                         <div class="checklist-item" data-doc="SKKHDinasProvinsi">
                                             <i class="fas fa-times-circle text-danger"></i>
                                             <span>SKKH dari Dinas Peternakan Provinsi NTB</span>
+                                            <small class="checklist-status">Belum diupload</small>
                                         </div>
                                         <div class="checklist-item" data-doc="SuratJalanTernak">
                                             <i class="fas fa-times-circle text-danger"></i>
                                             <span>Surat Keterangan Jalan Ternak/Rekomendasi Asal</span>
+                                            <small class="checklist-status">Belum diupload</small>
                                         </div>
                                         <div class="checklist-item" data-doc="HasilPemeriksaanFisik">
                                             <i class="fas fa-times-circle text-danger"></i>
                                             <span>Hasil Pemeriksaan Fisik (Holding Ground)</span>
+                                            <small class="checklist-status">Belum diupload</small>
                                         </div>
                                     </div>
                                 </div>
@@ -1123,6 +1135,46 @@
             </div>
         </div>
 
+        <!-- Form Validation Summary -->
+        <div class="form-validation-summary" id="formValidationSummary" style="display: none;">
+            <div class="validation-header">
+                <i class="fas fa-shield-alt"></i>
+                <span>Status Validasi Form</span>
+            </div>
+            <div class="validation-content">
+                <div class="validation-steps">
+                    <div class="validation-step" data-step="1">
+                        <div class="step-status">
+                            <i class="fas fa-circle text-danger"></i>
+                            <span>Step 1: Informasi Pemohon</span>
+                        </div>
+                        <div class="step-errors" id="step1Errors"></div>
+                    </div>
+                    <div class="validation-step" data-step="2">
+                        <div class="step-status">
+                            <i class="fas fa-circle text-danger"></i>
+                            <span>Step 2: Detail Pengiriman</span>
+                        </div>
+                        <div class="step-errors" id="step2Errors"></div>
+                    </div>
+                    <div class="validation-step" data-step="3">
+                        <div class="step-status">
+                            <i class="fas fa-circle text-danger"></i>
+                            <span>Step 3: Detail Ternak</span>
+                        </div>
+                        <div class="step-errors" id="step3Errors"></div>
+                    </div>
+                    <div class="validation-step" data-step="4">
+                        <div class="step-status">
+                            <i class="fas fa-circle text-danger"></i>
+                            <span>Step 4: Dokumen Pendukung</span>
+                        </div>
+                        <div class="step-errors" id="step4Errors"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Form Navigation -->
         <div class="form-navigation">
             <div class="nav-buttons">
@@ -1168,13 +1220,15 @@
 </div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-    <script src="~/js/multi-step-form.js"></script>
-    <link rel="stylesheet" href="~/css/permit/create.css" />
-
+    <!-- CSS Dependencies - Load First -->
+    <link rel="stylesheet" href="~/css/permit/create-modern.css" />
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    
+    <!-- JavaScript Dependencies -->
+    <partial name="_ValidationScriptsPartial" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="~/js/multi-step-form.js"></script>
     <script src="~/js/permit-create.js" asp-append-version="true"></script>
     
     <script>
