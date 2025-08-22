@@ -43,7 +43,25 @@ builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IApprovalService, ApprovalService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 
-builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
+// Configure SMTP with environment variable support
+var smtpSection = builder.Configuration.GetSection("Smtp");
+var smtpOptions = new SmtpOptions
+{
+    Host = smtpSection["Host"],
+    Port = int.Parse(smtpSection["Port"] ?? "587"),
+    EnableSsl = bool.Parse(smtpSection["EnableSsl"] ?? "true"),
+    Username = smtpSection["UserName"],
+    Password = Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? smtpSection["Password"]
+};
+
+builder.Services.Configure<SmtpOptions>(options =>
+{
+    options.Host = smtpOptions.Host;
+    options.Port = smtpOptions.Port;
+    options.EnableSsl = smtpOptions.EnableSsl;
+    options.Username = smtpOptions.Username;
+    options.Password = smtpOptions.Password;
+});
 
 // Add file upload services
 builder.Services.Configure<IISServerOptions>(options =>
