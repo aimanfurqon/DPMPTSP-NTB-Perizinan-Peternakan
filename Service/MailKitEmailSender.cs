@@ -29,7 +29,7 @@ namespace PerizinanPeternakan.Services
         /// <summary>
         /// Gets or sets the SMTP application password.
         /// </summary>
-        public string AppPassword { get; set; }
+        public string Password { get; set; }
     }
 
     /// <summary>
@@ -57,7 +57,7 @@ namespace PerizinanPeternakan.Services
         /// <returns>A task representing the asynchronous operation.</returns>
         public async Task SendEmailAsync(string toEmail, string subject, string htmlMessage)
         {
-            if (string.IsNullOrEmpty(_options.AppPassword))
+            if (string.IsNullOrEmpty(_options.Password))
             {
                 throw new System.Exception("App Password untuk SMTP tidak ditemukan. Pastikan sudah diatur di User Secrets.");
             }
@@ -82,7 +82,7 @@ namespace PerizinanPeternakan.Services
                 await smtp.ConnectAsync(_options.Host, _options.Port, SecureSocketOptions.StartTls);
 
                 // Autentikasi menggunakan username dan App Password
-                await smtp.AuthenticateAsync(_options.Username, _options.AppPassword);
+                await smtp.AuthenticateAsync(_options.Username, _options.Password);
 
                 // Kirim email
                 await smtp.SendAsync(email);
