@@ -49,7 +49,6 @@ var smtpOptions = new SmtpOptions
 {
     Host = smtpSection["Host"],
     Port = int.Parse(smtpSection["Port"] ?? "587"),
-    EnableSsl = bool.Parse(smtpSection["EnableSsl"] ?? "true"),
     Username = smtpSection["UserName"],
     Password = Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? smtpSection["Password"]
 };
@@ -58,7 +57,6 @@ builder.Services.Configure<SmtpOptions>(options =>
 {
     options.Host = smtpOptions.Host;
     options.Port = smtpOptions.Port;
-    options.EnableSsl = smtpOptions.EnableSsl;
     options.Username = smtpOptions.Username;
     options.Password = smtpOptions.Password;
 });
